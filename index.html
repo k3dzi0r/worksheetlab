@@ -3,11 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/worksheetlab/manifest.json" />
+    <link rel="apple-touch-icon" href="/worksheetlab/favicon.svg" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WorksheetLab – kreator kart pracy</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+  
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/worksheetlab/sw.js')
+            .then(reg => console.log('ServiceWorker registered'))
+            .catch(err => console.log('ServiceWorker error', err));
+        });
+      }
+    </script>
   </body>
 </html>
