@@ -12,9 +12,13 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 ## Funkcje (MVP)
 
 - Wybór jednego z 3 szablonów karty pracy:
-  - **Wybierz** — polecenie + od 2 do 6 obrazów/emoji do wyboru,
+  - **Wybierz** — polecenie + od 2 do 6 obrazów/emoji do wyboru, w układzie
+    „Rząd” (równa linia) lub „Rozrzucone” (elementy porozrzucane po kartce),
   - **Połącz w parę** — dwie kolumny elementów z miejscem na rysowanie linii,
   - **Policz** — jeden element powtórzony 1–10 razy + pole na odpowiedź.
+- Kontrola rozmiaru elementów (małe/średnie/duże) dla szablonów „Wybierz” i
+  „Policz”.
+- Duplikowanie elementu (i pary) jednym kliknięciem.
 - Dodawanie własnych obrazów (PNG, JPG/JPEG, WebP) z dysku — obrazy nie są
   nigdzie wysyłane, są tylko wczytywane lokalnie w przeglądarce.
 - Wbudowany picker emoji (ok. 130 emoji, 8 kategorii, wyszukiwarka po polskich

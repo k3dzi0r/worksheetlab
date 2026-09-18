@@ -5,6 +5,25 @@ export function createId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
 }
 
+/**
+ * Deterministyczny hash tekstu na liczbę w zakresie [0, 1).
+ * Używany do wyliczania "losowych", ale stabilnych pozycji w układzie rozrzuconym
+ * (te same dane wejściowe zawsze dają tę samą pozycję, dopóki nie zmieni się seed).
+ */
+export function hashToUnit(input: string): number {
+  let hash = 0
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i)
+    hash |= 0
+  }
+  return (Math.abs(hash) % 1000) / 1000
+}
+
+/** Ogranicza wartość do podanego zakresu. */
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
 /** Tasowanie tablicy algorytmem Fisher-Yates (nie modyfikuje oryginału). */
 export function shuffleArray<T>(items: T[]): T[] {
   const result = [...items]

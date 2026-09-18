@@ -22,7 +22,13 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
   return (
     <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto">
       {worksheet.template === 'choice' && (
-        <ChoiceTemplate instruction={worksheet.instruction} items={worksheet.items} />
+        <ChoiceTemplate
+          instruction={worksheet.instruction}
+          items={worksheet.items}
+          layout={worksheet.layout}
+          itemSize={worksheet.itemSize}
+          seed={shuffleSeed}
+        />
       )}
       {worksheet.template === 'matchPairs' && (
         <MatchPairsTemplate
@@ -36,6 +42,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
           instruction={worksheet.instruction}
           item={worksheet.items[0]}
           repetitions={worksheet.countRepetitions}
+          itemSize={worksheet.itemSize}
         />
       )}
     </div>

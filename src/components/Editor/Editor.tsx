@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { WorksheetItem, WorksheetState, TemplateType } from '../../types/worksheet'
-import { TEMPLATE_OPTIONS } from '../../types/worksheet'
+import type { WorksheetItem, WorksheetState, TemplateType, ChoiceLayout, ItemSize } from '../../types/worksheet'
+import { TEMPLATE_OPTIONS, ITEM_SIZE_OPTIONS } from '../../types/worksheet'
 import { ImageUploader } from '../ImageUploader/ImageUploader'
 import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
 import type { EmojiEntry } from '../../data/emojis'
@@ -11,8 +11,11 @@ interface EditorProps {
   onTemplateChange: (template: TemplateType) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
+  onLayoutChange: (layout: ChoiceLayout) => void
+  onItemSizeChange: (itemSize: ItemSize) => void
   onAddItem: (item: WorksheetItem) => void
   onRemoveItem: (id: string) => void
+  onDuplicateItem: (id: string) => void
   onMoveItem: (id: string, direction: 'up' | 'down') => void
   onShuffle: () => void
   onPrint: () => void
@@ -25,8 +28,11 @@ export function Editor({
   onTemplateChange,
   onInstructionChange,
   onCountRepetitionsChange,
+  onLayoutChange,
+  onItemSizeChange,
   onAddItem,
   onRemoveItem,
+  onDuplicateItem,
   onMoveItem,
   onShuffle,
   onPrint,
@@ -43,6 +49,7 @@ export function Editor({
   }
 
   const showShuffleButton = worksheet.template === 'choice' || worksheet.template === 'matchPairs'
+  const showItemSizeControl = worksheet.template === 'choice' || worksheet.template === 'count'
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto">
@@ -103,6 +110,60 @@ export function Editor({
         </section>
       )}
 
+      {/* Układ elementów - tylko dla szablonu "Wybierz" */}
+      {worksheet.template === 'choice' && (
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Układ elementów</h2>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onLayoutChange('row')}
+              className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium ${
+                worksheet.layout === 'row'
+                  ? 'border-blue-600 bg-blue-50 text-gray-900'
+                  : 'border-gray-200 bg-white text-gray-700'
+              }`}
+            >
+              Rząd
+            </button>
+            <button
+              type="button"
+              onClick={() => onLayoutChange('scattered')}
+              className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium ${
+                worksheet.layout === 'scattered'
+                  ? 'border-blue-600 bg-blue-50 text-gray-900'
+                  : 'border-gray-200 bg-white text-gray-700'
+              }`}
+            >
+              Rozrzucone
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Rozmiar elementów - dla szablonów "Wybierz" i "Policz" */}
+      {showItemSizeControl && (
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Rozmiar elementów</h2>
+          <div className="flex gap-2">
+            {ITEM_SIZE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onItemSizeChange(option.value)}
+                className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium ${
+                  worksheet.itemSize === option.value
+                    ? 'border-blue-600 bg-blue-50 text-gray-900'
+                    : 'border-gray-200 bg-white text-gray-700'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Dodawanie elementów */}
       <section>
         <h2 className="text-lg font-semibold mb-2">3. Dodaj elementy</h2>
@@ -130,7 +191,12 @@ export function Editor({
       {/* Lista elementów */}
       <section>
         <h2 className="text-lg font-semibold mb-2">4. Aktualne elementy</h2>
-        <ElementsList worksheet={worksheet} onRemove={onRemoveItem} onMove={onMoveItem} />
+        <ElementsList
+          worksheet={worksheet}
+          onRemove={onRemoveItem}
+          onDuplicate={onDuplicateItem}
+          onMove={onMoveItem}
+        />
       </section>
 
       {/* Akcje */}
@@ -166,11 +232,12 @@ export function Editor({
 interface ElementsListProps {
   worksheet: WorksheetState
   onRemove: (id: string) => void
+  onDuplicate: (id: string) => void
   onMove: (id: string, direction: 'up' | 'down') => void
 }
 
 /** Lista aktualnie użytych elementów – różny widok w zależności od szablonu. */
-function ElementsList({ worksheet, onRemove, onMove }: ElementsListProps) {
+function ElementsList({ worksheet, onRemove, onDuplicate, onMove }: ElementsListProps) {
   if (worksheet.template === 'matchPairs') {
     if (worksheet.pairs.length === 0) {
       return <p className="text-gray-400 text-sm">Brak dodanych par.</p>
@@ -190,6 +257,7 @@ function ElementsList({ worksheet, onRemove, onMove }: ElementsListProps) {
               total={worksheet.pairs.length}
               id={pair.id}
               onRemove={onRemove}
+              onDuplicate={onDuplicate}
               onMove={onMove}
             />
           </li>
@@ -215,6 +283,7 @@ function ElementsList({ worksheet, onRemove, onMove }: ElementsListProps) {
             total={worksheet.items.length}
             id={item.id}
             onRemove={onRemove}
+            onDuplicate={onDuplicate}
             onMove={onMove}
           />
         </li>
@@ -232,10 +301,11 @@ interface RowControlsProps {
   total: number
   id: string
   onRemove: (id: string) => void
+  onDuplicate: (id: string) => void
   onMove: (id: string, direction: 'up' | 'down') => void
 }
 
-function RowControls({ index, total, id, onRemove, onMove }: RowControlsProps) {
+function RowControls({ index, total, id, onRemove, onDuplicate, onMove }: RowControlsProps) {
   return (
     <div className="flex items-center gap-1">
       <button
@@ -255,6 +325,15 @@ function RowControls({ index, total, id, onRemove, onMove }: RowControlsProps) {
         aria-label="Przesuń niżej"
       >
         ↓
+      </button>
+      <button
+        type="button"
+        onClick={() => onDuplicate(id)}
+        className="px-2 py-1 text-gray-600"
+        aria-label="Duplikuj"
+        title="Duplikuj"
+      >
+        ⧉
       </button>
       <button
         type="button"

@@ -1,5 +1,12 @@
 import { useState } from 'react'
-import type { WorksheetItem, WorksheetState, TemplateType } from './types/worksheet'
+import type {
+  WorksheetItem,
+  WorksheetState,
+  TemplateType,
+  ChoiceLayout,
+  ItemSize,
+  MatchPair,
+} from './types/worksheet'
 import { createId, shuffleArray } from './utils'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
@@ -10,6 +17,8 @@ const INITIAL_WORKSHEET: WorksheetState = {
   items: [],
   pairs: [],
   countRepetitions: 5,
+  layout: 'row',
+  itemSize: 'lg',
 }
 
 function App() {
@@ -28,6 +37,14 @@ function App() {
 
   function handleCountRepetitionsChange(countRepetitions: number) {
     setWorksheet((prev) => ({ ...prev, countRepetitions }))
+  }
+
+  function handleLayoutChange(layout: ChoiceLayout) {
+    setWorksheet((prev) => ({ ...prev, layout }))
+  }
+
+  function handleItemSizeChange(itemSize: ItemSize) {
+    setWorksheet((prev) => ({ ...prev, itemSize }))
   }
 
   function handleAddItem(newItem: WorksheetItem) {
@@ -64,6 +81,35 @@ function App() {
     }))
   }
 
+  function handleDuplicateItem(id: string) {
+    setWorksheet((prev) => {
+      if (prev.template === 'matchPairs') {
+        const index = prev.pairs.findIndex((pair) => pair.id === id)
+        if (index === -1) return prev
+        const original = prev.pairs[index]
+        const duplicate: MatchPair = {
+          id: createId(),
+          left: { ...original.left, id: createId() },
+          right: original.right ? { ...original.right, id: createId() } : null,
+        }
+        const pairs = [...prev.pairs]
+        pairs.splice(index + 1, 0, duplicate)
+        return { ...prev, pairs }
+      }
+
+      const index = prev.items.findIndex((item) => item.id === id)
+      if (index === -1) return prev
+      if (prev.template === 'choice' && prev.items.length >= 6) {
+        alert('W tym szablonie można dodać maksymalnie 6 elementów.')
+        return prev
+      }
+      const duplicate: WorksheetItem = { ...prev.items[index], id: createId() }
+      const items = [...prev.items]
+      items.splice(index + 1, 0, duplicate)
+      return { ...prev, items }
+    })
+  }
+
   function handleMoveItem(id: string, direction: 'up' | 'down') {
     setWorksheet((prev) => {
       if (prev.template === 'matchPairs') {
@@ -80,8 +126,8 @@ function App() {
       }
       return prev
     })
-    // Dla "Połącz w pary" tasujemy tylko kolejność wyświetlania prawej kolumny,
-    // bez zmiany faktycznej listy par (WorksheetPreview reaguje na shuffleSeed).
+    // Dla "Wybierz" (rozrzucone) i "Połącz w pary" seed wymusza nowe losowe pozycje
+    // / nowe tasowanie prawej kolumny, bez zmiany faktycznej listy elementów/par.
     setShuffleSeed((seed) => seed + 1)
   }
 
@@ -101,8 +147,11 @@ function App() {
           onTemplateChange={handleTemplateChange}
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
+          onLayoutChange={handleLayoutChange}
+          onItemSizeChange={handleItemSizeChange}
           onAddItem={handleAddItem}
           onRemoveItem={handleRemoveItem}
+          onDuplicateItem={handleDuplicateItem}
           onMoveItem={handleMoveItem}
           onShuffle={handleShuffle}
           onPrint={handlePrint}

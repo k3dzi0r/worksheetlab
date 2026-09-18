@@ -17,6 +17,18 @@ export interface WorksheetItem {
 
 export type TemplateType = 'choice' | 'matchPairs' | 'count'
 
+/** Układ elementów w szablonie „Wybierz”. */
+export type ChoiceLayout = 'row' | 'scattered'
+
+/** Rozmiar elementów (obrazów/emoji) na kartce. */
+export type ItemSize = 'sm' | 'md' | 'lg'
+
+export const ITEM_SIZE_OPTIONS: { value: ItemSize; label: string }[] = [
+  { value: 'sm', label: 'Małe' },
+  { value: 'md', label: 'Średnie' },
+  { value: 'lg', label: 'Duże' },
+]
+
 export interface TemplateOption {
   value: TemplateType
   label: string
@@ -61,4 +73,8 @@ export interface WorksheetState {
   pairs: MatchPair[]
   /** Liczba powtórzeń elementu w szablonie „Policz” (1-10). */
   countRepetitions: number
+  /** Układ elementów - dotyczy szablonu „Wybierz”. */
+  layout: ChoiceLayout
+  /** Rozmiar elementów - dotyczy szablonów „Wybierz” i „Policz”. */
+  itemSize: ItemSize
 }
