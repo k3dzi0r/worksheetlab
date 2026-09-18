@@ -9,7 +9,7 @@ interface OddOneOutTemplateProps {
   simpleMode?: boolean
 }
 
-/** Szablon „Co nie pasuje?”: 3-6 elementów w rzędzie, uczeń wskazuje ten niepasujący. */
+/** Szablon „Co nie pasuje?”: kilka elementów w rzędzie, uczeń wskazuje ten niepasujący. */
 export function OddOneOutTemplate({ instruction, items, itemScale, simpleMode = false }: OddOneOutTemplateProps) {
   return (
     <div className="flex flex-col items-center gap-12 pt-8 h-full">

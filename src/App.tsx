@@ -32,15 +32,13 @@ const INITIAL_WORKSHEET: WorksheetState = {
 }
 
 /**
- * Miękki limit liczby elementów w szablonach "Wybierz" i "Co nie pasuje?", żeby karta
- * czytelnie mieściła się na A4. "Wybierz" pozwala na więcej elementów niż "Co nie pasuje?",
- * dla którego sensowne jest tylko kilka elementów do porównania.
+ * Miękki limit liczby elementów w niektórych szablonach, żeby karta czytelnie
+ * mieściła się na A4. W trybie prostym limit jest niższy, bo elementy są większe.
  */
 function getMaxItems(template: TemplateType, simpleMode: boolean): number | null {
-  if (template === 'choice' || template === 'cutCards') return simpleMode ? 6 : 12
-  if (template === 'oddOneOut') return simpleMode ? 4 : 6
-  // "Taki sam / inny": 1 element wzorcowy + 2-6 odpowiedzi.
-  if (template === 'sameOrDifferent') return simpleMode ? 5 : 7
+  if (template === 'choice' || template === 'cutCards' || template === 'oddOneOut') return simpleMode ? 6 : 12
+  // "Taki sam / inny": 1 element wzorcowy + odpowiedzi, więc limit jest o 1 wyższy.
+  if (template === 'sameOrDifferent') return simpleMode ? 7 : 13
   return null
 }
 

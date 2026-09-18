@@ -4,7 +4,7 @@ import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
 interface SameOrDifferentTemplateProps {
   instruction: string
-  /** Pierwszy element to wzorzec, pozostałe (2-6) to odpowiedzi do porównania. */
+  /** Pierwszy element to wzorzec, pozostałe to odpowiedzi do porównania. */
   items: WorksheetItem[]
   itemScale: number
   simpleMode?: boolean

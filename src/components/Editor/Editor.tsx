@@ -286,10 +286,10 @@ export function Editor({
             <input
               type="number"
               min={1}
-              max={6}
+              max={12}
               value={worksheet.sequenceRepetitions}
               onChange={(event) => {
-                const value = Math.min(6, Math.max(1, Number(event.target.value) || 1))
+                const value = Math.min(12, Math.max(1, Number(event.target.value) || 1))
                 onSequenceRepetitionsChange(value)
               }}
               className="w-24 border border-gray-300 rounded-lg px-4 py-3 text-base"
@@ -386,7 +386,7 @@ export function Editor({
         )}
         {worksheet.template === 'sameOrDifferent' && (
           <p className="text-sm text-gray-500 mb-2">
-            Pierwszy dodany element to wzorzec. Kolejne (2-6) to odpowiedzi do porównania.
+            Pierwszy dodany element to wzorzec. Kolejne to odpowiedzi do porównania.
           </p>
         )}
         <div className="flex flex-col gap-3">

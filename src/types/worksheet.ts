@@ -65,7 +65,7 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
   {
     value: 'oddOneOut',
     label: 'Co nie pasuje?',
-    description: '3-6 elementów, uczeń wskazuje ten niepasujący.',
+    description: 'Kilka elementów, uczeń wskazuje ten niepasujący.',
   },
   {
     value: 'sequence',

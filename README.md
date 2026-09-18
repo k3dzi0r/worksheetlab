@@ -19,18 +19,19 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
   - **Połącz w parę** — dwie kolumny elementów z miejscem na rysowanie linii,
   - **Policz** — jeden element powtórzony 1–10 razy + pole na odpowiedź,
   - **Tak / Nie** — jeden element, pytanie nad nim i dwa duże pola odpowiedzi,
-  - **Co nie pasuje?** — od 3 do 6 elementów, uczeń wskazuje ten niepasujący,
-  - **Sekwencja** — wzór z 2–4 elementów powtórzony kilka razy + puste pola
+  - **Co nie pasuje?** — od 2 do 12 elementów (6 w trybie prostym), uczeń
+    wskazuje ten niepasujący,
+  - **Sekwencja** — wzór z 2–4 elementów powtórzony do 12 razy + puste pola
     do uzupełnienia na końcu,
   - **Kartoniki do wycinania** — od 2 do 12 elementów w siatce równych
     kartoników, z opcjonalną przerywaną ramką ułatwiającą wycinanie,
   - **Taki sam / inny** — jeden element wzorcowy (wizualnie odseparowany
-    ramką) i od 2 do 6 odpowiedzi do porównania; tasowanie dotyczy tylko
-    odpowiedzi, wzorzec zawsze zostaje na miejscu.
+    ramką) i do 12 odpowiedzi do porównania (6 w trybie prostym); tasowanie
+    dotyczy tylko odpowiedzi, wzorzec zawsze zostaje na miejscu.
 - Orientacja kartki A4: pionowa lub pozioma (dotyczy wszystkich szablonów).
 - **Tryb prosty** — globalny przełącznik powiększający polecenie, elementy i
-  odstępy (przydatny dla młodszych uczniów); w tym trybie limit elementów w
-  szablonie „Wybierz”/„Co nie pasuje?” jest niższy, żeby karta była czytelna.
+  odstępy (przydatny dla młodszych uczniów); w tym trybie limit liczby
+  elementów jest niższy, żeby karta była czytelna.
 - Płynny suwak rozmiaru elementów (globalny, dla wszystkich szablonów) oraz
   możliwość ustawienia własnego rozmiaru pojedynczego elementu, z przyciskiem
   „Ujednolić rozmiar wszystkich elementów”, który cofa indywidualne rozmiary
