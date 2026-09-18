@@ -199,6 +199,7 @@ export function Editor({
         </div>
       </section>
 </Accordion>
+
 <Accordion title="2. Układ" defaultOpen={false}>
 
 
@@ -414,67 +415,6 @@ export function Editor({
       
 </Accordion>
 
-<Accordion title="5. Nagłówek i Polecenie" defaultOpen={false}>
-{/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
-      <section>
-        <h2 className="text-lg font-semibold mb-2">Nagłówek karty</h2>
-        <div className="flex flex-col gap-2 border border-gray-200 rounded-lg p-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={worksheet.header.showTitle}
-              onChange={(event) => onHeaderChange({ showTitle: event.target.checked })}
-              className="w-5 h-5"
-            />
-            <span>Tytuł karty</span>
-          </label>
-          {worksheet.header.showTitle && (
-            <input
-              type="text"
-              value={worksheet.header.title}
-              onChange={(event) => onHeaderChange({ title: event.target.value })}
-              placeholder='np. "Karta pracy - Wiosna"'
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
-          )}
-          <HeaderFieldToggle
-            checked={worksheet.header.showName}
-            label={worksheet.header.nameLabel}
-            defaultLabel="Imię i nazwisko"
-            onToggle={(checked) => onHeaderChange({ showName: checked })}
-            onLabelChange={(nameLabel) => onHeaderChange({ nameLabel })}
-          />
-          <HeaderFieldToggle
-            checked={worksheet.header.showDate}
-            label={worksheet.header.dateLabel}
-            defaultLabel="Data"
-            onToggle={(checked) => onHeaderChange({ showDate: checked })}
-            onLabelChange={(dateLabel) => onHeaderChange({ dateLabel })}
-          />
-          <HeaderFieldToggle
-            checked={worksheet.header.showClass}
-            label={worksheet.header.classLabel}
-            defaultLabel="Klasa"
-            onToggle={(checked) => onHeaderChange({ showClass: checked })}
-            onLabelChange={(classLabel) => onHeaderChange({ classLabel })}
-          />
-        </div>
-      </section>
-
-      {/* Polecenie */}
-      <section>
-        <h2 className="text-lg font-semibold mb-2">2. Polecenie</h2>
-        <input
-          type="text"
-          value={worksheet.instruction}
-          onChange={(event) => onInstructionChange(event.target.value)}
-          placeholder='np. "Wskaż zwierzę."'
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
-        />
-      </section>
-
-      
-</Accordion>
 <Accordion title="3. Edycja elementów" defaultOpen={false}>
 {/* Dodawanie elementów */}
       <section>
@@ -548,6 +488,7 @@ export function Editor({
 
       
 </Accordion>
+
 <Accordion title="4. Warianty" defaultOpen={false}>
 {/* Warianty */}
       <section>
@@ -570,6 +511,70 @@ export function Editor({
 
       
 </Accordion>
+
+<Accordion title="5. Nagłówek i Polecenie" defaultOpen={false}>
+{/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">Nagłówek karty</h2>
+        <div className="flex flex-col gap-2 border border-gray-200 rounded-lg p-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={worksheet.header.showTitle}
+              onChange={(event) => onHeaderChange({ showTitle: event.target.checked })}
+              className="w-5 h-5"
+            />
+            <span>Tytuł karty</span>
+          </label>
+          {worksheet.header.showTitle && (
+            <input
+              type="text"
+              value={worksheet.header.title}
+              onChange={(event) => onHeaderChange({ title: event.target.value })}
+              placeholder='np. "Karta pracy - Wiosna"'
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            />
+          )}
+          <HeaderFieldToggle
+            checked={worksheet.header.showName}
+            label={worksheet.header.nameLabel}
+            defaultLabel="Imię i nazwisko"
+            onToggle={(checked) => onHeaderChange({ showName: checked })}
+            onLabelChange={(nameLabel) => onHeaderChange({ nameLabel })}
+          />
+          <HeaderFieldToggle
+            checked={worksheet.header.showDate}
+            label={worksheet.header.dateLabel}
+            defaultLabel="Data"
+            onToggle={(checked) => onHeaderChange({ showDate: checked })}
+            onLabelChange={(dateLabel) => onHeaderChange({ dateLabel })}
+          />
+          <HeaderFieldToggle
+            checked={worksheet.header.showClass}
+            label={worksheet.header.classLabel}
+            defaultLabel="Klasa"
+            onToggle={(checked) => onHeaderChange({ showClass: checked })}
+            onLabelChange={(classLabel) => onHeaderChange({ classLabel })}
+          />
+        </div>
+      </section>
+
+      {/* Polecenie */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">2. Polecenie</h2>
+        <input
+          type="text"
+          value={worksheet.instruction}
+          onChange={(event) => onInstructionChange(event.target.value)}
+          placeholder='np. "Wskaż zwierzę."'
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
+        />
+      </section>
+
+      
+</Accordion>
+
+
 {/* Akcje */}
       <section className="flex flex-col gap-3 pt-2 border-t border-gray-200">
         <div className="flex gap-3">
