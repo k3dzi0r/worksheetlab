@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { TEMPLATE_OPTIONS, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP } from '../../types/worksheet'
 import { ImageUploader } from '../ImageUploader/ImageUploader'
 import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
+import { MyLibrary } from '../MyLibrary/MyLibrary'
 import type { EmojiEntry } from '../../data/emojis'
 import { createId } from '../../utils'
 
@@ -134,6 +135,7 @@ export function Editor({
   onToggleCorrectAnswer,
 }: EditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showLibrary, setShowLibrary] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -503,9 +505,22 @@ export function Editor({
         )}
         <div className="flex flex-col gap-3">
           <ImageUploader onImageSelected={handleImageSelected} />
+
           <button
             type="button"
-            onClick={() => setShowEmojiPicker((v) => !v)}
+            onClick={() => {
+              setShowLibrary((v) => !v);
+              if (!showLibrary) setShowEmojiPicker(false);
+            }}
+            className="w-full bg-blue-50 text-blue-900 font-medium py-3 rounded-lg text-base border border-blue-200 hover:bg-blue-100"
+          >
+            {showLibrary ? 'Zamknij bibliotekę' : 'Moja biblioteka'}
+          </button>
+          {showLibrary && <MyLibrary onSelectItem={handleImageSelected} />}
+
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((v) => { const next = !v; if (next) setShowLibrary(false); return next; })}
             className="w-full bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base border border-gray-300 hover:bg-gray-200"
           >
             {showEmojiPicker ? 'Ukryj emoji' : 'Emoji'}
