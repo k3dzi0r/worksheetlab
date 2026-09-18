@@ -24,7 +24,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -64,6 +64,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'math',
     label: 'Działania',
     description: 'Dodawanie, odejmowanie, mnożenie i dzielenie z kluczem odpowiedzi.',
+  },
+  {
+    value: 'pattern',
+    label: 'Szlaczki',
+    description: 'Wzory grafomotoryczne do wodzenia ołówkiem, po śladzie i samodzielnie.',
   },
   {
     value: 'choice',
@@ -169,6 +174,14 @@ export interface WorksheetState {
   handwritingMode?: 'solid' | 'tracing' | 'empty'
   handwritingRepeat?: boolean
   handwritingFont?: string
+  /** Wzór szlaczka albo „mixed" - inny w każdym wierszu. */
+  patternId?: string
+  /** Ile wiersza zajmuje gotowy wzór i ślad do obrysowania. */
+  patternHelp?: string
+  /** Czy rysować linie pomocnicze nad i pod szlaczkiem. */
+  patternGuides?: boolean
+  /** Czy zaznaczyć kropką miejsce startu. */
+  patternStartDot?: boolean
   /** Rodzaje działań w szablonie „Działania”. */
   mathOperations?: MathOperation[]
   /** Górna granica zakresu liczbowego (10, 20, 100). */

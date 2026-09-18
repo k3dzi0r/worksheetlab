@@ -62,6 +62,8 @@ const COLORING_CROWNS: { value: CrownStyle; label: string }[] = [
   { value: 'none', label: 'Gładka' },
 ]
 import { MATH_OPERATION_LABELS, MATH_OPERATION_SIGNS, MATH_RANGES } from '../../mathTasks'
+import { PATTERNS } from '../../patterns'
+import { PATTERN_HELP_LEVELS } from '../../templates/PatternTemplate'
 import type { MathOperation } from '../../mathTasks'
 
 /** Przełącza rodzaj działania, ale nie pozwala odznaczyć ostatniego - karta nie może być pusta. */
@@ -111,6 +113,7 @@ interface EditorProps {
   onMazeOptionsChange: (options: Partial<WorksheetState>) => void
   onColoringOptionsChange: (options: Partial<WorksheetState>) => void
   onMathOptionsChange: (options: Partial<WorksheetState>) => void
+  onPatternOptionsChange: (options: Partial<WorksheetState>) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -158,6 +161,7 @@ export function Editor({
   onMazeOptionsChange,
   onColoringOptionsChange,
   onMathOptionsChange,
+  onPatternOptionsChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -596,7 +600,84 @@ export function Editor({
     </section>
   )}
 
-  {worksheet.template === 'math' ? (
+  {worksheet.template === 'pattern' ? (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">3. Szlaczek</h2>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Wzór</label>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => onPatternOptionsChange({ patternId: 'mixed' })}
+              className={`py-2 px-2 text-sm rounded-lg border ${worksheet.patternId === 'mixed' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Różne
+            </button>
+            {PATTERNS.map((pattern) => (
+              <button
+                key={pattern.id}
+                type="button"
+                onClick={() => onPatternOptionsChange({ patternId: pattern.id })}
+                className={`py-2 px-2 text-sm rounded-lg border ${(worksheet.patternId ?? 'waves') === pattern.id ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+              >
+                {pattern.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            „Różne" daje inny szlaczek w każdym wierszu, a każdemu wariantowi karty inny zestaw.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Ile podpowiedzi</label>
+          <div className="grid grid-cols-4 gap-2">
+            {PATTERN_HELP_LEVELS.map((level) => (
+              <button
+                key={level.value}
+                type="button"
+                onClick={() => onPatternOptionsChange({ patternHelp: level.value })}
+                className={`py-2 px-1 text-sm rounded-lg border ${(worksheet.patternHelp ?? 'medium') === level.value ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+              >
+                {level.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Wiersz zaczyna się gotowym wzorem, dalej idzie ślad do obrysowania, a resztę dziecko
+            rysuje samo. Im mniej podpowiedzi, tym wcześniej zaczyna się samodzielna część.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.patternGuides ?? true}
+            onChange={(event) => onPatternOptionsChange({ patternGuides: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Linie pomocnicze</span>
+            <span className="block text-xs text-gray-500">Wzór nie wychodzi poza linie, tak jak w liniaturze.</span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.patternStartDot ?? true}
+            onChange={(event) => onPatternOptionsChange({ patternStartDot: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Kropka startowa</span>
+            <span className="block text-xs text-gray-500">Zielona kropka pokazuje, gdzie postawić ołówek.</span>
+          </span>
+        </label>
+      </div>
+    </section>
+  ) : worksheet.template === 'math' ? (
     <section>
       <h2 className="text-lg font-semibold mb-2">3. Działania</h2>
       <div className="flex flex-col gap-4">

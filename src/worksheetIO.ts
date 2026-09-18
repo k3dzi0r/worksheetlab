@@ -39,6 +39,7 @@ const VALID_TEMPLATES: TemplateType[] = [
   'maze',
   'coloring',
   'math',
+  'pattern',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -136,6 +137,10 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
     handwritingRepeat: typeof state.handwritingRepeat === 'boolean' ? state.handwritingRepeat : false,
     handwritingFont: normalizeHandwritingFont(state.handwritingFont),
+    patternId: typeof state.patternId === 'string' ? state.patternId : 'waves',
+    patternHelp: typeof state.patternHelp === 'string' ? state.patternHelp : 'medium',
+    patternGuides: typeof state.patternGuides === 'boolean' ? state.patternGuides : true,
+    patternStartDot: typeof state.patternStartDot === 'boolean' ? state.patternStartDot : true,
     mathOperations: normalizeMathOperations(state.mathOperations),
     mathMax: typeof state.mathMax === 'number' ? state.mathMax : 20,
     mathCrossTen: typeof state.mathCrossTen === 'boolean' ? state.mathCrossTen : true,
