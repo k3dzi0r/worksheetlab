@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type {
   WorksheetItem,
   WorksheetState,
@@ -33,6 +33,7 @@ const INITIAL_WORKSHEET: WorksheetState = {
   cutCardsShowBorder: true,
   categories: ['Kategoria 1', 'Kategoria 2'],
   variantCount: 1,
+  correctAnswers: [],
 }
 
 /**
@@ -57,10 +58,26 @@ function App() {
     canRedo,
   } = useUndoRedo<WorksheetState>(INITIAL_WORKSHEET)
   const [shuffleSeed, setShuffleSeed] = useState(0)
+  const [showAnswerKey, setShowAnswerKey] = useState(false)
 
   const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(worksheet, (state) => {
     resetWorksheet(state)
   })
+
+
+  const handleToggleCorrectAnswer = useCallback(
+    (answerId: string) => {
+      setWorksheet((prev) => {
+        const correctAnswers = prev.correctAnswers || []
+        if (correctAnswers.includes(answerId)) {
+          return { ...prev, correctAnswers: correctAnswers.filter((id) => id !== answerId) }
+        } else {
+          return { ...prev, correctAnswers: [...correctAnswers, answerId] }
+        }
+      })
+    },
+    [setWorksheet]
+  )
 
   function handleTemplateChange(template: TemplateType) {
     // Każdy szablon ma inny kształt danych, więc przy zmianie czyścimy zawartość,
@@ -409,6 +426,9 @@ function App() {
           canRedo={canRedo}
           saveStatus={saveStatus}
           onReorderItems={handleReorderItems}
+            onToggleCorrectAnswer={handleToggleCorrectAnswer}
+            showAnswerKey={showAnswerKey}
+            onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
         />
       </div>
       <div className="preview-panel">

@@ -54,6 +54,9 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
 }
 
 interface EditorProps {
+  showAnswerKey?: boolean
+  onToggleAnswerKey?: () => void
+  onToggleCorrectAnswer?: (answerId: string) => void
   worksheet: WorksheetState
   onTemplateChange: (template: TemplateType) => void
   onInstructionChange: (instruction: string) => void
@@ -126,6 +129,9 @@ export function Editor({
   canRedo,
   saveStatus,
   onReorderItems,
+  showAnswerKey,
+  onToggleAnswerKey,
+  onToggleCorrectAnswer,
 }: EditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -168,7 +174,7 @@ export function Editor({
         <p className="text-gray-500 text-sm">Kreator kart pracy A4</p>
       </header>
 
-      <Accordion title="1. Szablon i Układ" defaultOpen={true}>
+      <Accordion title="1. Szablon" defaultOpen={false}>
 {/* Wybór szablonu */}
       <section>
         <h2 className="text-lg font-semibold mb-2">1. Wybierz typ karty</h2>
@@ -190,6 +196,9 @@ export function Editor({
           ))}
         </div>
       </section>
+</Accordion>
+<Accordion title="2. Układ" defaultOpen={false}>
+
 
       {/* Orientacja strony - wspólna dla wszystkich szablonów */}
       <section>
@@ -402,7 +411,8 @@ export function Editor({
 
       
 </Accordion>
-<Accordion title="2. Nagłówek i Polecenie" defaultOpen={false}>
+
+<Accordion title="5. Nagłówek i Polecenie" defaultOpen={false}>
 {/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
       <section>
         <h2 className="text-lg font-semibold mb-2">Nagłówek karty</h2>
@@ -463,7 +473,7 @@ export function Editor({
 
       
 </Accordion>
-<Accordion title="3. Edycja elementów" defaultOpen={true}>
+<Accordion title="3. Edycja elementów" defaultOpen={false}>
 {/* Dodawanie elementów */}
       <section>
         <h2 className="text-lg font-semibold mb-2">3. Dodaj elementy</h2>
@@ -517,6 +527,7 @@ export function Editor({
           onUpdateItemScale={onUpdateItemScale}
           onResetItemScale={onResetItemScale}
           onReorderItems={onReorderItems}
+          onToggleCorrectAnswer={onToggleCorrectAnswer}
         />
       </section>
 
@@ -580,6 +591,13 @@ export function Editor({
         >
           Drukuj / Zapisz jako PDF
         </button>
+
+        {onToggleAnswerKey && (
+          <label className="flex items-center justify-center gap-2 w-full bg-blue-100 text-blue-900 font-medium py-3 rounded-lg text-base hover:bg-blue-200 cursor-pointer mb-2">
+            <input type="checkbox" checked={showAnswerKey} onChange={onToggleAnswerKey} className="w-5 h-5 cursor-pointer" />
+            <span>Pokaż klucz odpowiedzi na podglądzie</span>
+          </label>
+        )}
         <div className="flex gap-2">
           <button
             type="button"
@@ -624,6 +642,7 @@ export function Editor({
 }
 
 interface ElementsListProps {
+  onToggleCorrectAnswer?: (answerId: string) => void
   worksheet: WorksheetState
   onRemove: (id: string) => void
   onDuplicate: (id: string) => void
@@ -666,6 +685,7 @@ function ElementsList({
   onUpdateItemScale,
   onResetItemScale,
   onReorderItems,
+  onToggleCorrectAnswer,
 }: ElementsListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -742,6 +762,40 @@ function ElementsList({
 
   const listItems = worksheet.template === 'sequence' ? worksheet.sequenceItems : worksheet.items
 
+  
+  if (worksheet.template === 'yesNo') {
+    return (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={listItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+          <ul className="flex flex-col gap-3">
+            {listItems.map((item, index) => (
+              <SortableItem key={item.id} id={item.id} className="border border-gray-200 rounded-lg px-3 py-2 bg-white relative pr-8">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{itemPreview(item)}</span>
+                  <RowControls index={index} total={listItems.length} id={item.id} onRemove={onRemove} onDuplicate={onDuplicate} onMove={onMove} />
+                </div>
+                <div className="mt-2 flex flex-col gap-1">
+                  <CaptionEditor item={item} label="Podpis" onUpdateCaption={onUpdateCaption} onToggleCaption={onToggleCaption} />
+                  <ItemScaleEditor item={item} globalScale={worksheet.itemScale} onUpdateItemScale={onUpdateItemScale} onResetItemScale={onResetItemScale} />
+                  {onToggleCorrectAnswer && (
+                    <div className="flex gap-4 mt-2">
+                      <label className="flex items-center gap-1 text-sm text-green-700 font-medium cursor-pointer">
+                        <input type="checkbox" checked={worksheet.correctAnswers?.includes('yes')} onChange={() => onToggleCorrectAnswer('yes')} /> Poprawna odp: TAK
+                      </label>
+                      <label className="flex items-center gap-1 text-sm text-green-700 font-medium cursor-pointer">
+                        <input type="checkbox" checked={worksheet.correctAnswers?.includes('no')} onChange={() => onToggleCorrectAnswer('no')} /> Poprawna odp: NIE
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </SortableItem>
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
+    )
+  }
+
   if (listItems.length === 0) {
     return <p className="text-gray-400 text-sm">Brak dodanych elementów.</p>
   }
@@ -782,6 +836,12 @@ function ElementsList({
                   onResetItemScale={onResetItemScale}
                   hidden={worksheet.template === 'cutCards'}
                 />
+
+                {['choice', 'oddOneOut', 'sameOrDifferent', 'categorize'].includes(worksheet.template) && !(worksheet.template === 'sameOrDifferent' && index === 0) && onToggleCorrectAnswer && (
+                  <label className="flex items-center gap-1 text-sm text-green-700 font-medium mt-1 cursor-pointer">
+                    <input type="checkbox" checked={worksheet.correctAnswers?.includes(item.id)} onChange={() => onToggleCorrectAnswer(item.id)} /> Poprawna odpowiedź
+                  </label>
+                )}
               </div>
             </SortableItem>
           ))}

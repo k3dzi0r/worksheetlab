@@ -14,6 +14,7 @@ import { CategorizeTemplate } from '../../templates/CategorizeTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
+  showAnswerKey?: boolean
   worksheet: WorksheetState
   /** Wartość zmieniana przy każdym „Losuj kolejność”, wymusza nowe tasowanie prawej kolumny. */
   shuffleSeed: number

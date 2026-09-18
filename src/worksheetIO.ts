@@ -113,6 +113,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
       ? (state.categories as string[])
       : ['Kategoria 1', 'Kategoria 2'],
     variantCount: typeof state.variantCount === 'number' ? state.variantCount : 1,
+    correctAnswers: Array.isArray(state.correctAnswers) ? state.correctAnswers : [],
   }
 }
 

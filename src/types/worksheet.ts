@@ -131,6 +131,8 @@ export interface WorksheetState {
   categories: string[]
   /** Liczba generowanych wariantów. */
   variantCount?: number
+  /** Identyfikatory poprawnych odpowiedzi (dla Wybierz, Co nie pasuje, Taki sam/inny) lub "yes"/"no" (dla Tak/Nie) */
+  correctAnswers?: string[]
 }
 
 /** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */
