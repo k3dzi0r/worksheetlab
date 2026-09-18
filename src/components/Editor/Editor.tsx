@@ -86,23 +86,19 @@ function stripFileExtension(fileName: string): string {
   return fileName.replace(/\.[a-z0-9]+$/i, '')
 }
 
-function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-  return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm mb-4">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
-      >
-        <span>{title}</span>
-        <span className={`transform transition-transform text-gray-400 ${isOpen ? 'rotate-180' : ''}`}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </span>
-      </button>
-      {isOpen && <div className="p-4 border-t border-gray-200 flex flex-col gap-4">{children}</div>}
-    </div>
-  )
+/** Kroki kreatora - nawigacja po lewej, treść aktywnego kroku w środkowej kolumnie. */
+const STEPS = [
+  { id: 1, title: 'Szablon', hint: 'Wybierz typ karty' },
+  { id: 2, title: 'Układ', hint: 'Rozmiar, orientacja, tryb' },
+  { id: 3, title: 'Edycja', hint: 'Treść i elementy karty' },
+  { id: 4, title: 'Warianty', hint: 'Kilka wersji tej samej karty' },
+  { id: 5, title: 'Nagłówek', hint: 'Tytuł, polecenie, dane ucznia' },
+] as const
+
+/** Treść jednego kroku; niewidoczne kroki nie są renderowane. */
+function Step({ step, active, children }: { step: number; active: number; children: React.ReactNode }) {
+  if (step !== active) return null
+  return <div className="flex flex-col gap-4">{children}</div>
 }
 
 interface EditorProps {
@@ -189,6 +185,7 @@ export function Editor({
   onReorderItems,
   onToggleCorrectAnswer,
 }: EditorProps) {
+  const [activeStep, setActiveStep] = useState(1)
   const [templateCategory, setTemplateCategory] = useState<TemplateCategory>('all')
   const visibleTemplates = useMemo(
     () =>
@@ -261,16 +258,57 @@ export function Editor({
   }
 
   return (
-    <div className="flex flex-col gap-2 p-6 overflow-y-auto">
-      <header className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">WorksheetLab</h1>
-        <p className="text-gray-500 text-sm">Kreator kart pracy A4</p>
-      </header>
+    <div className="editor-shell">
+      <nav className="step-nav">
+        <header className="mb-5">
+          <h1 className="text-xl font-bold text-gray-900">WorksheetLab</h1>
+          <p className="text-gray-500 text-xs">Kreator kart pracy A4</p>
+        </header>
 
-      <Accordion title="1. Szablon" defaultOpen={false}>
+        <ol className="flex flex-col gap-2">
+          {STEPS.map((step) => {
+            const active = activeStep === step.id
+            return (
+              <li key={step.id}>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep(step.id)}
+                  className={`w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-xl border transition-colors ${
+                    active
+                      ? 'bg-blue-50 border-blue-500'
+                      : 'bg-white border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold shrink-0 ${
+                      active ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {step.id}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-sm font-semibold ${active ? 'text-blue-800' : 'text-gray-900'}`}>
+                      {step.title}
+                    </span>
+                    <span className="block text-xs text-gray-500 truncate">{step.hint}</span>
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+
+        <p className="mt-auto pt-6 text-xs text-gray-400 leading-relaxed">
+          Wszystko liczy się na Twoim komputerze. Karty nie są nigdzie wysyłane.
+        </p>
+      </nav>
+
+      <div className="step-content">
+
+      <Step step={1} active={activeStep}>
 {/* Wybór szablonu */}
       <section>
-        <h2 className="text-lg font-semibold mb-2">1. Wybierz typ karty</h2>
+        <h2 className="text-lg font-semibold mb-2">Wybierz typ karty</h2>
 
         <div className="flex flex-wrap gap-1.5 mb-3">
           {TEMPLATE_CATEGORIES.map((category) => (
@@ -319,9 +357,9 @@ export function Editor({
           {TEMPLATE_OPTIONS.find((option) => option.value === worksheet.template)?.description}
         </p>
       </section>
-</Accordion>
+</Step>
 
-<Accordion title="2. Układ" defaultOpen={false}>
+<Step step={2} active={activeStep}>
 
 
       {/* Orientacja strony - wspólna dla wszystkich szablonów */}
@@ -534,12 +572,12 @@ export function Editor({
       </section>
 
       
-</Accordion>
+</Step>
 
-<Accordion title="3. Edycja elementów" defaultOpen={false}>
+<Step step={3} active={activeStep}>
   {worksheet.template === 'maze' && (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Labirynt</h2>
+      <h2 className="text-lg font-semibold mb-2">Labirynt</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -623,7 +661,7 @@ export function Editor({
 
   {worksheet.template === 'clock' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Zegar</h2>
+      <h2 className="text-lg font-semibold mb-2">Zegar</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj ćwiczenia</label>
@@ -722,7 +760,7 @@ export function Editor({
     </section>
   ) : worksheet.template === 'dotToDot' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Połącz kropki</h2>
+      <h2 className="text-lg font-semibold mb-2">Połącz kropki</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Obrazek</label>
@@ -805,7 +843,7 @@ export function Editor({
     </section>
   ) : worksheet.template === 'crossword' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Krzyżówka</h2>
+      <h2 className="text-lg font-semibold mb-2">Krzyżówka</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Hasło w kolumnie</label>
@@ -872,7 +910,7 @@ export function Editor({
     </section>
   ) : worksheet.template === 'pattern' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Szlaczek</h2>
+      <h2 className="text-lg font-semibold mb-2">Szlaczek</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Wzór</label>
@@ -949,7 +987,7 @@ export function Editor({
     </section>
   ) : worksheet.template === 'math' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Działania</h2>
+      <h2 className="text-lg font-semibold mb-2">Działania</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaje działań</label>
@@ -1036,7 +1074,7 @@ export function Editor({
     </section>
   ) : worksheet.template === 'coloring' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Kolorowanka</h2>
+      <h2 className="text-lg font-semibold mb-2">Kolorowanka</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj</label>
@@ -1153,7 +1191,7 @@ export function Editor({
     </section>
   ) : worksheet.template === 'wordSearch' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Słowa do ukrycia</h2>
+      <h2 className="text-lg font-semibold mb-2">Słowa do ukrycia</h2>
       <div className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Wpisz słowa (jedno w wierszu)</label>
@@ -1289,7 +1327,7 @@ export function Editor({
     </section>
   ) : worksheet.template === 'handwriting' ? (
     <section>
-      <h2 className="text-lg font-semibold mb-2">3. Tekst do pisania</h2>
+      <h2 className="text-lg font-semibold mb-2">Tekst do pisania</h2>
       <div className="flex flex-col gap-4">
         <div>
           <div className="flex justify-between items-end mb-1">
@@ -1460,7 +1498,7 @@ export function Editor({
   ) : (
     <>
       <section>
-        <h2 className="text-lg font-semibold mb-2">3. Dodaj elementy</h2>
+        <h2 className="text-lg font-semibold mb-2">Dodaj elementy</h2>
         {worksheet.template === 'maze' && (
           <p className="text-sm text-gray-500 mb-2">
             Dodaj dwa elementy: pierwszy oznaczy start, drugi metę (np. 🐭 i 🧀). Bez nich labirynt
@@ -1518,7 +1556,7 @@ export function Editor({
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">4. Aktualne elementy</h2>
+        <h2 className="text-lg font-semibold mb-2">Aktualne elementy</h2>
         <ElementsList
           worksheet={worksheet}
           onRemove={onRemoveItem}
@@ -1534,12 +1572,12 @@ export function Editor({
       </section>
     </>
   )}
-</Accordion>
+</Step>
 
-<Accordion title="4. Warianty" defaultOpen={false}>
+<Step step={4} active={activeStep}>
 {/* Warianty */}
       <section>
-        <h2 className="text-lg font-semibold mb-2">5. Warianty</h2>
+        <h2 className="text-lg font-semibold mb-2">Warianty</h2>
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">Liczba generowanych wariantów (stron)</label>
           <input
@@ -1557,9 +1595,9 @@ export function Editor({
       </section>
 
       
-</Accordion>
+</Step>
 
-<Accordion title="5. Nagłówek i Polecenie" defaultOpen={false}>
+<Step step={5} active={activeStep}>
 {/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
       <section>
         <h2 className="text-lg font-semibold mb-2">Nagłówek karty</h2>
@@ -1608,7 +1646,7 @@ export function Editor({
 
       {/* Polecenie */}
       <section>
-        <h2 className="text-lg font-semibold mb-2">2. Polecenie</h2>
+        <h2 className="text-lg font-semibold mb-2">Polecenie</h2>
         <input
           type="text"
           value={worksheet.instruction}
@@ -1617,11 +1655,8 @@ export function Editor({
           className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
         />
       </section>
-
-      
-</Accordion>
-
-
+      </Step>
+      </div>
     </div>
   )
 }

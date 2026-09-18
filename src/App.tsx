@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import type {
   WorksheetItem,
   WorksheetState,
@@ -18,6 +18,9 @@ import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 import { PageManager } from './components/PageManager'
 import { TopBar } from './components/TopBar'
+
+/** Szerokość kartki w pikselach przy 96 dpi - potrzebna do dopasowania podglądu do panelu. */
+const PAGE_WIDTH_PX = { portrait: 794, landscape: 1123 }
 
 /** Szablony, w których losowanie kolejności elementów cokolwiek zmienia. */
 const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'oddOneOut', 'sameOrDifferent']
@@ -71,6 +74,8 @@ function App() {
   } = useUndoRedo<ProjectState>(INITIAL_PROJECT)
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [showAnswerKey, setShowAnswerKey] = useState(false)
+  /** null oznacza „dopasuj do szerokości panelu". */
+  const [previewZoom, setPreviewZoom] = useState<number | null>(null)
 
   const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(project, (state) => {
     resetProject(state)
@@ -499,6 +504,33 @@ function App() {
     })
   }
 
+  // Dopasowanie podglądu: przy trzech kolumnach kartka A4 bywa szersza niż panel,
+  // więc domyślnie skalujemy ją do jego szerokości. Ręcznie ustawiony zoom ma pierwszeństwo.
+  const previewPanelRef = useRef<HTMLDivElement>(null)
+  const [panelWidth, setPanelWidth] = useState(0)
+
+  // Zależność od `isReady` i `hasDraft` jest konieczna: przy pierwszym renderze na ekranie
+  // stoi okno „wykryto zapis roboczy", panelu podglądu jeszcze nie ma i ref jest pusty.
+  useLayoutEffect(() => {
+    const element = previewPanelRef.current
+    if (!element) return
+    const measure = () => setPanelWidth(element.clientWidth)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [isReady, hasDraft])
+
+  const fitZoom = useMemo(() => {
+    const pageWidth = PAGE_WIDTH_PX[worksheet.orientation]
+    if (panelWidth === 0) return 1
+    // 4rem zapasu na marginesy panelu podglądu.
+    return Math.min(1, Math.max(0.3, (panelWidth - 64) / pageWidth))
+  }, [panelWidth, worksheet.orientation])
+
+  const effectiveZoom = previewZoom === null ? fitZoom : previewZoom / 100
+
+
   if (!isReady) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">Wczytywanie...</div>
   }
@@ -575,7 +607,7 @@ function App() {
             onToggleCorrectAnswer={handleToggleCorrectAnswer}
         />
       </div>
-      <div className="preview-panel print:overflow-visible">
+      <div className="preview-panel print:overflow-visible" ref={previewPanelRef}>
         <TopBar
           canUndo={canUndo}
           canRedo={canRedo}
@@ -590,6 +622,9 @@ function App() {
           showShuffle={SHUFFLEABLE_TEMPLATES.includes(worksheet.template)}
           onShuffle={handleShuffle}
           saveStatus={saveStatus}
+          zoom={previewZoom}
+          effectiveZoom={effectiveZoom}
+          onZoomChange={setPreviewZoom}
         />
         <div className="print:hidden w-full max-w-[21cm] mb-4">
           <PageManager
@@ -601,7 +636,12 @@ function App() {
             onReorder={reorderPages}
           />
         </div>
-        <div className="flex flex-col items-center w-full gap-8 print:gap-0">
+        {/* `zoom` zamiast `transform: scale`, bo przelicza też wysokość - kartki nie zostawiają
+            pustego pasa pod spodem ani nie wychodzą poza panel. Na wydruku wracamy do skali 1. */}
+        <div
+          className="flex flex-col items-center w-full gap-8 print:gap-0 preview-stack"
+          style={{ zoom: effectiveZoom }}
+        >
           {project.pages.map((page, idx) => (
             <div
               key={page.id}

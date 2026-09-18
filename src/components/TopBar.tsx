@@ -15,6 +15,11 @@ interface TopBarProps {
   showShuffle: boolean
   onShuffle: () => void
   saveStatus: 'saved' | 'saving' | 'idle'
+  /** Skala podglądu w procentach; null oznacza dopasowanie do szerokości panelu. */
+  zoom: number | null
+  /** Skala faktycznie użyta - pokazujemy ją, gdy podgląd jest dopasowywany automatycznie. */
+  effectiveZoom: number
+  onZoomChange: (zoom: number | null) => void
 }
 
 /**
@@ -36,6 +41,9 @@ export function TopBar({
   showShuffle,
   onShuffle,
   saveStatus,
+  zoom,
+  effectiveZoom,
+  onZoomChange,
 }: TopBarProps) {
   const importInputRef = useRef<HTMLInputElement>(null)
 
@@ -52,7 +60,8 @@ export function TopBar({
   }
 
   return (
-    <div className="print:hidden w-full bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2 flex-wrap">
+    // Pasek zawija się przy wąskim oknie - lepszy drugi rząd niż przyciski uciekające poza ekran.
+    <div className="print:hidden w-full bg-white border-b border-gray-200 px-3 py-2 flex items-center gap-1.5 flex-wrap">
       <div className="flex items-center gap-1">
         <IconButton label="Cofnij" disabled={!canUndo} onClick={onUndo}>
           <path d="M9 14 L4 9 L9 4" />
@@ -66,7 +75,7 @@ export function TopBar({
 
       <span className="w-px h-6 bg-gray-200" />
 
-      <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-gray-800 hover:bg-gray-100 cursor-pointer">
+      <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-gray-800 hover:bg-gray-100 cursor-pointer whitespace-nowrap">
         <input
           type="checkbox"
           checked={showAnswerKey}
@@ -80,23 +89,51 @@ export function TopBar({
         <button
           type="button"
           onClick={onShuffle}
-          className="px-3 py-1.5 rounded-lg text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100"
+          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 whitespace-nowrap"
         >
           Losuj kolejność
         </button>
       )}
 
-      <div className="flex-1" />
+      <span className="w-px h-6 bg-gray-200" />
 
-      <span className="text-xs text-gray-400 min-w-[7rem] text-right">
-        {saveStatus === 'saved' && <span className="text-green-600 font-medium">✔ Zapisano lokalnie</span>}
-        {saveStatus === 'saving' && 'Zapisywanie...'}
+      {/* Zoom podglądu: przy trzech kolumnach kartka A4 nie zawsze mieści się w naturalnej skali. */}
+      <div className="flex items-center gap-0.5">
+        <IconButton
+          label="Pomniejsz"
+          onClick={() => onZoomChange(Math.max(30, Math.round(effectiveZoom * 100) - 10))}
+        >
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </IconButton>
+        <button
+          type="button"
+          onClick={() => onZoomChange(null)}
+          title="Dopasuj do szerokości"
+          className={`px-1.5 py-1 rounded text-xs tabular-nums w-14 ${
+            zoom === null ? 'text-blue-700 font-medium bg-blue-50' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          {Math.round(effectiveZoom * 100)}%
+        </button>
+        <IconButton
+          label="Powiększ"
+          onClick={() => onZoomChange(Math.min(200, Math.round(effectiveZoom * 100) + 10))}
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </IconButton>
+      </div>
+
+      <div className="flex items-center gap-1.5 ml-auto">
+      <span className="text-xs text-gray-400 whitespace-nowrap">
+        {saveStatus === 'saved' && <span className="text-green-600 font-medium">✔ zapisano</span>}
+        {saveStatus === 'saving' && 'zapisywanie...'}
       </span>
 
       <button
         type="button"
         onClick={() => importInputRef.current?.click()}
-        className="px-3 py-1.5 rounded-lg text-sm text-gray-800 border border-gray-300 hover:bg-gray-100"
+        className="px-2.5 py-1.5 rounded-lg text-xs text-gray-800 border border-gray-300 hover:bg-gray-100"
       >
         Wczytaj
       </button>
@@ -110,7 +147,7 @@ export function TopBar({
       <button
         type="button"
         onClick={onExport}
-        className="px-3 py-1.5 rounded-lg text-sm text-gray-800 border border-gray-300 hover:bg-gray-100"
+        className="px-2.5 py-1.5 rounded-lg text-xs text-gray-800 border border-gray-300 hover:bg-gray-100"
       >
         Eksportuj
       </button>
@@ -119,17 +156,18 @@ export function TopBar({
         onClick={() => {
           if (window.confirm('Czy na pewno chcesz usunąć wszystko i zacząć od nowa?')) onClear()
         }}
-        className="px-3 py-1.5 rounded-lg text-sm text-red-700 border border-red-200 hover:bg-red-50"
+        className="px-2.5 py-1.5 rounded-lg text-xs text-red-700 border border-red-200 hover:bg-red-50"
       >
         Wyczyść
       </button>
       <button
         type="button"
         onClick={onPrint}
-        className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700"
+        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 whitespace-nowrap"
       >
         Drukuj / Zapisz PDF
       </button>
+      </div>
     </div>
   )
 }
@@ -152,11 +190,11 @@ function IconButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent"
+      className="p-1.5 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent"
     >
       <svg
-        width="20"
-        height="20"
+        width="18"
+        height="18"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

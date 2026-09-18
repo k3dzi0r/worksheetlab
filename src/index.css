@@ -20,12 +20,34 @@ body {
 }
 
 .editor-panel {
-  width: 420px;
   flex-shrink: 0;
   border-right: 1px solid #e5e7eb;
   background: #ffffff;
-  /* Panel przewija się niezależnie od podglądu, żeby ten zawsze był widoczny. */
   height: 100vh;
+}
+
+/* Panel edycji to dwie kolumny: nawigacja po krokach i treść aktywnego kroku.
+   Dzięki temu ustawienia jednego kroku mają wygodną szerokość, a nie stos zwiniętych sekcji. */
+.editor-shell {
+  display: flex;
+  height: 100%;
+}
+
+.step-nav {
+  width: 224px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1rem;
+  border-right: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.step-content {
+  width: 392px;
+  flex-shrink: 0;
+  padding: 1.5rem;
+  /* Treść kroku przewija się niezależnie od nawigacji i od podglądu. */
   overflow-y: auto;
 }
 
@@ -69,9 +91,23 @@ body {
   .editor-panel {
     width: 100%;
     height: auto;
-    overflow-y: visible;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
+  }
+
+  .editor-shell {
+    flex-direction: column;
+  }
+
+  .step-nav,
+  .step-content {
+    width: 100%;
+    overflow-y: visible;
+  }
+
+  .step-nav {
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
   }
   .preview-panel {
     height: auto;
@@ -119,6 +155,11 @@ body {
   .preview-panel > * {
     margin: 0 !important;
     position: static !important;
+  }
+
+  /* Podgląd może być pomniejszony na ekranie, ale drukujemy zawsze w skali 1:1. */
+  .preview-stack {
+    zoom: 1 !important;
   }
 
   .worksheet-a4 {
