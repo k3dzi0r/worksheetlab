@@ -35,10 +35,30 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 2rem;
-  padding: 2rem;
   height: 100vh;
   overflow: auto;
+}
+
+/* Pasek akcji przykleja się do górnej krawędzi, żeby „Drukuj" był pod ręką
+   także po przewinięciu do ostatniej strony projektu. */
+.preview-panel > :first-child {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* Odstępy przeniesione z panelu na zawartość pod paskiem. */
+.preview-panel > :not(:first-child) {
+  margin-left: 2rem;
+  margin-right: 2rem;
+}
+
+.preview-panel > :nth-child(2) {
+  margin-top: 1.5rem;
+}
+
+.preview-panel > :last-child {
+  margin-bottom: 2rem;
 }
 
 @media (max-width: 900px) {
@@ -93,6 +113,12 @@ body {
     display: block;
     height: auto;
     overflow: visible;
+  }
+
+  /* Na wydruku nie ma paska ani marginesów panelu. */
+  .preview-panel > * {
+    margin: 0 !important;
+    position: static !important;
   }
 
   .worksheet-a4 {

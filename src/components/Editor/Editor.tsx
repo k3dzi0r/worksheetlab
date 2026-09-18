@@ -23,7 +23,9 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { TEMPLATE_OPTIONS, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP } from '../../types/worksheet'
+import { TEMPLATE_OPTIONS, TEMPLATE_CATEGORIES, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP } from '../../types/worksheet'
+import type { TemplateCategory } from '../../types/worksheet'
+import { TemplateThumbnail } from './TemplateThumbnail'
 import { ImageUploader } from '../ImageUploader/ImageUploader'
 import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
 import { MyLibrary } from '../MyLibrary/MyLibrary'
@@ -104,8 +106,6 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
 }
 
 interface EditorProps {
-  showAnswerKey?: boolean
-  onToggleAnswerKey?: () => void
   onToggleCorrectAnswer?: (answerId: string) => void
   worksheet: WorksheetState
   onTemplateChange: (template: TemplateType) => void
@@ -144,16 +144,6 @@ interface EditorProps {
   onMoveItem: (id: string, direction: 'up' | 'down') => void
   onUpdateCaption: (id: string, caption: string) => void
   onToggleCaption: (id: string) => void
-  onShuffle: () => void
-  onPrint: () => void
-  onExport: () => void
-  onImport: (text: string) => void
-  onClear: () => void
-  onUndo: () => void
-  onRedo: () => void
-  canUndo: boolean
-  canRedo: boolean
-  saveStatus: 'saved' | 'saving' | 'idle'
   onReorderItems: (activeId: string, overId: string) => void
 }
 
@@ -196,24 +186,20 @@ export function Editor({
   onMoveItem,
   onUpdateCaption,
   onToggleCaption,
-  onShuffle,
-  onPrint,
-  onExport,
-  onImport,
-  onClear,
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo,
-  saveStatus,
   onReorderItems,
-  showAnswerKey,
-  onToggleAnswerKey,
   onToggleCorrectAnswer,
 }: EditorProps) {
+  const [templateCategory, setTemplateCategory] = useState<TemplateCategory>('all')
+  const visibleTemplates = useMemo(
+    () =>
+      templateCategory === 'all'
+        ? TEMPLATE_OPTIONS
+        : TEMPLATE_OPTIONS.filter((option) => option.category === templateCategory),
+    [templateCategory],
+  )
+
   const [showLibrary, setShowLibrary] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const importInputRef = useRef<HTMLInputElement>(null)
 
   const handwritingTextareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -263,20 +249,6 @@ export function Editor({
     }, 0)
   }
 
-  function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = '' // pozwala zaimportować ten sam plik ponownie
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        onImport(reader.result)
-      }
-    }
-    reader.readAsText(file)
-  }
-
   function handleImageSelected(dataUrl: string, fileName: string) {
     // Podpis jest od razu proponowany na podstawie nazwy pliku - użytkownik może go dowolnie zmienić.
     const caption = stripFileExtension(fileName)
@@ -287,12 +259,6 @@ export function Editor({
     // Podpis jest od razu proponowany na podstawie polskiej nazwy emoji - można go zmienić.
     onAddItem({ id: createId(), source: 'emoji', emoji: entry.emoji, label: entry.name, caption: entry.name, showCaption: false })
   }
-
-  const showShuffleButton =
-    worksheet.template === 'choice' ||
-    worksheet.template === 'matchPairs' ||
-    worksheet.template === 'oddOneOut' ||
-    worksheet.template === 'sameOrDifferent'
 
   return (
     <div className="flex flex-col gap-2 p-6 overflow-y-auto">
@@ -305,23 +271,53 @@ export function Editor({
 {/* Wybór szablonu */}
       <section>
         <h2 className="text-lg font-semibold mb-2">1. Wybierz typ karty</h2>
-        <div className="grid grid-cols-1 gap-2">
-          {TEMPLATE_OPTIONS.map((option) => (
+
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {TEMPLATE_CATEGORIES.map((category) => (
             <button
-              key={option.value}
+              key={category.value}
               type="button"
-              onClick={() => onTemplateChange(option.value)}
-              className={`text-left px-4 py-3 rounded-lg border-2 ${
-                worksheet.template === option.value
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 bg-white'
+              onClick={() => setTemplateCategory(category.value)}
+              className={`px-2.5 py-1 text-xs rounded-full border ${
+                templateCategory === category.value
+                  ? 'bg-blue-600 border-blue-600 text-white font-medium'
+                  : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400'
               }`}
             >
-              <div className="font-semibold text-gray-900">{option.label}</div>
-              <div className="text-sm text-gray-500">{option.description}</div>
+              {category.label}
             </button>
           ))}
         </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {visibleTemplates.map((option) => {
+            const active = worksheet.template === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onTemplateChange(option.value)}
+                title={option.description}
+                className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-colors ${
+                  active ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <span className="w-full aspect-square max-h-24 rounded bg-gray-50 p-1">
+                  <TemplateThumbnail template={option.value} />
+                </span>
+                <span
+                  className={`text-xs text-center leading-tight ${active ? 'text-blue-700 font-semibold' : 'text-gray-700'}`}
+                >
+                  {option.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <p className="text-xs text-gray-500 mt-2">
+          {TEMPLATE_OPTIONS.find((option) => option.value === worksheet.template)?.description}
+        </p>
       </section>
 </Accordion>
 
@@ -1626,88 +1622,6 @@ export function Editor({
 </Accordion>
 
 
-{/* Akcje */}
-      <section className="flex flex-col gap-3 pt-2 border-t border-gray-200">
-        <div className="flex gap-3">
-          <button
-            type="button"
-            disabled={!canUndo}
-            onClick={onUndo}
-            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cofnij
-          </button>
-          <button
-            type="button"
-            disabled={!canRedo}
-            onClick={onRedo}
-            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Ponów
-          </button>
-        </div>
-        {showShuffleButton && (
-          <button
-            type="button"
-            onClick={onShuffle}
-            className="w-full bg-amber-500 text-white font-medium py-3 rounded-lg text-base hover:bg-amber-600"
-          >
-            Losuj kolejność
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onPrint}
-          className="w-full bg-green-600 text-white font-semibold py-3 rounded-lg text-base hover:bg-green-700"
-        >
-          Drukuj / Zapisz jako PDF
-        </button>
-
-        {onToggleAnswerKey && (
-          <label className="flex items-center justify-center gap-2 w-full bg-blue-100 text-blue-900 font-medium py-3 rounded-lg text-base hover:bg-blue-200 cursor-pointer mb-2">
-            <input type="checkbox" checked={showAnswerKey} onChange={onToggleAnswerKey} className="w-5 h-5 cursor-pointer" />
-            <span>Pokaż klucz odpowiedzi na podglądzie</span>
-          </label>
-        )}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onExport}
-            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base border border-gray-300 hover:bg-gray-200"
-          >
-            Eksportuj projekt
-          </button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept="application/json"
-            onChange={handleImportFileChange}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => importInputRef.current?.click()}
-            className="flex-1 bg-gray-100 text-gray-900 font-medium py-2 rounded-lg text-sm hover:bg-gray-200"
-          >
-            Wczytaj z pliku
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('Czy na pewno chcesz usunąć wszystko i zacząć od nowa?')) {
-                onClear()
-              }
-            }}
-            className="flex-1 bg-red-100 text-red-700 font-medium py-2 rounded-lg text-sm hover:bg-red-200"
-          >
-            Wyczyść wszystko
-          </button>
-        </div>
-        <div className="text-center h-4 mt-1">
-          {saveStatus === 'saved' && <span className="text-xs text-green-600 font-medium">✔ Zapisano lokalnie</span>}
-          {saveStatus === 'saving' && <span className="text-xs text-gray-400">Zapisywanie robocze...</span>}
-        </div>
-      </section>
     </div>
   )
 }

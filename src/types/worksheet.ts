@@ -38,102 +38,133 @@ export const ITEM_SCALE_DEFAULT = 1.3
 /** Orientacja kartki A4. */
 export type PageOrientation = 'portrait' | 'landscape'
 
+/** Kategorie w wyborze szablonu - przy osiemnastu kartach płaska lista była nie do przejrzenia. */
+export const TEMPLATE_CATEGORIES = [
+  { value: 'all', label: 'Wszystkie' },
+  { value: 'language', label: 'Polski' },
+  { value: 'math', label: 'Matematyka' },
+  { value: 'writing', label: 'Pisanie' },
+  { value: 'puzzles', label: 'Łamigłówki' },
+  { value: 'pictures', label: 'Obrazkowe' },
+] as const
+
+export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number]['value']
+
 export interface TemplateOption {
   value: TemplateType
   label: string
   description: string
+  category: Exclude<TemplateCategory, 'all'>
 }
 
 export const TEMPLATE_OPTIONS: TemplateOption[] = [
   {
     value: 'wordSearch',
     label: 'Wykreślanka',
-    description: 'Ukryte słowa w siatce liter z podpowiedziami.'
+    description: 'Ukryte słowa w siatce liter z podpowiedziami.',
+    category: 'language',
   },
   {
     value: 'maze',
     label: 'Labirynt',
     description: 'Droga od startu do mety, z kluczem odpowiedzi.',
+    category: 'puzzles',
   },
   {
     value: 'coloring',
     label: 'Kolorowanka',
     description: 'Mandala do pokolorowania, także w wersji „koloruj według kodu”.',
+    category: 'puzzles',
   },
   {
     value: 'math',
     label: 'Działania',
     description: 'Dodawanie, odejmowanie, mnożenie i dzielenie z kluczem odpowiedzi.',
+    category: 'math',
   },
   {
     value: 'pattern',
     label: 'Szlaczki',
     description: 'Wzory grafomotoryczne do wodzenia ołówkiem, po śladzie i samodzielnie.',
+    category: 'writing',
   },
   {
     value: 'crossword',
     label: 'Krzyżówka',
     description: 'Hasło w kolumnie, definicje pod spodem, klucz odpowiedzi.',
+    category: 'language',
   },
   {
     value: 'dotToDot',
     label: 'Połącz kropki',
     description: 'Numerowane kropki układają się w obrazek do odkrycia.',
+    category: 'writing',
   },
   {
     value: 'clock',
     label: 'Zegar',
     description: 'Odczytywanie godziny i rysowanie wskazówek, z kluczem odpowiedzi.',
+    category: 'math',
   },
   {
     value: 'choice',
     label: 'Wybierz',
     description: 'Polecenie i kilka obrazów/emoji do wyboru.',
+    category: 'pictures',
   },
   {
     value: 'matchPairs',
     label: 'Połącz w pary',
     description: 'Dwie kolumny elementów do połączenia liniami.',
+    category: 'pictures',
   },
   {
     value: 'count',
     label: 'Policz',
     description: 'Jeden element powtórzony wielokrotnie + pole na odpowiedź.',
+    category: 'math',
   },
   {
     value: 'yesNo',
     label: 'Tak / Nie',
     description: 'Element z pytaniem i dwoma dużymi polami odpowiedzi.',
+    category: 'pictures',
   },
   {
     value: 'oddOneOut',
     label: 'Co nie pasuje?',
     description: 'Kilka elementów, uczeń wskazuje ten niepasujący.',
+    category: 'puzzles',
   },
   {
     value: 'sequence',
     label: 'Sekwencja',
     description: 'Wzór z elementów powtórzony kilka razy + puste pola.',
+    category: 'puzzles',
   },
   {
     value: 'cutCards',
     label: 'Kartoniki do wycinania',
     description: 'Równe kartoniki w siatce, gotowe do wydruku i wycięcia.',
+    category: 'pictures',
   },
   {
     value: 'sameOrDifferent',
     label: 'Taki sam / inny',
     description: 'Element wzorcowy i kilka odpowiedzi do porównania.',
+    category: 'puzzles',
   },
   {
     value: 'categorize',
     label: 'Podziel na kategorie',
     description: 'Elementy i 2–3 kategorie, do których należy je przyporządkować.',
+    category: 'pictures',
   },
   {
     value: 'handwriting',
     label: 'Nauka pisania',
     description: 'Szkolna liniatura i wpisywanie tekstu po śladzie.',
+    category: 'writing',
   },
 ]
 

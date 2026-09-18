@@ -17,6 +17,10 @@ import { useAutosave } from './hooks/useAutosave'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 import { PageManager } from './components/PageManager'
+import { TopBar } from './components/TopBar'
+
+/** Szablony, w których losowanie kolejności elementów cokolwiek zmienia. */
+const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'oddOneOut', 'sameOrDifferent']
 
 export const INITIAL_WORKSHEET: WorksheetState = {
   id: createId(),
@@ -567,23 +571,26 @@ function App() {
           onMoveItem={handleMoveItem}
           onUpdateCaption={handleUpdateCaption}
           onToggleCaption={handleToggleCaption}
-          onShuffle={handleShuffle}
+          onReorderItems={handleReorderItems}
+            onToggleCorrectAnswer={handleToggleCorrectAnswer}
+        />
+      </div>
+      <div className="preview-panel print:overflow-visible">
+        <TopBar
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={undo}
+          onRedo={redo}
           onPrint={handlePrint}
           onExport={handleExport}
           onImport={handleImport}
           onClear={handleClear}
-          onUndo={undo}
-          onRedo={redo}
-          canUndo={canUndo}
-          canRedo={canRedo}
+          showAnswerKey={showAnswerKey}
+          onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
+          showShuffle={SHUFFLEABLE_TEMPLATES.includes(worksheet.template)}
+          onShuffle={handleShuffle}
           saveStatus={saveStatus}
-          onReorderItems={handleReorderItems}
-            onToggleCorrectAnswer={handleToggleCorrectAnswer}
-            showAnswerKey={showAnswerKey}
-            onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
         />
-      </div>
-      <div className="preview-panel print:overflow-visible">
         <div className="print:hidden w-full max-w-[21cm] mb-4">
           <PageManager
             project={project}
