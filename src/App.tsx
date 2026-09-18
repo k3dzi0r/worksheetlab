@@ -11,6 +11,7 @@ import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_H
 import type { WorksheetHeader } from './types/worksheet'
 import { createId, shuffleArray, clamp } from './utils'
 import { downloadWorksheetJson, parseWorksheetJson } from './worksheetIO'
+import { useUndoRedo } from './hooks/useUndoRedo'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 
@@ -45,7 +46,15 @@ function getMaxItems(template: TemplateType, simpleMode: boolean): number | null
 }
 
 function App() {
-  const [worksheet, setWorksheet] = useState<WorksheetState>(INITIAL_WORKSHEET)
+  const {
+    state: worksheet,
+    set: setWorksheet,
+    reset: resetWorksheet,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoRedo<WorksheetState>(INITIAL_WORKSHEET)
   const [shuffleSeed, setShuffleSeed] = useState(0)
 
   function handleTemplateChange(template: TemplateType) {
@@ -279,17 +288,17 @@ function App() {
       alert('Nie udało się wczytać pliku - to nie jest poprawny projekt WorksheetLab.')
       return
     }
-    setWorksheet(imported)
+    resetWorksheet(imported)
   }
 
   function handleClear() {
-    setWorksheet((prev) => ({
+    resetWorksheet({
       ...INITIAL_WORKSHEET,
-      template: prev.template,
-      orientation: prev.orientation,
-      simpleMode: prev.simpleMode,
-      header: prev.header,
-    }))
+      template: worksheet.template,
+      orientation: worksheet.orientation,
+      simpleMode: worksheet.simpleMode,
+      header: worksheet.header,
+    })
   }
 
   return (
@@ -324,6 +333,10 @@ function App() {
           onExport={handleExport}
           onImport={handleImport}
           onClear={handleClear}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
       </div>
       <div className="preview-panel">

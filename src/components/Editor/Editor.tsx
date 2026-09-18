@@ -47,6 +47,10 @@ interface EditorProps {
   onExport: () => void
   onImport: (text: string) => void
   onClear: () => void
+  onUndo: () => void
+  onRedo: () => void
+  canUndo: boolean
+  canRedo: boolean
 }
 
 /** Lewy panel edycji: wybór szablonu, treść polecenia, dodawanie elementów, lista elementów. */
@@ -79,6 +83,10 @@ export function Editor({
   onExport,
   onImport,
   onClear,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: EditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -485,6 +493,24 @@ export function Editor({
 
       {/* Akcje */}
       <section className="flex flex-col gap-3 pt-2 border-t border-gray-200">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            disabled={!canUndo}
+            onClick={onUndo}
+            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cofnij
+          </button>
+          <button
+            type="button"
+            disabled={!canRedo}
+            onClick={onRedo}
+            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Ponów
+          </button>
+        </div>
         {showShuffleButton && (
           <button
             type="button"
