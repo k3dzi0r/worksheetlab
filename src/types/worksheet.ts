@@ -13,9 +13,13 @@ export interface WorksheetItem {
   emoji?: string
   /** Etykieta pomocnicza pokazywana na liście elementów w edytorze. */
   label: string
+  /** Opcjonalny podpis wyświetlany pod elementem w podglądzie i na wydruku. */
+  caption?: string
+  /** Czy podpis ma być widoczny (domyślnie true, jeśli caption jest ustawiony). */
+  showCaption?: boolean
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -28,6 +32,9 @@ export const ITEM_SIZE_OPTIONS: { value: ItemSize; label: string }[] = [
   { value: 'md', label: 'Średnie' },
   { value: 'lg', label: 'Duże' },
 ]
+
+/** Orientacja kartki A4. */
+export type PageOrientation = 'portrait' | 'landscape'
 
 export interface TemplateOption {
   value: TemplateType
@@ -50,6 +57,21 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'count',
     label: 'Policz',
     description: 'Jeden element powtórzony wielokrotnie + pole na odpowiedź.',
+  },
+  {
+    value: 'yesNo',
+    label: 'Tak / Nie',
+    description: 'Element z pytaniem i dwoma dużymi polami odpowiedzi.',
+  },
+  {
+    value: 'oddOneOut',
+    label: 'Co nie pasuje?',
+    description: '3-6 elementów, uczeń wskazuje ten niepasujący.',
+  },
+  {
+    value: 'sequence',
+    label: 'Sekwencja',
+    description: 'Wzór z elementów powtórzony kilka razy + puste pola.',
   },
 ]
 
@@ -77,4 +99,14 @@ export interface WorksheetState {
   layout: ChoiceLayout
   /** Rozmiar elementów - dotyczy szablonów „Wybierz” i „Policz”. */
   itemSize: ItemSize
+  /** Orientacja strony A4 — wspólna dla wszystkich szablonów. */
+  orientation: PageOrientation
+  /** Tryb prosty: większe polecenie, elementy i odstępy, dla lepszej czytelności. */
+  simpleMode: boolean
+  /** Elementy tworzące wzór w szablonie „Sekwencja” (2-4 elementy). */
+  sequenceItems: WorksheetItem[]
+  /** Ile razy wzór ma się powtórzyć w szablonie „Sekwencja”. */
+  sequenceRepetitions: number
+  /** Liczba pustych pól na końcu sekwencji (1-3). */
+  sequenceBlanks: number
 }

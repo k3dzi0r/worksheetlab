@@ -1,26 +1,28 @@
 import type { ItemSize, WorksheetItem } from '../types/worksheet'
 import { WorksheetItemView } from '../components/WorksheetPreview/WorksheetItemView'
+import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
 interface CountTemplateProps {
   instruction: string
   item: WorksheetItem | undefined
   repetitions: number
   itemSize: ItemSize
+  simpleMode?: boolean
 }
 
 /** Szablon „Policz”: jeden element powtórzony wiele razy + pole na odpowiedź. */
-export function CountTemplate({ instruction, item, repetitions, itemSize }: CountTemplateProps) {
+export function CountTemplate({ instruction, item, repetitions, itemSize, simpleMode = false }: CountTemplateProps) {
   return (
     <div className="flex flex-col gap-10 pt-8 h-full">
-      <p className="text-xl font-semibold text-center">{instruction || 'Wpisz polecenie...'}</p>
-      <div className="flex flex-wrap justify-center items-center gap-6 flex-1">
+      <InstructionText instruction={instruction} simpleMode={simpleMode} />
+      <div className={`flex flex-wrap justify-center items-center flex-1 ${simpleMode ? 'gap-9' : 'gap-6'}`}>
         {item &&
           Array.from({ length: repetitions }).map((_, index) => (
-            <WorksheetItemView key={`${item.id}-${index}`} item={item} size={itemSize} />
+            <WorksheetItemView key={`${item.id}-${index}`} item={item} size={itemSize} simpleMode={simpleMode} />
           ))}
         {!item && <p className="text-gray-400">Wybierz element do powielenia.</p>}
       </div>
-      <p className="text-lg font-medium">Odpowiedź: __________</p>
+      <p className={simpleMode ? 'text-2xl font-semibold' : 'text-lg font-medium'}>Odpowiedź: __________</p>
     </div>
   )
 }

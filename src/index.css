@@ -45,17 +45,19 @@ body {
   }
 }
 
-/* Kartka A4: 210mm x 297mm, skalowana na ekranie, 1:1 podczas druku. */
+/* Kartka A4: wymiary sterowane zmiennymi CSS, żeby JS mógł przełączać orientację. */
 .worksheet-a4 {
-  width: 210mm;
-  height: 297mm;
+  width: var(--page-width, 210mm);
+  height: var(--page-height, 297mm);
   padding: 15mm;
   box-sizing: border-box;
 }
 
 @media print {
+  /* Domyślna orientacja pionowa; @page dla trybu poziomego jest wstrzykiwane
+     dynamicznie przez WorksheetPreview, bo @page nie obsługuje selektorów klas. */
   @page {
-    size: A4;
+    size: A4 portrait;
     margin: 0;
   }
 

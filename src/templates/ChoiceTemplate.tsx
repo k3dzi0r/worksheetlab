@@ -1,5 +1,6 @@
 import type { ChoiceLayout, ItemSize, WorksheetItem } from '../types/worksheet'
 import { WorksheetItemView } from '../components/WorksheetPreview/WorksheetItemView'
+import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 import { clamp, hashToUnit } from '../utils'
 
 interface ChoiceTemplateProps {
@@ -9,6 +10,7 @@ interface ChoiceTemplateProps {
   itemSize: ItemSize
   /** Zmienia się przy „Losuj kolejność” - dla układu rozrzuconego wylicza nowe pozycje. */
   seed: number
+  simpleMode?: boolean
 }
 
 /**
@@ -51,15 +53,15 @@ const SCATTER_SLOTS: Record<number, Array<[number, number]>> = {
 }
 
 /** Szablon „Wybierz”: polecenie na górze, poniżej elementy w rzędzie albo rozrzucone po kartce. */
-export function ChoiceTemplate({ instruction, items, layout, itemSize, seed }: ChoiceTemplateProps) {
+export function ChoiceTemplate({ instruction, items, layout, itemSize, seed, simpleMode = false }: ChoiceTemplateProps) {
   return (
     <div className="flex flex-col items-center gap-12 pt-8 h-full">
-      <p className="text-xl font-semibold text-center">{instruction || 'Wpisz polecenie...'}</p>
+      <InstructionText instruction={instruction} simpleMode={simpleMode} />
 
       {layout === 'row' ? (
-        <div className="flex flex-wrap justify-center items-center gap-10">
+        <div className={`flex flex-wrap justify-center items-center ${simpleMode ? 'gap-16' : 'gap-10'}`}>
           {items.map((item) => (
-            <WorksheetItemView key={item.id} item={item} size={itemSize} />
+            <WorksheetItemView key={item.id} item={item} size={itemSize} simpleMode={simpleMode} />
           ))}
         </div>
       ) : (
@@ -77,7 +79,7 @@ export function ChoiceTemplate({ instruction, items, layout, itemSize, seed }: C
                 className="absolute -translate-x-1/2 -translate-y-1/2"
                 style={{ left: `${left}%`, top: `${top}%` }}
               >
-                <WorksheetItemView item={item} size={itemSize} />
+                <WorksheetItemView item={item} size={itemSize} simpleMode={simpleMode} />
               </div>
             )
           })}

@@ -5,9 +5,11 @@ import type {
   TemplateType,
   ChoiceLayout,
   ItemSize,
+  PageOrientation,
   MatchPair,
 } from './types/worksheet'
 import { createId, shuffleArray } from './utils'
+import { downloadWorksheetJson, parseWorksheetJson } from './worksheetIO'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 
@@ -19,6 +21,11 @@ const INITIAL_WORKSHEET: WorksheetState = {
   countRepetitions: 5,
   layout: 'row',
   itemSize: 'lg',
+  orientation: 'portrait',
+  simpleMode: false,
+  sequenceItems: [],
+  sequenceRepetitions: 3,
+  sequenceBlanks: 1,
 }
 
 function App() {
@@ -28,7 +35,8 @@ function App() {
   function handleTemplateChange(template: TemplateType) {
     // Każdy szablon ma inny kształt danych, więc przy zmianie czyścimy zawartość,
     // żeby uniknąć niespójnych stanów (np. par bez odpowiednika w innym szablonie).
-    setWorksheet({ ...INITIAL_WORKSHEET, template })
+    // Orientacja strony to ustawienie globalne, więc ją zachowujemy.
+    setWorksheet((prev) => ({ ...INITIAL_WORKSHEET, template, orientation: prev.orientation, simpleMode: prev.simpleMode }))
   }
 
   function handleInstructionChange(instruction: string) {
@@ -47,9 +55,26 @@ function App() {
     setWorksheet((prev) => ({ ...prev, itemSize }))
   }
 
+  function handleOrientationChange(orientation: PageOrientation) {
+    setWorksheet((prev) => ({ ...prev, orientation }))
+  }
+
+  function handleSimpleModeChange(simpleMode: boolean) {
+    setWorksheet((prev) => ({ ...prev, simpleMode }))
+  }
+
+  function handleSequenceRepetitionsChange(sequenceRepetitions: number) {
+    setWorksheet((prev) => ({ ...prev, sequenceRepetitions }))
+  }
+
+  function handleSequenceBlanksChange(sequenceBlanks: number) {
+    setWorksheet((prev) => ({ ...prev, sequenceBlanks }))
+  }
+
   function handleAddItem(newItem: WorksheetItem) {
     setWorksheet((prev) => {
-      if (prev.template === 'count') {
+      if (prev.template === 'count' || prev.template === 'yesNo') {
+        // Oba szablony pokazują dokładnie jeden element - nowy zastępuje poprzedni.
         return { ...prev, items: [newItem] }
       }
 
@@ -64,9 +89,20 @@ function App() {
         return { ...prev, pairs }
       }
 
-      // Szablon "choice" - miękki limit 6 elementów, żeby karta czytelnie się mieściła na A4.
-      if (prev.items.length >= 6) {
-        alert('W tym szablonie można dodać maksymalnie 6 elementów.')
+      if (prev.template === 'sequence') {
+        // Wzór składa się z 2 do 4 elementów.
+        if (prev.sequenceItems.length >= 4) {
+          alert('Wzór może się składać maksymalnie z 4 elementów.')
+          return prev
+        }
+        return { ...prev, sequenceItems: [...prev.sequenceItems, newItem] }
+      }
+
+      // Szablony "choice" i "oddOneOut" - miękki limit elementów, żeby karta czytelnie się mieściła na A4.
+      // W trybie prostym elementy są większe, więc limit jest niższy.
+      const maxItems = prev.simpleMode ? 4 : 6
+      if (prev.items.length >= maxItems) {
+        alert(`W tym szablonie można dodać maksymalnie ${maxItems} elementów.`)
         return prev
       }
       return { ...prev, items: [...prev.items, newItem] }
@@ -78,6 +114,7 @@ function App() {
       ...prev,
       items: prev.items.filter((item) => item.id !== id),
       pairs: prev.pairs.filter((pair) => pair.id !== id),
+      sequenceItems: prev.sequenceItems.filter((item) => item.id !== id),
     }))
   }
 
@@ -97,10 +134,24 @@ function App() {
         return { ...prev, pairs }
       }
 
+      if (prev.template === 'sequence') {
+        const index = prev.sequenceItems.findIndex((item) => item.id === id)
+        if (index === -1) return prev
+        if (prev.sequenceItems.length >= 4) {
+          alert('Wzór może się składać maksymalnie z 4 elementów.')
+          return prev
+        }
+        const duplicate: WorksheetItem = { ...prev.sequenceItems[index], id: createId() }
+        const sequenceItems = [...prev.sequenceItems]
+        sequenceItems.splice(index + 1, 0, duplicate)
+        return { ...prev, sequenceItems }
+      }
+
       const index = prev.items.findIndex((item) => item.id === id)
       if (index === -1) return prev
-      if (prev.template === 'choice' && prev.items.length >= 6) {
-        alert('W tym szablonie można dodać maksymalnie 6 elementów.')
+      const maxItems = prev.simpleMode ? 4 : 6
+      if ((prev.template === 'choice' || prev.template === 'oddOneOut') && prev.items.length >= maxItems) {
+        alert(`W tym szablonie można dodać maksymalnie ${maxItems} elementów.`)
         return prev
       }
       const duplicate: WorksheetItem = { ...prev.items[index], id: createId() }
@@ -115,13 +166,26 @@ function App() {
       if (prev.template === 'matchPairs') {
         return { ...prev, pairs: moveInArray(prev.pairs, id, direction) }
       }
+      if (prev.template === 'sequence') {
+        return { ...prev, sequenceItems: moveInArray(prev.sequenceItems, id, direction) }
+      }
       return { ...prev, items: moveInArray(prev.items, id, direction) }
     })
   }
 
+  function handleUpdateCaption(id: string, caption: string) {
+    setWorksheet((prev) => updateItemById(prev, id, (item) => ({ ...item, caption, showCaption: true })))
+  }
+
+  function handleToggleCaption(id: string) {
+    setWorksheet((prev) =>
+      updateItemById(prev, id, (item) => ({ ...item, showCaption: item.showCaption === false })),
+    )
+  }
+
   function handleShuffle() {
     setWorksheet((prev) => {
-      if (prev.template === 'choice') {
+      if (prev.template === 'choice' || prev.template === 'oddOneOut') {
         return { ...prev, items: shuffleArray(prev.items) }
       }
       return prev
@@ -135,8 +199,26 @@ function App() {
     window.print()
   }
 
+  function handleExport() {
+    downloadWorksheetJson(worksheet)
+  }
+
+  function handleImport(text: string) {
+    const imported = parseWorksheetJson(text)
+    if (!imported) {
+      alert('Nie udało się wczytać pliku - to nie jest poprawny projekt WorksheetLab.')
+      return
+    }
+    setWorksheet(imported)
+  }
+
   function handleClear() {
-    setWorksheet((prev) => ({ ...INITIAL_WORKSHEET, template: prev.template }))
+    setWorksheet((prev) => ({
+      ...INITIAL_WORKSHEET,
+      template: prev.template,
+      orientation: prev.orientation,
+      simpleMode: prev.simpleMode,
+    }))
   }
 
   return (
@@ -149,12 +231,20 @@ function App() {
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}
           onItemSizeChange={handleItemSizeChange}
+          onOrientationChange={handleOrientationChange}
+          onSimpleModeChange={handleSimpleModeChange}
+          onSequenceRepetitionsChange={handleSequenceRepetitionsChange}
+          onSequenceBlanksChange={handleSequenceBlanksChange}
           onAddItem={handleAddItem}
           onRemoveItem={handleRemoveItem}
           onDuplicateItem={handleDuplicateItem}
           onMoveItem={handleMoveItem}
+          onUpdateCaption={handleUpdateCaption}
+          onToggleCaption={handleToggleCaption}
           onShuffle={handleShuffle}
           onPrint={handlePrint}
+          onExport={handleExport}
+          onImport={handleImport}
           onClear={handleClear}
         />
       </div>
@@ -175,6 +265,25 @@ function moveInArray<T extends { id: string }>(list: T[], id: string, direction:
   const result = [...list]
   ;[result[index], result[targetIndex]] = [result[targetIndex], result[index]]
   return result
+}
+
+/**
+ * Aktualizuje pojedynczy WorksheetItem po id, niezależnie od tego, czy siedzi
+ * bezpośrednio w `items`, czy jest lewym/prawym elementem pary w `pairs`.
+ */
+function updateItemById(
+  state: WorksheetState,
+  id: string,
+  updater: (item: WorksheetItem) => WorksheetItem,
+): WorksheetState {
+  const items = state.items.map((item) => (item.id === id ? updater(item) : item))
+  const pairs = state.pairs.map((pair) => ({
+    ...pair,
+    left: pair.left.id === id ? updater(pair.left) : pair.left,
+    right: pair.right && pair.right.id === id ? updater(pair.right) : pair.right,
+  }))
+  const sequenceItems = state.sequenceItems.map((item) => (item.id === id ? updater(item) : item))
+  return { ...state, items, pairs, sequenceItems }
 }
 
 export default App

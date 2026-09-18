@@ -1,5 +1,12 @@
-import { useState } from 'react'
-import type { WorksheetItem, WorksheetState, TemplateType, ChoiceLayout, ItemSize } from '../../types/worksheet'
+import { useRef, useState } from 'react'
+import type {
+  WorksheetItem,
+  WorksheetState,
+  TemplateType,
+  ChoiceLayout,
+  ItemSize,
+  PageOrientation,
+} from '../../types/worksheet'
 import { TEMPLATE_OPTIONS, ITEM_SIZE_OPTIONS } from '../../types/worksheet'
 import { ImageUploader } from '../ImageUploader/ImageUploader'
 import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
@@ -13,12 +20,20 @@ interface EditorProps {
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
   onItemSizeChange: (itemSize: ItemSize) => void
+  onOrientationChange: (orientation: PageOrientation) => void
+  onSimpleModeChange: (simpleMode: boolean) => void
+  onSequenceRepetitionsChange: (count: number) => void
+  onSequenceBlanksChange: (count: number) => void
   onAddItem: (item: WorksheetItem) => void
   onRemoveItem: (id: string) => void
   onDuplicateItem: (id: string) => void
   onMoveItem: (id: string, direction: 'up' | 'down') => void
+  onUpdateCaption: (id: string, caption: string) => void
+  onToggleCaption: (id: string) => void
   onShuffle: () => void
   onPrint: () => void
+  onExport: () => void
+  onImport: (text: string) => void
   onClear: () => void
 }
 
@@ -30,15 +45,38 @@ export function Editor({
   onCountRepetitionsChange,
   onLayoutChange,
   onItemSizeChange,
+  onOrientationChange,
+  onSimpleModeChange,
+  onSequenceRepetitionsChange,
+  onSequenceBlanksChange,
   onAddItem,
   onRemoveItem,
   onDuplicateItem,
   onMoveItem,
+  onUpdateCaption,
+  onToggleCaption,
   onShuffle,
   onPrint,
+  onExport,
+  onImport,
   onClear,
 }: EditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const importInputRef = useRef<HTMLInputElement>(null)
+
+  function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = '' // pozwala zaimportować ten sam plik ponownie
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        onImport(reader.result)
+      }
+    }
+    reader.readAsText(file)
+  }
 
   function handleImageSelected(dataUrl: string, fileName: string) {
     onAddItem({ id: createId(), source: 'image', imageDataUrl: dataUrl, label: fileName })
@@ -48,8 +86,13 @@ export function Editor({
     onAddItem({ id: createId(), source: 'emoji', emoji: entry.emoji, label: entry.name })
   }
 
-  const showShuffleButton = worksheet.template === 'choice' || worksheet.template === 'matchPairs'
-  const showItemSizeControl = worksheet.template === 'choice' || worksheet.template === 'count'
+  const showShuffleButton =
+    worksheet.template === 'choice' || worksheet.template === 'matchPairs' || worksheet.template === 'oddOneOut'
+  const showItemSizeControl =
+    worksheet.template === 'choice' ||
+    worksheet.template === 'count' ||
+    worksheet.template === 'oddOneOut' ||
+    worksheet.template === 'sequence'
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto">
@@ -80,6 +123,51 @@ export function Editor({
         </div>
       </section>
 
+      {/* Orientacja strony - wspólna dla wszystkich szablonów */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">Orientacja kartki</h2>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onOrientationChange('portrait')}
+            className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium ${
+              worksheet.orientation === 'portrait'
+                ? 'border-blue-600 bg-blue-50 text-gray-900'
+                : 'border-gray-200 bg-white text-gray-700'
+            }`}
+          >
+            Pionowa
+          </button>
+          <button
+            type="button"
+            onClick={() => onOrientationChange('landscape')}
+            className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium ${
+              worksheet.orientation === 'landscape'
+                ? 'border-blue-600 bg-blue-50 text-gray-900'
+                : 'border-gray-200 bg-white text-gray-700'
+            }`}
+          >
+            Pozioma
+          </button>
+        </div>
+      </section>
+
+      {/* Tryb prosty - większe elementy i polecenie, dla łatwiejszej czytelności */}
+      <section>
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.simpleMode}
+            onChange={(event) => onSimpleModeChange(event.target.checked)}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900">Tryb prosty</span>
+            <span className="block text-sm text-gray-500">Większe elementy i polecenie — dla młodszych uczniów.</span>
+          </span>
+        </label>
+      </section>
+
       {/* Polecenie */}
       <section>
         <h2 className="text-lg font-semibold mb-2">2. Polecenie</h2>
@@ -107,6 +195,40 @@ export function Editor({
             }}
             className="w-24 border border-gray-300 rounded-lg px-4 py-3 text-base"
           />
+        </section>
+      )}
+
+      {/* Ustawienia wzoru - tylko dla szablonu "Sekwencja" */}
+      {worksheet.template === 'sequence' && (
+        <section className="flex gap-6">
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Powtórzenia wzoru</h2>
+            <input
+              type="number"
+              min={1}
+              max={6}
+              value={worksheet.sequenceRepetitions}
+              onChange={(event) => {
+                const value = Math.min(6, Math.max(1, Number(event.target.value) || 1))
+                onSequenceRepetitionsChange(value)
+              }}
+              className="w-24 border border-gray-300 rounded-lg px-4 py-3 text-base"
+            />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Puste pola</h2>
+            <input
+              type="number"
+              min={1}
+              max={3}
+              value={worksheet.sequenceBlanks}
+              onChange={(event) => {
+                const value = Math.min(3, Math.max(1, Number(event.target.value) || 1))
+                onSequenceBlanksChange(value)
+              }}
+              className="w-24 border border-gray-300 rounded-lg px-4 py-3 text-base"
+            />
+          </div>
         </section>
       )}
 
@@ -172,8 +294,11 @@ export function Editor({
             Elementy dodajesz na przemian: najpierw lewa kolumna pary, potem prawa.
           </p>
         )}
-        {worksheet.template === 'count' && (
+        {(worksheet.template === 'count' || worksheet.template === 'yesNo') && (
           <p className="text-sm text-gray-500 mb-2">Dodanie nowego elementu zastąpi poprzedni.</p>
+        )}
+        {worksheet.template === 'sequence' && (
+          <p className="text-sm text-gray-500 mb-2">Dodaj 2-4 elementy tworzące wzór (np. 🍎 🍌).</p>
         )}
         <div className="flex flex-col gap-3">
           <ImageUploader onImageSelected={handleImageSelected} />
@@ -196,6 +321,8 @@ export function Editor({
           onRemove={onRemoveItem}
           onDuplicate={onDuplicateItem}
           onMove={onMoveItem}
+          onUpdateCaption={onUpdateCaption}
+          onToggleCaption={onToggleCaption}
         />
       </section>
 
@@ -217,6 +344,29 @@ export function Editor({
         >
           Drukuj / Zapisz jako PDF
         </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onExport}
+            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base border border-gray-300 hover:bg-gray-200"
+          >
+            Eksportuj projekt
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json"
+            onChange={handleImportFileChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => importInputRef.current?.click()}
+            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base border border-gray-300 hover:bg-gray-200"
+          >
+            Importuj projekt
+          </button>
+        </div>
         <button
           type="button"
           onClick={onClear}
@@ -234,61 +384,126 @@ interface ElementsListProps {
   onRemove: (id: string) => void
   onDuplicate: (id: string) => void
   onMove: (id: string, direction: 'up' | 'down') => void
+  onUpdateCaption: (id: string, caption: string) => void
+  onToggleCaption: (id: string) => void
 }
 
 /** Lista aktualnie użytych elementów – różny widok w zależności od szablonu. */
-function ElementsList({ worksheet, onRemove, onDuplicate, onMove }: ElementsListProps) {
+function ElementsList({
+  worksheet,
+  onRemove,
+  onDuplicate,
+  onMove,
+  onUpdateCaption,
+  onToggleCaption,
+}: ElementsListProps) {
   if (worksheet.template === 'matchPairs') {
     if (worksheet.pairs.length === 0) {
       return <p className="text-gray-400 text-sm">Brak dodanych par.</p>
     }
     return (
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-3">
         {worksheet.pairs.map((pair, index) => (
-          <li
-            key={pair.id}
-            className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2"
-          >
-            <span className="text-sm text-gray-700">
-              {itemPreview(pair.left)} ↔ {pair.right ? itemPreview(pair.right) : '(czeka na parę)'}
-            </span>
-            <RowControls
-              index={index}
-              total={worksheet.pairs.length}
-              id={pair.id}
-              onRemove={onRemove}
-              onDuplicate={onDuplicate}
-              onMove={onMove}
-            />
+          <li key={pair.id} className="border border-gray-200 rounded-lg px-3 py-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">
+                {itemPreview(pair.left)} ↔ {pair.right ? itemPreview(pair.right) : '(czeka na parę)'}
+              </span>
+              <RowControls
+                index={index}
+                total={worksheet.pairs.length}
+                id={pair.id}
+                onRemove={onRemove}
+                onDuplicate={onDuplicate}
+                onMove={onMove}
+              />
+            </div>
+            <div className="flex flex-col gap-1 mt-2">
+              <CaptionEditor
+                item={pair.left}
+                label="Podpis (lewa)"
+                onUpdateCaption={onUpdateCaption}
+                onToggleCaption={onToggleCaption}
+              />
+              {pair.right && (
+                <CaptionEditor
+                  item={pair.right}
+                  label="Podpis (prawa)"
+                  onUpdateCaption={onUpdateCaption}
+                  onToggleCaption={onToggleCaption}
+                />
+              )}
+            </div>
           </li>
         ))}
       </ul>
     )
   }
 
-  if (worksheet.items.length === 0) {
+  const listItems = worksheet.template === 'sequence' ? worksheet.sequenceItems : worksheet.items
+
+  if (listItems.length === 0) {
     return <p className="text-gray-400 text-sm">Brak dodanych elementów.</p>
   }
 
   return (
-    <ul className="flex flex-col gap-2">
-      {worksheet.items.map((item, index) => (
-        <li
-          key={item.id}
-          className="flex items-center justify-between border border-gray-200 rounded-lg px-3 py-2"
-        >
-          <span className="text-sm text-gray-700">{itemPreview(item)}</span>
-          <RowControls
-            index={index}
-            total={worksheet.items.length}
-            id={item.id}
-            onRemove={onRemove}
-            onDuplicate={onDuplicate}
-            onMove={onMove}
-          />
+    <ul className="flex flex-col gap-3">
+      {listItems.map((item, index) => (
+        <li key={item.id} className="border border-gray-200 rounded-lg px-3 py-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-700">{itemPreview(item)}</span>
+            <RowControls
+              index={index}
+              total={listItems.length}
+              id={item.id}
+              onRemove={onRemove}
+              onDuplicate={onDuplicate}
+              onMove={onMove}
+            />
+          </div>
+          <div className="mt-2">
+            <CaptionEditor
+              item={item}
+              label="Podpis"
+              onUpdateCaption={onUpdateCaption}
+              onToggleCaption={onToggleCaption}
+            />
+          </div>
         </li>
       ))}
     </ul>
+  )
+}
+
+interface CaptionEditorProps {
+  item: WorksheetItem
+  label: string
+  onUpdateCaption: (id: string, caption: string) => void
+  onToggleCaption: (id: string) => void
+}
+
+/** Pole do wpisania podpisu elementu i przełącznik jego widoczności. */
+function CaptionEditor({ item, label, onUpdateCaption, onToggleCaption }: CaptionEditorProps) {
+  const hasCaption = Boolean(item.caption?.trim())
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="text"
+        value={item.caption ?? ''}
+        onChange={(event) => onUpdateCaption(item.id, event.target.value)}
+        placeholder={label}
+        className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
+      />
+      <label className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+        <input
+          type="checkbox"
+          checked={hasCaption && item.showCaption !== false}
+          disabled={!hasCaption}
+          onChange={() => onToggleCaption(item.id)}
+        />
+        Pokaż
+      </label>
+    </div>
   )
 }
 
