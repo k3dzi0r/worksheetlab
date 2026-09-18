@@ -21,7 +21,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -42,6 +42,16 @@ export interface TemplateOption {
 }
 
 export const TEMPLATE_OPTIONS: TemplateOption[] = [
+  {
+    value: 'wordSearch',
+    label: 'Wykreślanka',
+    description: 'Ukryte słowa w siatce liter z podpowiedziami.'
+  },
+  {
+    value: 'maze',
+    label: 'Labirynt',
+    description: 'Droga od startu do mety, z kluczem odpowiedzi.',
+  },
   {
     value: 'choice',
     label: 'Wybierz',
@@ -146,6 +156,15 @@ export interface WorksheetState {
   handwritingMode?: 'solid' | 'tracing' | 'empty'
   handwritingRepeat?: boolean
   handwritingFont?: string
+  /** Poziom trudności labiryntu (1-5). */
+  mazeLevel?: number
+  /** Opcje wykreślanki */
+  /** Słowa do ukrycia - jedno w wierszu (dopuszczalne też przecinki/średniki). */
+  wordSearchWords?: string
+  wordSearchGridSize?: number
+  wordSearchAllowDiagonals?: boolean
+  wordSearchAllowReverse?: boolean
+  wordSearchUppercase?: boolean
 }
 
 /** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */

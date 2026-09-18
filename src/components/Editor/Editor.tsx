@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type {
   WorksheetItem,
   WorksheetState,
@@ -29,6 +29,9 @@ import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
 import { MyLibrary } from '../MyLibrary/MyLibrary'
 import type { EmojiEntry } from '../../data/emojis'
 import { createId } from '../../utils'
+import { generateWordSearch, parseWords } from '../../wordSearch'
+import { DEFAULT_HANDWRITING_FONT, HANDWRITING_FONTS, getHandwritingFont } from '../../handwritingFonts'
+import { MAZE_LEVELS, getMazeLevel } from '../../maze'
 
 /** Usuwa rozszerzenie pliku (np. ".png"), żeby zaproponować czytelną nazwę jako podpis. */
 function stripFileExtension(fileName: string): string {
@@ -64,6 +67,8 @@ interface EditorProps {
   onHandwritingModeChange: (mode: 'solid' | 'tracing' | 'empty') => void
   onHandwritingRepeatChange: (repeat: boolean) => void
   onHandwritingFontChange: (font: string) => void
+  onWordSearchOptionsChange: (options: Partial<WorksheetState>) => void
+  onMazeLevelChange: (level: number) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -106,6 +111,8 @@ export function Editor({
   onHandwritingModeChange,
   onHandwritingRepeatChange,
   onHandwritingFontChange,
+  onWordSearchOptionsChange,
+  onMazeLevelChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -147,6 +154,23 @@ export function Editor({
   const importInputRef = useRef<HTMLInputElement>(null)
 
   const handwritingTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Ostrzeżenie w edytorze: które słowa nie zmieściły się w siatce wykreślanki.
+  const wordSearchSkipped = useMemo(() => {
+    if (worksheet.template !== 'wordSearch') return []
+    return generateWordSearch(parseWords(worksheet.wordSearchWords || ''), {
+      size: worksheet.wordSearchGridSize || 10,
+      allowDiagonals: worksheet.wordSearchAllowDiagonals ?? false,
+      allowReverse: worksheet.wordSearchAllowReverse ?? false,
+      seed: 1,
+    }).skipped
+  }, [
+    worksheet.template,
+    worksheet.wordSearchWords,
+    worksheet.wordSearchGridSize,
+    worksheet.wordSearchAllowDiagonals,
+    worksheet.wordSearchAllowReverse,
+  ])
 
   const insertHandwritingTag = (tag: string) => {
     const el = handwritingTextareaRef.current
@@ -443,7 +467,110 @@ export function Editor({
 </Accordion>
 
 <Accordion title="3. Edycja elementów" defaultOpen={false}>
-  {worksheet.template === 'handwriting' ? (
+  {worksheet.template === 'maze' ? (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">3. Labirynt</h2>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Poziom trudności: {getMazeLevel(worksheet.mazeLevel).label}
+          </label>
+          <input
+            type="range"
+            min={MAZE_LEVELS[0].value}
+            max={MAZE_LEVELS[MAZE_LEVELS.length - 1].value}
+            step={1}
+            value={worksheet.mazeLevel ?? 2}
+            onChange={(event) => onMazeLevelChange(Number(event.target.value))}
+            className="w-full"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Labirynt zawsze wypełnia całą kartkę - wyższy poziom to gęstsza siatka i dłuższa droga.
+          </p>
+        </div>
+
+        <p className="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+          Dodaj poniżej dwa elementy, żeby oznaczyć start i metę (np. 🐭 i 🧀). Bez nich pojawią się
+          podpisy START i META. Zaznacz „Pokaż klucz odpowiedzi", aby zobaczyć rozwiązanie.
+        </p>
+      </div>
+    </section>
+  ) : worksheet.template === 'wordSearch' ? (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">3. Słowa do ukrycia</h2>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Wpisz słowa (jedno w wierszu)</label>
+          <textarea
+            value={worksheet.wordSearchWords || ''}
+            onChange={(event) => onWordSearchOptionsChange({ wordSearchWords: event.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={6}
+            placeholder={'kot\npies\nsowa'}
+          />
+          {wordSearchSkipped.length > 0 && (
+            <p className="text-xs text-amber-600 mt-1">
+              Nie zmieściły się w siatce: {wordSearchSkipped.join(', ')}. Zwiększ rozmiar siatki lub skróć słowa.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Rozmiar siatki: {worksheet.wordSearchGridSize || 10} × {worksheet.wordSearchGridSize || 10}
+          </label>
+          <input
+            type="range"
+            min={6}
+            max={18}
+            step={1}
+            value={worksheet.wordSearchGridSize || 10}
+            onChange={(event) => onWordSearchOptionsChange({ wordSearchGridSize: Number(event.target.value) })}
+            className="w-full"
+          />
+        </div>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.wordSearchAllowDiagonals ?? false}
+            onChange={(event) => onWordSearchOptionsChange({ wordSearchAllowDiagonals: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Ukośne</span>
+            <span className="block text-xs text-gray-500">Słowa mogą biec na skos - trudniejsze.</span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.wordSearchAllowReverse ?? false}
+            onChange={(event) => onWordSearchOptionsChange({ wordSearchAllowReverse: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Wspak</span>
+            <span className="block text-xs text-gray-500">Słowa mogą być zapisane od tyłu.</span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.wordSearchUppercase ?? true}
+            onChange={(event) => onWordSearchOptionsChange({ wordSearchUppercase: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Wielkie litery</span>
+            <span className="block text-xs text-gray-500">Wyłącz, żeby wydrukować małe litery.</span>
+          </span>
+        </label>
+      </div>
+    </section>
+  ) : worksheet.template === 'handwriting' ? (
     <section>
       <h2 className="text-lg font-semibold mb-2">3. Tekst do pisania</h2>
       <div className="flex flex-col gap-4">
@@ -508,13 +635,19 @@ export function Editor({
             Czcionka
           </label>
           <select
-            value={worksheet.handwritingFont || '"Comic Sans MS", "Chalkboard SE", sans-serif'}
+            value={worksheet.handwritingFont || DEFAULT_HANDWRITING_FONT}
             onChange={(e) => onHandwritingFontChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value='"Comic Sans MS", "Chalkboard SE", sans-serif'>Podstawowa (Comic Sans / Chalkboard)</option>
-            <option value='Elementarz, sans-serif'>Elementarz (Pisana)</option>
+            {HANDWRITING_FONTS.map((font) => (
+              <option key={font.value} value={font.value}>
+                {font.label}
+              </option>
+            ))}
           </select>
+          <p className="text-xs text-gray-500 mt-1 mb-4">
+            {getHandwritingFont(worksheet.handwritingFont).description}
+          </p>
         </div>
 
         <div>

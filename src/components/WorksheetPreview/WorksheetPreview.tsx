@@ -12,6 +12,8 @@ import { CutCardsTemplate } from '../../templates/CutCardsTemplate'
 import { SameOrDifferentTemplate } from '../../templates/SameOrDifferentTemplate'
 import { CategorizeTemplate } from '../../templates/CategorizeTemplate'
 import { HandwritingTemplate } from '../../templates/HandwritingTemplate'
+import { WordSearchTemplate } from '../../templates/WordSearchTemplate'
+import { MazeTemplate } from '../../templates/MazeTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
@@ -42,7 +44,7 @@ function usePrintOrientation(orientation: WorksheetState['orientation']) {
 }
 
 /** Podgląd kartki A4 – to jedyny fragment strony widoczny podczas drukowania. */
-export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0 }: WorksheetPreviewProps) {
+export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, showAnswerKey = false }: WorksheetPreviewProps) {
   usePrintOrientation(worksheet.orientation)
 
   const items = useMemo(() => {
@@ -57,7 +59,8 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0 }: W
       worksheet.template === 'sequence' ||
       worksheet.template === 'cutCards' ||
       worksheet.template === 'count' ||
-      worksheet.template === 'yesNo'
+      worksheet.template === 'yesNo' ||
+      worksheet.template === 'maze'
     ) {
       return worksheet.items
     }
@@ -166,6 +169,21 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0 }: W
       )}
       {worksheet.template === 'handwriting' && (
         <HandwritingTemplate worksheet={worksheet} />
+      )}
+      {worksheet.template === 'maze' && (
+        <MazeTemplate
+          worksheet={worksheet}
+          items={items}
+          seed={shuffleSeed + variantIndex * 100}
+          showAnswerKey={showAnswerKey}
+        />
+      )}
+      {worksheet.template === 'wordSearch' && (
+        <WordSearchTemplate
+          worksheet={worksheet}
+          seed={shuffleSeed + variantIndex * 100}
+          showAnswerKey={showAnswerKey}
+        />
       )}
     </div>
   )
