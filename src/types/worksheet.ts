@@ -24,7 +24,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword' | 'dotToDot'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword' | 'dotToDot' | 'clock'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -79,6 +79,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'dotToDot',
     label: 'Połącz kropki',
     description: 'Numerowane kropki układają się w obrazek do odkrycia.',
+  },
+  {
+    value: 'clock',
+    label: 'Zegar',
+    description: 'Odczytywanie godziny i rysowanie wskazówek, z kluczem odpowiedzi.',
   },
   {
     value: 'choice',
@@ -192,6 +197,16 @@ export interface WorksheetState {
   handwritingEveryOther?: boolean
   /** Czy zaznaczyć kropką miejsce startu wiersza. */
   handwritingStartDot?: boolean
+  /** Rodzaj ćwiczenia z zegarem. */
+  clockMode?: 'read' | 'draw' | 'mixed'
+  /** Z jaką dokładnością losowane są godziny. */
+  clockPrecision?: 'hour' | 'half' | 'quarter' | 'five' | 'minute'
+  /** Zapis 24-godzinny zamiast 12-godzinnego. */
+  clockFormat24?: boolean
+  /** Które cyfry są na tarczy. */
+  clockDial?: 'all' | 'quarters' | 'none'
+  /** Czy rysować kreski minutowe. */
+  clockMinuteTicks?: boolean
   /** Obrazek w „Połącz kropki" albo „random" - inny w każdym wariancie. */
   dotShape?: string
   /** Liczba kropek na konturze. */

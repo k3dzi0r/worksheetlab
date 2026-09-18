@@ -42,6 +42,7 @@ const VALID_TEMPLATES: TemplateType[] = [
   'pattern',
   'crossword',
   'dotToDot',
+  'clock',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -148,6 +149,19 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingEveryOther:
       typeof state.handwritingEveryOther === 'boolean' ? state.handwritingEveryOther : false,
     handwritingStartDot: typeof state.handwritingStartDot === 'boolean' ? state.handwritingStartDot : false,
+    clockMode: (['read', 'draw', 'mixed'] as const).includes(state.clockMode as 'read')
+      ? (state.clockMode as 'read')
+      : 'read',
+    clockPrecision: (['hour', 'half', 'quarter', 'five', 'minute'] as const).includes(
+      state.clockPrecision as 'hour',
+    )
+      ? (state.clockPrecision as 'hour')
+      : 'hour',
+    clockFormat24: typeof state.clockFormat24 === 'boolean' ? state.clockFormat24 : false,
+    clockDial: (['all', 'quarters', 'none'] as const).includes(state.clockDial as 'all')
+      ? (state.clockDial as 'all')
+      : 'all',
+    clockMinuteTicks: typeof state.clockMinuteTicks === 'boolean' ? state.clockMinuteTicks : true,
     dotShape: typeof state.dotShape === 'string' ? state.dotShape : 'star',
     dotCount: typeof state.dotCount === 'number' ? state.dotCount : 20,
     dotNumbering: (['numbers', 'evens', 'backwards', 'letters'] as const).includes(
