@@ -11,7 +11,16 @@ import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_H
 import type { WorksheetHeader } from './types/worksheet'
 import { clamp } from './utils'
 
-const VALID_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'count', 'yesNo', 'oddOneOut', 'sequence', 'cutCards']
+const VALID_TEMPLATES: TemplateType[] = [
+  'choice',
+  'matchPairs',
+  'count',
+  'yesNo',
+  'oddOneOut',
+  'sequence',
+  'cutCards',
+  'sameOrDifferent',
+]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
 

@@ -39,6 +39,8 @@ const INITIAL_WORKSHEET: WorksheetState = {
 function getMaxItems(template: TemplateType, simpleMode: boolean): number | null {
   if (template === 'choice' || template === 'cutCards') return simpleMode ? 6 : 12
   if (template === 'oddOneOut') return simpleMode ? 4 : 6
+  // "Taki sam / inny": 1 element wzorcowy + 2-6 odpowiedzi.
+  if (template === 'sameOrDifferent') return simpleMode ? 5 : 7
   return null
 }
 
@@ -244,6 +246,12 @@ function App() {
     setWorksheet((prev) => {
       if (prev.template === 'choice' || prev.template === 'oddOneOut') {
         return { ...prev, items: shuffleArray(prev.items) }
+      }
+      if (prev.template === 'sameOrDifferent') {
+        // Tasujemy tylko odpowiedzi - wzorzec (pierwszy element) zostaje na miejscu.
+        const [reference, ...answers] = prev.items
+        if (!reference) return prev
+        return { ...prev, items: [reference, ...shuffleArray(answers)] }
       }
       return prev
     })

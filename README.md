@@ -11,7 +11,7 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 
 ## Funkcje
 
-- Wybór jednego z 7 szablonów karty pracy:
+- Wybór jednego z 8 szablonów karty pracy:
   - **Wybierz** — polecenie + od 2 do 12 obrazów/emoji do wyboru (6 w trybie
     prostym), w układzie „Rząd” (równa linia) lub „Rozrzucone” (elementy
     porozrzucane po kartce, rozmieszczane automatycznie niezależnie od liczby
@@ -23,7 +23,10 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
   - **Sekwencja** — wzór z 2–4 elementów powtórzony kilka razy + puste pola
     do uzupełnienia na końcu,
   - **Kartoniki do wycinania** — od 2 do 12 elementów w siatce równych
-    kartoników, z opcjonalną przerywaną ramką ułatwiającą wycinanie.
+    kartoników, z opcjonalną przerywaną ramką ułatwiającą wycinanie,
+  - **Taki sam / inny** — jeden element wzorcowy (wizualnie odseparowany
+    ramką) i od 2 do 6 odpowiedzi do porównania; tasowanie dotyczy tylko
+    odpowiedzi, wzorzec zawsze zostaje na miejscu.
 - Orientacja kartki A4: pionowa lub pozioma (dotyczy wszystkich szablonów).
 - **Tryb prosty** — globalny przełącznik powiększający polecenie, elementy i
   odstępy (przydatny dla młodszych uczniów); w tym trybie limit elementów w

@@ -9,6 +9,7 @@ import { YesNoTemplate } from '../../templates/YesNoTemplate'
 import { OddOneOutTemplate } from '../../templates/OddOneOutTemplate'
 import { SequenceTemplate } from '../../templates/SequenceTemplate'
 import { CutCardsTemplate } from '../../templates/CutCardsTemplate'
+import { SameOrDifferentTemplate } from '../../templates/SameOrDifferentTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
@@ -113,6 +114,14 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
           items={worksheet.items}
           itemScale={worksheet.itemScale}
           showBorder={worksheet.cutCardsShowBorder}
+          simpleMode={worksheet.simpleMode}
+        />
+      )}
+      {worksheet.template === 'sameOrDifferent' && (
+        <SameOrDifferentTemplate
+          instruction={worksheet.instruction}
+          items={worksheet.items}
+          itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
         />
       )}

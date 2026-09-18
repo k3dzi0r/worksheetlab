@@ -105,7 +105,10 @@ export function Editor({
   }
 
   const showShuffleButton =
-    worksheet.template === 'choice' || worksheet.template === 'matchPairs' || worksheet.template === 'oddOneOut'
+    worksheet.template === 'choice' ||
+    worksheet.template === 'matchPairs' ||
+    worksheet.template === 'oddOneOut' ||
+    worksheet.template === 'sameOrDifferent'
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto">
@@ -381,6 +384,11 @@ export function Editor({
         {worksheet.template === 'cutCards' && (
           <p className="text-sm text-gray-500 mb-2">Dodaj od 2 do 12 elementów - każdy trafi na osobny kartonik.</p>
         )}
+        {worksheet.template === 'sameOrDifferent' && (
+          <p className="text-sm text-gray-500 mb-2">
+            Pierwszy dodany element to wzorzec. Kolejne (2-6) to odpowiedzi do porównania.
+          </p>
+        )}
         <div className="flex flex-col gap-3">
           <ImageUploader onImageSelected={handleImageSelected} />
           <button
@@ -552,7 +560,12 @@ function ElementsList({
       {listItems.map((item, index) => (
         <li key={item.id} className="border border-gray-200 rounded-lg px-3 py-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-700">{itemPreview(item)}</span>
+            <span className="text-sm text-gray-700">
+              {worksheet.template === 'sameOrDifferent' && index === 0 && (
+                <span className="font-semibold text-blue-700">Wzorzec: </span>
+              )}
+              {itemPreview(item)}
+            </span>
             <RowControls
               index={index}
               total={listItems.length}

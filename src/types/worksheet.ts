@@ -21,7 +21,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -76,6 +76,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'cutCards',
     label: 'Kartoniki do wycinania',
     description: 'Równe kartoniki w siatce, gotowe do wydruku i wycięcia.',
+  },
+  {
+    value: 'sameOrDifferent',
+    label: 'Taki sam / inny',
+    description: 'Element wzorcowy i kilka odpowiedzi do porównania.',
   },
 ]
 
