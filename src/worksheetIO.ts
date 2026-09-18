@@ -1,6 +1,7 @@
 // Eksport/import całego stanu karty pracy do/z pliku JSON - bez backendu, bez localStorage.
 import { normalizeHandwritingFont } from './handwritingFonts'
 import type { MathMissing, MathOperation } from './mathTasks'
+import type { MazeCarver, MazeDeadEnds, MazeEnds } from './maze'
 
 const VALID_MATH_OPERATIONS: MathOperation[] = ['add', 'sub', 'mul', 'div']
 
@@ -152,6 +153,15 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
       : 'auto',
     coloringStroke: typeof state.coloringStroke === 'number' ? state.coloringStroke : 1,
     mazeLevel: typeof state.mazeLevel === 'number' ? state.mazeLevel : 2,
+    mazeCarver: (['random', 'winding', 'branching'] as const).includes(state.mazeCarver as MazeCarver)
+      ? (state.mazeCarver as MazeCarver)
+      : 'random',
+    mazeDeadEnds: (['many', 'few', 'none'] as const).includes(state.mazeDeadEnds as MazeDeadEnds)
+      ? (state.mazeDeadEnds as MazeDeadEnds)
+      : 'many',
+    mazeEnds: (['random', 'corners', 'edges'] as const).includes(state.mazeEnds as MazeEnds)
+      ? (state.mazeEnds as MazeEnds)
+      : 'random',
     wordSearchWords: typeof state.wordSearchWords === 'string' ? state.wordSearchWords : '',
     wordSearchGridSize: typeof state.wordSearchGridSize === 'number' ? state.wordSearchGridSize : 10,
     wordSearchAllowDiagonals: typeof state.wordSearchAllowDiagonals === 'boolean' ? state.wordSearchAllowDiagonals : false,

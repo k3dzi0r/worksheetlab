@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { WorksheetItem, WorksheetState } from '../types/worksheet'
 import { generateMaze, getMazeLevel } from '../maze'
+import type { MazeCarver, MazeDeadEnds, MazeEnds } from '../maze'
 import { usePageSpace } from '../usePageSpace'
 import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
@@ -16,11 +17,21 @@ const WALL_RATIO = 0.12
 const MIN_ROWS = 4
 
 export function MazeTemplate({ worksheet, items, seed, showAnswerKey = false }: MazeTemplateProps) {
-  const { mazeLevel, simpleMode = false, instruction } = worksheet
+  const {
+    mazeLevel,
+    mazeCarver = 'random',
+    mazeDeadEnds = 'many',
+    mazeEnds = 'random',
+    simpleMode = false,
+    instruction,
+  } = worksheet
   const level = getMazeLevel(mazeLevel)
 
   const { containerRef, width, height } = usePageSpace([
     mazeLevel,
+    mazeCarver,
+    mazeDeadEnds,
+    mazeEnds,
     worksheet.header,
     worksheet.orientation,
     instruction,
@@ -31,7 +42,18 @@ export function MazeTemplate({ worksheet, items, seed, showAnswerKey = false }: 
   // a labirynt wypełniał kartkę zarówno w pionie, jak i w poziomie.
   const rows = width > 0 && height > 0 ? Math.max(MIN_ROWS, Math.round((level.cols * height) / width)) : MIN_ROWS
 
-  const maze = useMemo(() => generateMaze(level.cols, rows, seed), [level.cols, rows, seed])
+  const maze = useMemo(
+    () =>
+      generateMaze({
+        cols: level.cols,
+        rows,
+        carver: mazeCarver as MazeCarver,
+        deadEnds: mazeDeadEnds as MazeDeadEnds,
+        ends: mazeEnds as MazeEnds,
+        seed,
+      }),
+    [level.cols, rows, mazeCarver, mazeDeadEnds, mazeEnds, seed],
+  )
 
   // Ramka rysowana jest po środku linii, więc jej grubość zjada część kartki - liczymy ją
   // w dopasowaniu, inaczej labirynt wystawałby poza dolną krawędź zadruku.
@@ -71,17 +93,19 @@ export function MazeTemplate({ worksheet, items, seed, showAnswerKey = false }: 
                 rowCells.map((mazeCell, col) => {
                   const x = offset + col * cell
                   const y = offset + row * cell
-                  // Wejście w lewej ścianie pierwszego pola, wyjście w prawej ścianie ostatniego.
-                  const isEntrance = col === 0 && row === 0
-                  const isExit = col === maze.cols - 1 && row === maze.rows - 1
+                  // Górną i lewą ścianę rysuje każde pole, prawą i dolną tylko pola przy krawędzi -
+                  // dzięki temu każda ściana powstaje dokładnie raz, a otwarte wejście i wyjście
+                  // (zapisane w danych pola) po prostu się nie rysują.
                   return (
                     <g key={`${row}-${col}`}>
                       {mazeCell.walls[0] && <line x1={x} y1={y} x2={x + cell} y2={y} />}
-                      {mazeCell.walls[3] && !isEntrance && <line x1={x} y1={y} x2={x} y2={y + cell} />}
-                      {col === maze.cols - 1 && !isExit && (
+                      {mazeCell.walls[3] && <line x1={x} y1={y} x2={x} y2={y + cell} />}
+                      {col === maze.cols - 1 && mazeCell.walls[1] && (
                         <line x1={x + cell} y1={y} x2={x + cell} y2={y + cell} />
                       )}
-                      {row === maze.rows - 1 && <line x1={x} y1={y + cell} x2={x + cell} y2={y + cell} />}
+                      {row === maze.rows - 1 && mazeCell.walls[2] && (
+                        <line x1={x} y1={y + cell} x2={x + cell} y2={y + cell} />
+                      )}
                     </g>
                   )
                 }),
@@ -101,12 +125,18 @@ export function MazeTemplate({ worksheet, items, seed, showAnswerKey = false }: 
               />
             )}
 
-            <MazeMarker item={start} cell={cell} x={offset} y={offset} fallback="START" />
+            <MazeMarker
+              item={start}
+              cell={cell}
+              x={offset + maze.start.col * cell}
+              y={offset + maze.start.row * cell}
+              fallback="START"
+            />
             <MazeMarker
               item={finish}
               cell={cell}
-              x={offset + (maze.cols - 1) * cell}
-              y={offset + (maze.rows - 1) * cell}
+              x={offset + maze.finish.col * cell}
+              y={offset + maze.finish.row * cell}
               fallback="META"
             />
           </svg>
@@ -151,7 +181,9 @@ function MazeMarker({ item, cell, x, y, fallback }: MazeMarkerProps) {
     <text
       x={x + cell / 2}
       y={y + cell / 2}
-      fontSize={Math.min(cell * 0.32, 14)}
+      // Podpis musi zmieścić się w polu labiryntu także przy gęstej siatce - stąd
+      // rozmiar wyliczany z długości słowa, a nie stała wartość.
+      fontSize={Math.min(cell * 0.34, (cell * 0.9) / (0.62 * fallback.length))}
       textAnchor="middle"
       dominantBaseline="central"
       fill="#2563eb"

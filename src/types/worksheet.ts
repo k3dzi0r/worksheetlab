@@ -1,4 +1,5 @@
 import type { MathMissing, MathOperation } from '../mathTasks'
+import type { MazeCarver, MazeDeadEnds, MazeEnds } from '../maze'
 
 // Wspólny model danych dla każdego elementu dodanego do karty pracy,
 // niezależnie od tego, czy jest to własny obraz, czy emoji z biblioteki.
@@ -190,6 +191,12 @@ export interface WorksheetState {
   coloringStroke?: number
   /** Poziom trudności labiryntu (1-5). */
   mazeLevel?: number
+  /** Sposób drążenia korytarzy. */
+  mazeCarver?: MazeCarver
+  /** Ile ślepych uliczek zostaje w labiryncie. */
+  mazeDeadEnds?: MazeDeadEnds
+  /** Gdzie wypadają start i meta. */
+  mazeEnds?: MazeEnds
   /** Opcje wykreślanki */
   /** Słowa do ukrycia - jedno w wierszu (dopuszczalne też przecinki/średniki). */
   wordSearchWords?: string

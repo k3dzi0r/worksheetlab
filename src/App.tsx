@@ -187,6 +187,10 @@ function App() {
     setWorksheet((prev) => ({ ...prev, mazeLevel: level }))
   }
 
+  function handleMazeOptionsChange(options: Partial<WorksheetState>) {
+    setWorksheet((prev) => ({ ...prev, ...options }))
+  }
+
   function handleColoringOptionsChange(options: Partial<WorksheetState>) {
     setWorksheet((prev) => ({ ...prev, ...options }))
   }
@@ -514,6 +518,7 @@ function App() {
           onHandwritingFontChange={handleHandwritingFontChange}
           onWordSearchOptionsChange={handleWordSearchOptionsChange}
           onMazeLevelChange={handleMazeLevelChange}
+          onMazeOptionsChange={handleMazeOptionsChange}
           onColoringOptionsChange={handleColoringOptionsChange}
           onMathOptionsChange={handleMathOptionsChange}
           onInstructionChange={handleInstructionChange}
