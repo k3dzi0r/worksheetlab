@@ -101,9 +101,15 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
             {byNumbers &&
               !showAnswerKey &&
               coloring.regions.map((region, index) => {
-                // Numer wchodzi tylko tam, gdzie realnie się mieści - inaczej zlewa się z konturem.
-                const fontSize = Math.min(region.room * 1.5, CANVAS * 0.035)
-                if (fontSize < CANVAS * 0.012) return null
+                // `room` to promień największego kółka mieszczącego się w polu z zapasem na kontur,
+                // więc cyfra tej wielkości nie dotyka linii. Poniżej progu czytelności numer i tak
+                // musi się pojawić - każde pole potrzebuje swojego koloru - dlatego dostaje wtedy
+                // białą otoczkę i pozostaje widoczny nawet na kresce.
+                const fontSize = Math.max(
+                  Math.min(region.room * 1.4, CANVAS * 0.042),
+                  CANVAS * 0.019,
+                )
+                const needsHalo = region.room * 1.4 < CANVAS * 0.019
                 return (
                   <text
                     key={`label-${index}`}
@@ -112,8 +118,11 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
                     fontSize={fontSize}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fill="#6b7280"
+                    fill="#4b5563"
                     fontFamily="Andika, sans-serif"
+                    stroke={needsHalo ? '#ffffff' : undefined}
+                    strokeWidth={needsHalo ? fontSize * 0.3 : undefined}
+                    paintOrder="stroke"
                   >
                     {(region.colorIndex % palette.length) + 1}
                   </text>

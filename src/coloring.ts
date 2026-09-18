@@ -166,6 +166,20 @@ export interface ColoringOptions {
   fields?: 'any' | 'large'
 }
 
+/**
+ * Zapas na grubość konturu przy liczeniu miejsca na numer. Kreska jest rysowana po środku
+ * krawędzi pola, więc bez tego zapasu numer wchodziłby na linię i stawał się nieczytelny.
+ */
+const OUTLINE_CLEARANCE = 9
+
+/**
+ * Promień największego kółka, jakie zmieści się w polu w danym punkcie: mniejszy z zapasu
+ * wzdłuż promienia i wzdłuż łuku, pomniejszony o grubość konturu.
+ */
+function fieldRoom(radialHalf: number, tangentialHalf: number) {
+  return Math.max(0, Math.min(radialHalf, tangentialHalf) - OUTLINE_CLEARANCE)
+}
+
 /** Kolec wieńca: trójkąt wyrastający poza ostatni pierścień. */
 function pointPath(cx: number, cy: number, inner: number, outer: number, from: number, to: number): string {
   const mid = (from + to) / 2
@@ -215,7 +229,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
     labelX: center,
     labelY: center - coreRadius * 0.55,
     colorIndex: 0,
-    room: coreRadius * 0.3,
+    room: fieldRoom(coreRadius * 0.28, coreRadius * 0.6),
   })
   if (random() < 0.5) {
     regions.push({
@@ -223,7 +237,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
       labelX: center,
       labelY: center,
       colorIndex: 1 % colors,
-      room: coreRadius * 0.42,
+      room: fieldRoom(coreRadius * 0.42, coreRadius * 0.42),
     })
   } else {
     const corePetals = sectors / 2
@@ -236,7 +250,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
         labelX: petalCenter.x,
         labelY: petalCenter.y,
         colorIndex: 1 % colors,
-        room: coreRadius * 0.16,
+        room: fieldRoom(coreRadius * 0.2, coreRadius * 0.55 * Math.sin(coreStep / 2)),
       })
     }
   }
@@ -258,7 +272,10 @@ export function generateColoring(options: ColoringOptions): Coloring {
     previousQuiet = QUIET.includes(style)
 
     const isQuiet = QUIET.includes(style)
-    const ringSectors = style === 'band' ? 1 : isQuiet ? Math.max(4, 2 * Math.round(sectors / 4)) : sectors
+    // Przy kolorowaniu według kodu także pierścienie zdobione są rzadsze - w każdym polu
+    // i w każdym zdobieniu musi zmieścić się czytelny numer.
+    const denseSectors = largeFields ? Math.max(6, 2 * Math.round(sectors / 4)) : sectors
+    const ringSectors = style === 'band' ? 1 : isQuiet ? Math.max(4, 2 * Math.round(sectors / 4)) : denseSectors
     const ringStep = (Math.PI * 2) / ringSectors
     // Losowy obrót pierścienia rozbija sztywną siatkę promieni.
     const phase = random() < 0.5 ? 0 : ringStep / 2
@@ -275,7 +292,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
         labelX: center,
         labelY: center - (inner + outer) / 2,
         colorIndex: baseColor,
-        room: thickness * 0.4,
+        room: fieldRoom(thickness / 2, thickness),
       })
       continue
     }
@@ -285,9 +302,16 @@ export function generateColoring(options: ColoringOptions): Coloring {
       const to = from + ringStep
       const mid = from + ringStep / 2
       // Przy zdobionym pierścieniu numer wycinka odsuwamy na zewnątrz, żeby nie wpadł na zdobienie.
-      const labelRadius = isQuiet ? (inner + outer) / 2 : inner + thickness * 0.85
+      // Numer stawiamy tam, gdzie w polu jest najwięcej wolnego miejsca: na środku pola,
+      // a w pierścieniu zdobionym - w pasie między zdobieniem a zewnętrzną krawędzią.
+      const ringMiddle = (inner + outer) / 2
+      const ornamentRoom = largeFields
+        ? Math.min(thickness * 0.42, ringMiddle * Math.sin(ringStep / 2) * 0.85)
+        : Math.min(thickness * 0.3, ringMiddle * Math.sin(ringStep / 2) * 0.72)
+      const labelInner = isQuiet ? inner : ringMiddle + ornamentRoom
+      const labelRadius = (labelInner + outer) / 2
+      const radialHalf = (outer - labelInner) / 2
       const label = polar(center, center, labelRadius, mid)
-      const chord = 2 * labelRadius * Math.sin(ringStep / 2)
       // Sąsiednie pola dostają różne kolory - inaczej cały pierścień byłby jednolitą obręczą.
       const sectorColor = (baseColor + (sector % 2)) % colors
 
@@ -296,7 +320,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
         labelX: label.x,
         labelY: label.y,
         colorIndex: sectorColor,
-        room: Math.min(thickness * (isQuiet ? 0.42 : 0.13), chord * 0.42),
+        room: fieldRoom(radialHalf, labelRadius * Math.sin(ringStep / 2)),
       })
 
       if (isQuiet) continue
@@ -308,7 +332,9 @@ export function generateColoring(options: ColoringOptions): Coloring {
       const insetOuter = outer - thickness * 0.16
       const middle = (inner + outer) / 2
       const ornamentCenter = polar(center, center, middle, mid)
-      const ornamentRadius = Math.min(thickness * 0.3, middle * Math.sin(ringStep / 2) * 0.72)
+      const ornamentRadius = largeFields
+        ? Math.min(thickness * 0.42, middle * Math.sin(ringStep / 2) * 0.85)
+        : Math.min(thickness * 0.3, middle * Math.sin(ringStep / 2) * 0.72)
 
       if (style === 'twin') {
         // Dwa małe kółka obok siebie w jednym polu.
@@ -319,7 +345,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
             labelX: twinCenter.x,
             labelY: twinCenter.y,
             colorIndex: ornamentColor,
-            room: ornamentRadius * 0.45,
+            room: fieldRoom(ornamentRadius * 0.55, ornamentRadius * 0.55),
           })
         }
         continue
@@ -331,14 +357,14 @@ export function generateColoring(options: ColoringOptions): Coloring {
           labelX: polar(center, center, middle + ornamentRadius * 0.62, mid).x,
           labelY: polar(center, center, middle + ornamentRadius * 0.62, mid).y,
           colorIndex: ornamentColor,
-          room: ornamentRadius * 0.28,
+          room: fieldRoom(ornamentRadius * 0.27, ornamentRadius * 0.5),
         })
         regions.push({
           path: circlePath(ornamentCenter.x, ornamentCenter.y, ornamentRadius * 0.45),
           labelX: ornamentCenter.x,
           labelY: ornamentCenter.y,
           colorIndex: (ornamentColor + 1) % colors,
-          room: ornamentRadius * 0.45,
+          room: fieldRoom(ornamentRadius * 0.45, ornamentRadius * 0.45),
         })
         continue
       }
@@ -355,7 +381,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
         labelX: ornamentCenter.x,
         labelY: ornamentCenter.y,
         colorIndex: ornamentColor,
-        room: ornamentRadius * 0.75,
+        room: fieldRoom(ornamentRadius * 0.72, ornamentRadius * 0.72),
       })
     }
   }
@@ -379,7 +405,7 @@ export function generateColoring(options: ColoringOptions): Coloring {
         labelX: crownCenter.x,
         labelY: crownCenter.y,
         colorIndex: crownColor,
-        room: Math.min(crownThickness * 0.4, ringsOuter * Math.sin(step / 2) * 0.6),
+        room: fieldRoom(crownThickness * 0.45, ringsOuter * Math.sin(step / 2) * 0.7),
       })
     }
   }
