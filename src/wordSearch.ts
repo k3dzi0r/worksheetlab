@@ -1,6 +1,8 @@
 // Generator wykreślanki: układa słowa w siatce liter i dopełnia resztę losowymi literami.
 // Wynik jest deterministyczny dla danego seeda, dzięki czemu podgląd nie "skacze" przy każdym renderze.
 
+import { createSeededRandom } from './utils'
+
 /** Polski alfabet użyty do wypełnienia pustych pól - bez liter, których nie ma w polskich wyrazach. */
 const FILLER_LETTERS = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUWYZŹŻ'
 
@@ -34,17 +36,6 @@ const DIAGONAL: [number, number][] = [
   [1, -1],
 ]
 
-function makeRandom(seed: number) {
-  let state = (seed | 0) || 1
-  return () => {
-    // xorshift32 - szybki i deterministyczny
-    state ^= state << 13
-    state ^= state >>> 17
-    state ^= state << 5
-    return (state >>> 0) / 4294967296
-  }
-}
-
 /** Normalizuje słowo: usuwa spacje i znaki inne niż litery, zamienia na wielkie litery. */
 export function normalizeWord(word: string): string {
   return word
@@ -62,7 +53,7 @@ export function parseWords(text: string): string[] {
 
 export function generateWordSearch(words: string[], options: WordSearchOptions): WordSearchResult {
   const { size, allowDiagonals, allowReverse, seed } = options
-  const random = makeRandom(seed)
+  const random = createSeededRandom(seed)
 
   const grid: (string | null)[][] = Array.from({ length: size }, () => Array<string | null>(size).fill(null))
   const placed: PlacedWord[] = []
@@ -71,7 +62,11 @@ export function generateWordSearch(words: string[], options: WordSearchOptions):
   const directions: [number, number][] = [...STRAIGHT, ...(allowDiagonals ? DIAGONAL : [])]
 
   // Najdłuższe słowa układamy pierwsze - mają najmniej możliwych pozycji.
-  const ordered = [...words].sort((a, b) => b.length - a.length)
+  // Słowa tej samej długości tasujemy, żeby kolejność wpisania nie decydowała o miejscu w siatce.
+  const ordered = [...words]
+    .map((word) => ({ word, tie: random() }))
+    .sort((a, b) => b.word.length - a.word.length || a.tie - b.tie)
+    .map((entry) => entry.word)
 
   for (const word of ordered) {
     if (word.length > size) {

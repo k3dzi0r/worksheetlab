@@ -21,7 +21,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -51,6 +51,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'maze',
     label: 'Labirynt',
     description: 'Droga od startu do mety, z kluczem odpowiedzi.',
+  },
+  {
+    value: 'coloring',
+    label: 'Kolorowanka',
+    description: 'Mandala do pokolorowania, także w wersji „koloruj według kodu”.',
   },
   {
     value: 'choice',
@@ -156,6 +161,12 @@ export interface WorksheetState {
   handwritingMode?: 'solid' | 'tracing' | 'empty'
   handwritingRepeat?: boolean
   handwritingFont?: string
+  /** Złożoność wzoru kolorowanki (1-5). */
+  coloringLevel?: number
+  /** Zwykła kolorowanka albo kolorowanie według kodu (numer w każdym polu). */
+  coloringMode?: 'blank' | 'numbers'
+  /** Liczba kolorów w legendzie przy kolorowaniu według kodu. */
+  coloringColorCount?: number
   /** Poziom trudności labiryntu (1-5). */
   mazeLevel?: number
   /** Opcje wykreślanki */

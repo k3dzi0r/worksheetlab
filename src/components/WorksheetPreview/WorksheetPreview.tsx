@@ -14,6 +14,7 @@ import { CategorizeTemplate } from '../../templates/CategorizeTemplate'
 import { HandwritingTemplate } from '../../templates/HandwritingTemplate'
 import { WordSearchTemplate } from '../../templates/WordSearchTemplate'
 import { MazeTemplate } from '../../templates/MazeTemplate'
+import { ColoringTemplate } from '../../templates/ColoringTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
@@ -169,6 +170,13 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
       )}
       {worksheet.template === 'handwriting' && (
         <HandwritingTemplate worksheet={worksheet} />
+      )}
+      {worksheet.template === 'coloring' && (
+        <ColoringTemplate
+          worksheet={worksheet}
+          seed={shuffleSeed + variantIndex * 100}
+          showAnswerKey={showAnswerKey}
+        />
       )}
       {worksheet.template === 'maze' && (
         <MazeTemplate

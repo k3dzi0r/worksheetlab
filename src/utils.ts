@@ -49,3 +49,28 @@ export function shuffleArraySeeded<T>(items: T[], seed: number): T[] {
   }
   return result
 }
+
+/**
+ * Deterministyczny generator liczb pseudolosowych (xorshift32) dla generatorów
+ * wykreślanki, labiryntu i kolorowanki.
+ *
+ * Surowy xorshift z małym ziarnem zwraca na starcie bardzo małe liczby, przez co
+ * pierwsze losowanie zawsze trafiało w początek listy możliwości - w wykreślance
+ * pierwsze słowo lądowało zawsze w lewym górnym rogu poziomo. Dlatego ziarno
+ * najpierw mieszamy, a potem odrzucamy kilka pierwszych wyników.
+ */
+export function createSeededRandom(seed: number): () => number {
+  // Mnożenie przez liczbę Knutha rozrzuca kolejne ziarna po całym zakresie.
+  let state = Math.imul(seed | 0, 2654435761) ^ 0x9e3779b9
+  if (state === 0) state = 1
+
+  const next = () => {
+    state ^= state << 13
+    state ^= state >>> 17
+    state ^= state << 5
+    return (state >>> 0) / 4294967296
+  }
+
+  for (let i = 0; i < 8; i++) next()
+  return next
+}
