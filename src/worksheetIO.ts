@@ -20,6 +20,7 @@ const VALID_TEMPLATES: TemplateType[] = [
   'sequence',
   'cutCards',
   'sameOrDifferent',
+  'categorize',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -108,6 +109,10 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     sequenceBlanks: typeof state.sequenceBlanks === 'number' ? state.sequenceBlanks : 1,
     header: normalizeHeader(state.header),
     cutCardsShowBorder: typeof state.cutCardsShowBorder === 'boolean' ? state.cutCardsShowBorder : true,
+    categories: Array.isArray(state.categories) && state.categories.every((c) => typeof c === 'string')
+      ? (state.categories as string[])
+      : ['Kategoria 1', 'Kategoria 2'],
+    variantCount: typeof state.variantCount === 'number' ? state.variantCount : 1,
   }
 }
 

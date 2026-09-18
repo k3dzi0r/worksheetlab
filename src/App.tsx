@@ -29,6 +29,8 @@ const INITIAL_WORKSHEET: WorksheetState = {
   sequenceBlanks: 1,
   header: DEFAULT_WORKSHEET_HEADER,
   cutCardsShowBorder: true,
+  categories: ['Kategoria 1', 'Kategoria 2'],
+  variantCount: 1,
 }
 
 /**
@@ -36,7 +38,7 @@ const INITIAL_WORKSHEET: WorksheetState = {
  * mieściła się na A4. W trybie prostym limit jest niższy, bo elementy są większe.
  */
 function getMaxItems(template: TemplateType, simpleMode: boolean): number | null {
-  if (template === 'choice' || template === 'cutCards' || template === 'oddOneOut') return simpleMode ? 6 : 12
+  if (template === 'choice' || template === 'cutCards' || template === 'oddOneOut' || template === 'categorize') return simpleMode ? 6 : 12
   // "Taki sam / inny": 1 element wzorcowy + odpowiedzi, więc limit jest o 1 wyższy.
   if (template === 'sameOrDifferent') return simpleMode ? 7 : 13
   return null
@@ -127,6 +129,14 @@ function App() {
 
   function handleSequenceBlanksChange(sequenceBlanks: number) {
     setWorksheet((prev) => ({ ...prev, sequenceBlanks }))
+  }
+
+  function handleCategoriesChange(categories: string[]) {
+    setWorksheet((prev) => ({ ...prev, categories }))
+  }
+
+  function handleVariantCountChange(variantCount: number) {
+    setWorksheet((prev) => ({ ...prev, variantCount }))
   }
 
   function handleAddItem(newItem: WorksheetItem) {
@@ -242,19 +252,16 @@ function App() {
 
   function handleShuffle() {
     setWorksheet((prev) => {
-      if (prev.template === 'choice' || prev.template === 'oddOneOut') {
+      if (prev.template === 'choice' || prev.template === 'oddOneOut' || prev.template === 'categorize') {
         return { ...prev, items: shuffleArray(prev.items) }
       }
       if (prev.template === 'sameOrDifferent') {
-        // Tasujemy tylko odpowiedzi - wzorzec (pierwszy element) zostaje na miejscu.
         const [reference, ...answers] = prev.items
         if (!reference) return prev
         return { ...prev, items: [reference, ...shuffleArray(answers)] }
       }
       return prev
     })
-    // Dla "Wybierz" (rozrzucone) i "Połącz w pary" seed wymusza nowe losowe pozycje
-    // / nowe tasowanie prawej kolumny, bez zmiany faktycznej listy elementów/par.
     setShuffleSeed((seed) => seed + 1)
   }
 
@@ -304,6 +311,8 @@ function App() {
           onCutCardsShowBorderChange={handleCutCardsShowBorderChange}
           onSequenceRepetitionsChange={handleSequenceRepetitionsChange}
           onSequenceBlanksChange={handleSequenceBlanksChange}
+          onCategoriesChange={handleCategoriesChange}
+          onVariantCountChange={handleVariantCountChange}
           onAddItem={handleAddItem}
           onRemoveItem={handleRemoveItem}
           onDuplicateItem={handleDuplicateItem}
@@ -318,7 +327,9 @@ function App() {
         />
       </div>
       <div className="preview-panel">
-        <WorksheetPreview worksheet={worksheet} shuffleSeed={shuffleSeed} />
+        {Array.from({ length: worksheet.variantCount ?? 1 }).map((_, index) => (
+          <WorksheetPreview key={index} worksheet={worksheet} shuffleSeed={shuffleSeed} variantIndex={index} />
+        ))}
       </div>
     </div>
   )

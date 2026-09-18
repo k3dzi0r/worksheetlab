@@ -21,7 +21,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -82,6 +82,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     label: 'Taki sam / inny',
     description: 'Element wzorcowy i kilka odpowiedzi do porównania.',
   },
+  {
+    value: 'categorize',
+    label: 'Podziel na kategorie',
+    description: 'Elementy i 2–3 kategorie, do których należy je przyporządkować.',
+  },
 ]
 
 /**
@@ -122,6 +127,10 @@ export interface WorksheetState {
   header: WorksheetHeader
   /** Czy pokazywać przerywaną ramkę wokół kartoników w szablonie „Kartoniki do wycinania”. */
   cutCardsShowBorder: boolean
+  /** Nazwy kategorii (2 lub 3) dla szablonu „Podziel na kategorie”. */
+  categories: string[]
+  /** Liczba generowanych wariantów. */
+  variantCount?: number
 }
 
 /** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */

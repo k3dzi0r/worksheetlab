@@ -32,8 +32,10 @@ body {
 .preview-panel {
   flex: 1;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 2rem;
   padding: 2rem;
   height: 100vh;
   overflow: auto;
@@ -96,5 +98,6 @@ body {
   .worksheet-a4 {
     box-shadow: none !important;
     margin: 0;
+    page-break-after: always;
   }
 }

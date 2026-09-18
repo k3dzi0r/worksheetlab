@@ -24,11 +24,27 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-/** Tasowanie tablicy algorytmem Fisher-Yates (nie modyfikuje oryginału). */
 export function shuffleArray<T>(items: T[]): T[] {
   const result = [...items]
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
+function seededRandom(seed: number) {
+  const x = Math.sin(seed) * 10000
+  return x - Math.floor(x)
+}
+
+/** Tasowanie deterministyczne na podstawie seeda. */
+export function shuffleArraySeeded<T>(items: T[], seed: number): T[] {
+  const result = [...items]
+  let currentSeed = seed
+  for (let i = result.length - 1; i > 0; i--) {
+    const r = seededRandom(currentSeed++)
+    const j = Math.floor(r * (i + 1))
     ;[result[i], result[j]] = [result[j], result[i]]
   }
   return result

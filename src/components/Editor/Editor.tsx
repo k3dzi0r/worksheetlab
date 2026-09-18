@@ -34,6 +34,8 @@ interface EditorProps {
   onCutCardsShowBorderChange: (showBorder: boolean) => void
   onSequenceRepetitionsChange: (count: number) => void
   onSequenceBlanksChange: (count: number) => void
+  onCategoriesChange: (categories: string[]) => void
+  onVariantCountChange: (count: number) => void
   onAddItem: (item: WorksheetItem) => void
   onRemoveItem: (id: string) => void
   onDuplicateItem: (id: string) => void
@@ -64,6 +66,8 @@ export function Editor({
   onCutCardsShowBorderChange,
   onSequenceRepetitionsChange,
   onSequenceBlanksChange,
+  onCategoriesChange,
+  onVariantCountChange,
   onAddItem,
   onRemoveItem,
   onDuplicateItem,
@@ -242,6 +246,44 @@ export function Editor({
         />
       </section>
 
+      {/* Kategorie - tylko dla szablonu "Podziel na kategorie" */}
+      {worksheet.template === 'categorize' && (
+        <section>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold">Kategorie</h2>
+            <button
+              type="button"
+              onClick={() => {
+                if (worksheet.categories.length === 2) {
+                  onCategoriesChange([...worksheet.categories, 'Kategoria 3'])
+                } else {
+                  onCategoriesChange(worksheet.categories.slice(0, 2))
+                }
+              }}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {worksheet.categories.length === 2 ? '+ Dodaj trzecią kategorię' : '- Usuń trzecią kategorię'}
+            </button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {worksheet.categories.map((cat, i) => (
+              <input
+                key={i}
+                type="text"
+                value={cat}
+                onChange={(e) => {
+                  const newCats = [...worksheet.categories]
+                  newCats[i] = e.target.value
+                  onCategoriesChange(newCats)
+                }}
+                placeholder={`Nazwa kategorii ${i + 1}`}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Liczba powtórzeń - tylko dla szablonu "Policz" */}
       {worksheet.template === 'count' && (
         <section>
@@ -389,6 +431,11 @@ export function Editor({
             Pierwszy dodany element to wzorzec. Kolejne to odpowiedzi do porównania.
           </p>
         )}
+        {worksheet.template === 'categorize' && (
+          <p className="text-sm text-gray-500 mb-2">
+            Dodaj elementy do puli wspólnej. Uczeń przyporządkuje je do kategorii.
+          </p>
+        )}
         <div className="flex flex-col gap-3">
           <ImageUploader onImageSelected={handleImageSelected} />
           <button
@@ -415,6 +462,25 @@ export function Editor({
           onUpdateItemScale={onUpdateItemScale}
           onResetItemScale={onResetItemScale}
         />
+      </section>
+
+      {/* Warianty */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">5. Warianty</h2>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">Liczba generowanych wariantów (stron)</label>
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={worksheet.variantCount ?? 1}
+            onChange={(e) => onVariantCountChange(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
+          />
+          <p className="text-sm text-gray-500">
+            Kolejne warianty mają inną kolejność elementów. Wydrukuj je wszystkie naraz jednym kliknięciem.
+          </p>
+        </div>
       </section>
 
       {/* Akcje */}
