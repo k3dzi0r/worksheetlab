@@ -34,6 +34,25 @@ function stripFileExtension(fileName: string): string {
   return fileName.replace(/\.[a-z0-9]+$/i, '')
 }
 
+function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm mb-4">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
+      >
+        <span>{title}</span>
+        <span className={`transform transition-transform text-gray-400 ${isOpen ? 'rotate-180' : ''}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </span>
+      </button>
+      {isOpen && <div className="p-4 border-t border-gray-200 flex flex-col gap-4">{children}</div>}
+    </div>
+  )
+}
+
 interface EditorProps {
   worksheet: WorksheetState
   onTemplateChange: (template: TemplateType) => void
@@ -143,13 +162,14 @@ export function Editor({
     worksheet.template === 'sameOrDifferent'
 
   return (
-    <div className="flex flex-col gap-6 p-6 overflow-y-auto">
-      <header>
+    <div className="flex flex-col gap-2 p-6 overflow-y-auto">
+      <header className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900">WorksheetLab</h1>
         <p className="text-gray-500 text-sm">Kreator kart pracy A4</p>
       </header>
 
-      {/* Wybór szablonu */}
+      <Accordion title="1. Szablon i Układ" defaultOpen={true}>
+{/* Wybór szablonu */}
       <section>
         <h2 className="text-lg font-semibold mb-2">1. Wybierz typ karty</h2>
         <div className="grid grid-cols-1 gap-2">
@@ -216,65 +236,8 @@ export function Editor({
         </label>
       </section>
 
-      {/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
-      <section>
-        <h2 className="text-lg font-semibold mb-2">Nagłówek karty</h2>
-        <div className="flex flex-col gap-2 border border-gray-200 rounded-lg p-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={worksheet.header.showTitle}
-              onChange={(event) => onHeaderChange({ showTitle: event.target.checked })}
-              className="w-5 h-5"
-            />
-            <span>Tytuł karty</span>
-          </label>
-          {worksheet.header.showTitle && (
-            <input
-              type="text"
-              value={worksheet.header.title}
-              onChange={(event) => onHeaderChange({ title: event.target.value })}
-              placeholder='np. "Karta pracy - Wiosna"'
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
-          )}
-          <HeaderFieldToggle
-            checked={worksheet.header.showName}
-            label={worksheet.header.nameLabel}
-            defaultLabel="Imię i nazwisko"
-            onToggle={(checked) => onHeaderChange({ showName: checked })}
-            onLabelChange={(nameLabel) => onHeaderChange({ nameLabel })}
-          />
-          <HeaderFieldToggle
-            checked={worksheet.header.showDate}
-            label={worksheet.header.dateLabel}
-            defaultLabel="Data"
-            onToggle={(checked) => onHeaderChange({ showDate: checked })}
-            onLabelChange={(dateLabel) => onHeaderChange({ dateLabel })}
-          />
-          <HeaderFieldToggle
-            checked={worksheet.header.showClass}
-            label={worksheet.header.classLabel}
-            defaultLabel="Klasa"
-            onToggle={(checked) => onHeaderChange({ showClass: checked })}
-            onLabelChange={(classLabel) => onHeaderChange({ classLabel })}
-          />
-        </div>
-      </section>
-
-      {/* Polecenie */}
-      <section>
-        <h2 className="text-lg font-semibold mb-2">2. Polecenie</h2>
-        <input
-          type="text"
-          value={worksheet.instruction}
-          onChange={(event) => onInstructionChange(event.target.value)}
-          placeholder='np. "Wskaż zwierzę."'
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
-        />
-      </section>
-
-      {/* Kategorie - tylko dla szablonu "Podziel na kategorie" */}
+      
+{/* Kategorie - tylko dla szablonu "Podziel na kategorie" */}
       {worksheet.template === 'categorize' && (
         <section>
           <div className="flex justify-between items-center mb-2">
@@ -437,7 +400,71 @@ export function Editor({
         </button>
       </section>
 
-      {/* Dodawanie elementów */}
+      
+</Accordion>
+<Accordion title="2. Nagłówek i Polecenie" defaultOpen={false}>
+{/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">Nagłówek karty</h2>
+        <div className="flex flex-col gap-2 border border-gray-200 rounded-lg p-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={worksheet.header.showTitle}
+              onChange={(event) => onHeaderChange({ showTitle: event.target.checked })}
+              className="w-5 h-5"
+            />
+            <span>Tytuł karty</span>
+          </label>
+          {worksheet.header.showTitle && (
+            <input
+              type="text"
+              value={worksheet.header.title}
+              onChange={(event) => onHeaderChange({ title: event.target.value })}
+              placeholder='np. "Karta pracy - Wiosna"'
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            />
+          )}
+          <HeaderFieldToggle
+            checked={worksheet.header.showName}
+            label={worksheet.header.nameLabel}
+            defaultLabel="Imię i nazwisko"
+            onToggle={(checked) => onHeaderChange({ showName: checked })}
+            onLabelChange={(nameLabel) => onHeaderChange({ nameLabel })}
+          />
+          <HeaderFieldToggle
+            checked={worksheet.header.showDate}
+            label={worksheet.header.dateLabel}
+            defaultLabel="Data"
+            onToggle={(checked) => onHeaderChange({ showDate: checked })}
+            onLabelChange={(dateLabel) => onHeaderChange({ dateLabel })}
+          />
+          <HeaderFieldToggle
+            checked={worksheet.header.showClass}
+            label={worksheet.header.classLabel}
+            defaultLabel="Klasa"
+            onToggle={(checked) => onHeaderChange({ showClass: checked })}
+            onLabelChange={(classLabel) => onHeaderChange({ classLabel })}
+          />
+        </div>
+      </section>
+
+      {/* Polecenie */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">2. Polecenie</h2>
+        <input
+          type="text"
+          value={worksheet.instruction}
+          onChange={(event) => onInstructionChange(event.target.value)}
+          placeholder='np. "Wskaż zwierzę."'
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
+        />
+      </section>
+
+      
+</Accordion>
+<Accordion title="3. Edycja elementów" defaultOpen={true}>
+{/* Dodawanie elementów */}
       <section>
         <h2 className="text-lg font-semibold mb-2">3. Dodaj elementy</h2>
         {worksheet.template === 'matchPairs' && (
@@ -493,7 +520,10 @@ export function Editor({
         />
       </section>
 
-      {/* Warianty */}
+      
+</Accordion>
+<Accordion title="4. Warianty" defaultOpen={false}>
+{/* Warianty */}
       <section>
         <h2 className="text-lg font-semibold mb-2">5. Warianty</h2>
         <div className="flex flex-col gap-2">
@@ -512,7 +542,9 @@ export function Editor({
         </div>
       </section>
 
-      {/* Akcje */}
+      
+</Accordion>
+{/* Akcje */}
       <section className="flex flex-col gap-3 pt-2 border-t border-gray-200">
         <div className="flex gap-3">
           <button
