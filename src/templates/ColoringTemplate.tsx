@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { WorksheetState } from '../types/worksheet'
 import { COLORING_PALETTE, COLOR_COUNT_MAX, COLOR_COUNT_MIN, generateColoring, getColoringLevel } from '../coloring'
+import type { CrownStyle } from '../coloring'
 import { usePageSpace } from '../usePageSpace'
 import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
@@ -18,6 +19,9 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
     coloringLevel,
     coloringMode = 'blank',
     coloringColorCount = 4,
+    coloringSectors = 0,
+    coloringCrown = 'auto',
+    coloringStroke = 1,
     instruction,
     simpleMode = false,
   } = worksheet
@@ -31,6 +35,9 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
     coloringLevel,
     coloringMode,
     coloringColorCount,
+    coloringSectors,
+    coloringCrown,
+    coloringStroke,
     instruction,
     worksheet.header,
     worksheet.orientation,
@@ -38,8 +45,17 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
   ])
 
   const coloring = useMemo(
-    () => generateColoring(CANVAS, level.rings, level.sectors, seed, colorCount),
-    [level.rings, level.sectors, seed, colorCount],
+    () =>
+      generateColoring({
+        size: CANVAS,
+        rings: level.rings,
+        sectors: coloringSectors,
+        crown: coloringCrown as CrownStyle,
+        colorCount,
+        seed,
+        fields: byNumbers ? 'large' : 'any',
+      }),
+    [level.rings, coloringSectors, coloringCrown, colorCount, seed, byNumbers],
   )
 
   // Legenda kolorów stoi pod rysunkiem, więc rezerwujemy na nią miejsce zanim policzymy bok.
@@ -49,7 +65,7 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
   const side = Math.max(0, Math.min(width, height - legendHeight) - 1)
   // Kontur musi być gruby, żeby dziecko kolorowało kredką bez wychodzenia za linię,
   // ale przy gęstym wzorze cieńszy - inaczej małe pola zlałyby się w plamę.
-  const stroke = (CANVAS / 320) * (3 / level.rings + 0.6)
+  const stroke = (CANVAS / 320) * (3 / level.rings + 0.6) * coloringStroke
 
   return (
     <div className="flex flex-col w-full">
@@ -77,6 +93,8 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
                 stroke="#111827"
                 strokeWidth={stroke}
                 strokeLinejoin="round"
+                // Jednolita obręcz to dwa okręgi w jednej ścieżce - dziura musi zostać dziurą.
+                fillRule="evenodd"
               />
             ))}
 

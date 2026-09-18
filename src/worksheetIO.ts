@@ -144,6 +144,13 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     coloringLevel: typeof state.coloringLevel === 'number' ? state.coloringLevel : 2,
     coloringMode: state.coloringMode === 'numbers' ? 'numbers' : 'blank',
     coloringColorCount: typeof state.coloringColorCount === 'number' ? state.coloringColorCount : 4,
+    coloringSectors: typeof state.coloringSectors === 'number' ? state.coloringSectors : 0,
+    coloringCrown: (['auto', 'scallop', 'petal', 'points', 'none'] as const).includes(
+      state.coloringCrown as 'auto',
+    )
+      ? (state.coloringCrown as 'auto')
+      : 'auto',
+    coloringStroke: typeof state.coloringStroke === 'number' ? state.coloringStroke : 1,
     mazeLevel: typeof state.mazeLevel === 'number' ? state.mazeLevel : 2,
     wordSearchWords: typeof state.wordSearchWords === 'string' ? state.wordSearchWords : '',
     wordSearchGridSize: typeof state.wordSearchGridSize === 'number' ? state.wordSearchGridSize : 10,

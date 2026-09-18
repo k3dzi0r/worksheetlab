@@ -182,6 +182,12 @@ export interface WorksheetState {
   coloringMode?: 'blank' | 'numbers'
   /** Liczba kolorów w legendzie przy kolorowaniu według kodu. */
   coloringColorCount?: number
+  /** Liczba osi symetrii wzoru. 0 oznacza „losuj". */
+  coloringSectors?: number
+  /** Wykończenie krawędzi mandali. */
+  coloringCrown?: 'auto' | 'scallop' | 'petal' | 'points' | 'none'
+  /** Mnożnik grubości konturu (0,7 - 1,6). */
+  coloringStroke?: number
   /** Poziom trudności labiryntu (1-5). */
   mazeLevel?: number
   /** Opcje wykreślanki */

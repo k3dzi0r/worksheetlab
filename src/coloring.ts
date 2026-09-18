@@ -138,38 +138,78 @@ function circlePath(cx: number, cy: number, radius: number) {
 }
 
 /**
- * Styl pierścienia. Pierścienie „gładkie" są celowo puste i mają mniej, za to większych pól -
+ * Styl pierścienia. „Gładkie" pierścienie są celowo puste i mają mniej, za to większych pól -
  * dają oddech między zdobionymi i robią z rysunku mandalę zamiast tarczy strzelniczej.
  */
-type RingStyle = 'plain' | 'circle' | 'diamond' | 'petal'
+type RingStyle = 'plain' | 'band' | 'circle' | 'diamond' | 'petal' | 'twin' | 'donut'
 
-/** Zdobione pierścienie przeplatamy gładkimi - stąd stały rytm wzoru. */
-const RING_CYCLE: RingStyle[] = ['circle', 'plain', 'petal', 'plain', 'diamond', 'plain']
+/** Zdobienia, które mogą trafić do pierścienia. */
+const ORNAMENTS: RingStyle[] = ['circle', 'diamond', 'petal', 'twin', 'donut']
+/** Pierścienie bez zdobień: z podziałem na pola albo jednolita obręcz. */
+const QUIET: RingStyle[] = ['plain', 'band']
 
-export function generateColoring(
-  size: number,
-  rings: number,
-  sectors: number,
-  seed: number,
-  colorCount: number,
-): Coloring {
+export type CrownStyle = 'auto' | 'scallop' | 'petal' | 'points' | 'none'
+const CROWN_STYLES: Exclude<CrownStyle, 'auto'>[] = ['scallop', 'petal', 'points', 'none']
+
+export interface ColoringOptions {
+  size: number
+  rings: number
+  /** Liczba osi symetrii. 0 oznacza „dobierz losowo" w okolicach poziomu złożoności. */
+  sectors: number
+  crown: CrownStyle
+  colorCount: number
+  seed: number
+  /**
+   * „large" ogranicza gęstość wzoru: przy kolorowaniu według kodu w każdym polu musi
+   * zmieścić się numer, więc drobne zdobienia i gęste podziały odpadają.
+   */
+  fields?: 'any' | 'large'
+}
+
+/** Kolec wieńca: trójkąt wyrastający poza ostatni pierścień. */
+function pointPath(cx: number, cy: number, inner: number, outer: number, from: number, to: number): string {
+  const mid = (from + to) / 2
+  return [
+    `M ${point(cx, cy, inner, from)}`,
+    `L ${point(cx, cy, outer, mid)}`,
+    `L ${point(cx, cy, inner, to)}`,
+    `A ${inner.toFixed(2)} ${inner.toFixed(2)} 0 0 0 ${point(cx, cy, inner, from)}`,
+    'Z',
+  ].join(' ')
+}
+
+function pick<T>(random: () => number, items: readonly T[]): T {
+  return items[Math.floor(random() * items.length)]
+}
+
+export function generateColoring(options: ColoringOptions): Coloring {
+  const { size, rings, crown, colorCount, seed, fields = 'any' } = options
+  const largeFields = fields === 'large'
   const random = createSeededRandom(seed)
   const center = size / 2
   // Margines, żeby gruba kreska konturu nie wyszła poza kwadrat rysunku.
   const maxRadius = size / 2 - size * 0.02
-  // Wieniec płatków na zewnątrz: to on sprawia, że sylwetka jest kwiatem, a nie kołem.
-  const crownThickness = maxRadius * 0.13
-  const ringsOuter = maxRadius - crownThickness
-  const coreRadius = maxRadius * 0.15
-  const ringThickness = (ringsOuter - coreRadius) / rings
+
+  const colors = Math.max(COLOR_COUNT_MIN, Math.min(colorCount, COLOR_COUNT_MAX))
+
+  // Liczba osi symetrii: albo wskazana przez użytkownika, albo losowana wokół poziomu złożoności.
+  const drawnSectors = options.sectors > 0 ? options.sectors : 8 + 2 * Math.floor(random() * (rings + 2))
+  const sectors = largeFields ? Math.min(12, drawnSectors) : drawnSectors
   const step = (Math.PI * 2) / sectors
 
-  const regions: ColoringRegion[] = []
-  const colors = Math.max(COLOR_COUNT_MIN, Math.min(colorCount, COLOR_COUNT_MAX))
-  // Seed decyduje tylko o przesunięciu rytmu zdobień - wzór zostaje uporządkowany.
-  const cycleOffset = Math.floor(random() * RING_CYCLE.length)
+  const crownStyle = crown === 'auto' ? pick(random, CROWN_STYLES) : crown
+  // Bez wieńca cały promień zostaje dla pierścieni.
+  const crownThickness = crownStyle === 'none' ? 0 : maxRadius * (0.11 + random() * 0.05)
+  const ringsOuter = maxRadius - crownThickness
+  const coreRadius = maxRadius * (0.12 + random() * 0.06)
 
-  // Rdzeń: koło, mniejsze koło w środku i wianuszek płatków dookoła.
+  // Pierścienie o różnej grubości - równe obręcze wyglądają jak tarcza, nierówne jak mandala.
+  const weights = Array.from({ length: rings }, () => 0.75 + random() * 0.6)
+  const weightSum = weights.reduce((sum, weight) => sum + weight, 0)
+
+  const regions: ColoringRegion[] = []
+
+  // Rdzeń: koło z mniejszym kołem albo z wianuszkiem płatków w środku.
   regions.push({
     path: circlePath(center, center, coreRadius),
     labelX: center,
@@ -177,31 +217,75 @@ export function generateColoring(
     colorIndex: 0,
     room: coreRadius * 0.3,
   })
-  regions.push({
-    path: circlePath(center, center, coreRadius * 0.42),
-    labelX: center,
-    labelY: center,
-    colorIndex: 1 % colors,
-    room: coreRadius * 0.42,
-  })
+  if (random() < 0.5) {
+    regions.push({
+      path: circlePath(center, center, coreRadius * 0.42),
+      labelX: center,
+      labelY: center,
+      colorIndex: 1 % colors,
+      room: coreRadius * 0.42,
+    })
+  } else {
+    const corePetals = sectors / 2
+    const coreStep = (Math.PI * 2) / corePetals
+    for (let i = 0; i < corePetals; i++) {
+      const from = i * coreStep
+      const petalCenter = polar(center, center, coreRadius * 0.55, from + coreStep / 2)
+      regions.push({
+        path: petalPath(center, center, coreRadius * 0.12, coreRadius * 0.85, from, from + coreStep),
+        labelX: petalCenter.x,
+        labelY: petalCenter.y,
+        colorIndex: 1 % colors,
+        room: coreRadius * 0.16,
+      })
+    }
+  }
+
+  let previousQuiet = false
+  let previousColor = 1 % colors
+  let radius = coreRadius
 
   for (let ring = 0; ring < rings; ring++) {
-    const inner = coreRadius + ring * ringThickness
-    const outer = inner + ringThickness
-    const style = RING_CYCLE[(ring + cycleOffset) % RING_CYCLE.length]
-    // Gładkie pierścienie dostają o połowę mniej, za to większych pól - łatwiej je pokolorować.
-    // Liczba pól musi być parzysta, inaczej naprzemienne kolory zderzyłyby się na styku.
-    const ringSectors = style === 'plain' ? Math.max(4, 2 * Math.round(sectors / 4)) : sectors
+    const inner = radius
+    const thickness = ((ringsOuter - coreRadius) * weights[ring]) / weightSum
+    const outer = inner + thickness
+    radius = outer
+
+    // Po pierścieniu spokojnym idzie zdobiony i odwrotnie - to buduje rytm wzoru.
+    // Przy kolorowaniu według kodu odpadają zdobienia, w których nie zmieściłby się numer.
+    const ornaments = largeFields ? ORNAMENTS.filter((o) => o !== 'twin' && o !== 'donut') : ORNAMENTS
+    const style: RingStyle = previousQuiet ? pick(random, ornaments) : pick(random, QUIET)
+    previousQuiet = QUIET.includes(style)
+
+    const isQuiet = QUIET.includes(style)
+    const ringSectors = style === 'band' ? 1 : isQuiet ? Math.max(4, 2 * Math.round(sectors / 4)) : sectors
     const ringStep = (Math.PI * 2) / ringSectors
-    const baseColor = (ring + 2) % colors
-    const ornamentColor = (ring + 2 + Math.max(1, Math.floor(colors / 2))) % colors
+    // Losowy obrót pierścienia rozbija sztywną siatkę promieni.
+    const phase = random() < 0.5 ? 0 : ringStep / 2
+    // Kolejny pierścień nigdy nie powtarza koloru poprzedniego - inaczej cała mandala
+    // wychodziła w jednej barwie i klucz odpowiedzi był monotonny.
+    const baseColor = (previousColor + 1 + Math.floor(random() * (colors - 1))) % colors
+    const ornamentColor = (baseColor + 1 + Math.floor(random() * (colors - 1))) % colors
+    previousColor = baseColor
+
+    if (style === 'band') {
+      // Jednolita obręcz: jedno duże pole bez podziałów.
+      regions.push({
+        path: `${circlePath(center, center, outer)} ${circlePath(center, center, inner)}`,
+        labelX: center,
+        labelY: center - (inner + outer) / 2,
+        colorIndex: baseColor,
+        room: thickness * 0.4,
+      })
+      continue
+    }
 
     for (let sector = 0; sector < ringSectors; sector++) {
-      const from = sector * ringStep
+      const from = phase + sector * ringStep
       const to = from + ringStep
       const mid = from + ringStep / 2
       // Przy zdobionym pierścieniu numer wycinka odsuwamy na zewnątrz, żeby nie wpadł na zdobienie.
-      const labelRadius = style === 'plain' ? (inner + outer) / 2 : inner + ringThickness * 0.85
+      const labelRadius = isQuiet ? (inner + outer) / 2 : inner + thickness * 0.85
       const label = polar(center, center, labelRadius, mid)
       const chord = 2 * labelRadius * Math.sin(ringStep / 2)
       // Sąsiednie pola dostają różne kolory - inaczej cały pierścień byłby jednolitą obręczą.
@@ -212,21 +296,52 @@ export function generateColoring(
         labelX: label.x,
         labelY: label.y,
         colorIndex: sectorColor,
-        room: Math.min(ringThickness * (style === 'plain' ? 0.42 : 0.13), chord * 0.42),
+        room: Math.min(thickness * (isQuiet ? 0.42 : 0.13), chord * 0.42),
       })
 
-      if (style === 'plain') continue
+      if (isQuiet) continue
 
       // Zdobienie musi wyraźnie pływać w środku pola, nie dotykać jego krawędzi.
       const insetFrom = from + ringStep * 0.16
       const insetTo = to - ringStep * 0.16
-      const insetInner = inner + ringThickness * 0.16
-      const insetOuter = outer - ringThickness * 0.16
-      const ornamentCenter = polar(center, center, (inner + outer) / 2, mid)
-      const ornamentRadius = Math.min(
-        ringThickness * 0.3,
-        ((inner + outer) / 2) * Math.sin(ringStep / 2) * 0.72,
-      )
+      const insetInner = inner + thickness * 0.16
+      const insetOuter = outer - thickness * 0.16
+      const middle = (inner + outer) / 2
+      const ornamentCenter = polar(center, center, middle, mid)
+      const ornamentRadius = Math.min(thickness * 0.3, middle * Math.sin(ringStep / 2) * 0.72)
+
+      if (style === 'twin') {
+        // Dwa małe kółka obok siebie w jednym polu.
+        for (const offset of [-0.22, 0.22]) {
+          const twinCenter = polar(center, center, middle, mid + ringStep * offset)
+          regions.push({
+            path: circlePath(twinCenter.x, twinCenter.y, ornamentRadius * 0.55),
+            labelX: twinCenter.x,
+            labelY: twinCenter.y,
+            colorIndex: ornamentColor,
+            room: ornamentRadius * 0.45,
+          })
+        }
+        continue
+      }
+
+      if (style === 'donut') {
+        regions.push({
+          path: circlePath(ornamentCenter.x, ornamentCenter.y, ornamentRadius),
+          labelX: polar(center, center, middle + ornamentRadius * 0.62, mid).x,
+          labelY: polar(center, center, middle + ornamentRadius * 0.62, mid).y,
+          colorIndex: ornamentColor,
+          room: ornamentRadius * 0.28,
+        })
+        regions.push({
+          path: circlePath(ornamentCenter.x, ornamentCenter.y, ornamentRadius * 0.45),
+          labelX: ornamentCenter.x,
+          labelY: ornamentCenter.y,
+          colorIndex: (ornamentColor + 1) % colors,
+          room: ornamentRadius * 0.45,
+        })
+        continue
+      }
 
       const path =
         style === 'circle'
@@ -245,20 +360,28 @@ export function generateColoring(
     }
   }
 
-  // Wieniec: ząbki wychodzące poza ostatni pierścień, stykające się bokami.
-  const crownColor = (rings + 2) % colors
-  for (let sector = 0; sector < sectors; sector++) {
-    const from = sector * step
-    const to = from + step
-    const mid = from + step / 2
-    const petalCenter = polar(center, center, ringsOuter + crownThickness * 0.4, mid)
-    regions.push({
-      path: scallopPath(center, center, ringsOuter, maxRadius, from, to),
-      labelX: petalCenter.x,
-      labelY: petalCenter.y,
-      colorIndex: crownColor,
-      room: Math.min(crownThickness * 0.4, ringsOuter * Math.sin(step / 2) * 0.6),
-    })
+  // Wieniec: ząbki, płatki albo kolce wychodzące poza ostatni pierścień.
+  if (crownStyle !== 'none') {
+    const crownColor = (rings + 2) % colors
+    for (let sector = 0; sector < sectors; sector++) {
+      const from = sector * step
+      const to = from + step
+      const mid = from + step / 2
+      const crownCenter = polar(center, center, ringsOuter + crownThickness * 0.4, mid)
+      const path =
+        crownStyle === 'scallop'
+          ? scallopPath(center, center, ringsOuter, maxRadius, from, to)
+          : crownStyle === 'petal'
+            ? petalPath(center, center, ringsOuter - crownThickness * 0.2, maxRadius, from, to)
+            : pointPath(center, center, ringsOuter, maxRadius, from, to)
+      regions.push({
+        path,
+        labelX: crownCenter.x,
+        labelY: crownCenter.y,
+        colorIndex: crownColor,
+        room: Math.min(crownThickness * 0.4, ringsOuter * Math.sin(step / 2) * 0.6),
+      })
+    }
   }
 
   return { size, regions }
