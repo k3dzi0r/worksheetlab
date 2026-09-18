@@ -47,7 +47,7 @@ export function Editor({
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto">
       <header>
-        <h1 className="text-2xl font-bold text-gray-900">KartaLab</h1>
+        <h1 className="text-2xl font-bold text-gray-900">WorksheetLab</h1>
         <p className="text-gray-500 text-sm">Kreator kart pracy A4</p>
       </header>
 

@@ -1,6 +1,6 @@
-# KartaLab
+# WorksheetLab
 
-**KartaLab** to prosty kreator kart pracy A4 dla nauczycieli. Aplikacja działa
+**WorksheetLab** to prosty kreator kart pracy A4 dla nauczycieli. Aplikacja działa
 w całości w przeglądarce — bez backendu, bez logowania, bez zapisywania
 czegokolwiek na serwerze. Wszystko, co robi użytkownik (obrazy, tekst,
 wybory), pozostaje wyłącznie w pamięci przeglądarki i znika po odświeżeniu
@@ -46,7 +46,7 @@ npm run dev
 ```
 
 Aplikacja wystartuje pod adresem podanym w konsoli (domyślnie
-`http://localhost:5173/kartalab/`).
+`http://localhost:5173/worksheetlab/`).
 
 ## Budowanie produkcyjne
 
@@ -65,10 +65,10 @@ npm run preview
 Projekt jest skonfigurowany do hostowania pod adresem w stylu:
 
 ```
-https://USERNAME.github.io/kartalab/
+https://USERNAME.github.io/worksheetlab/
 ```
 
-W `vite.config.ts` ustawiona jest opcja `base: '/kartalab/'`, dopasowana do
+W `vite.config.ts` ustawiona jest opcja `base: '/worksheetlab/'`, dopasowana do
 nazwy repozytorium. Jeśli repozytorium nazywa się inaczej, zmień tę wartość.
 
 Wdrożenie odbywa się automatycznie: workflow
