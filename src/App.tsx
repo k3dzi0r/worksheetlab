@@ -4,11 +4,11 @@ import type {
   WorksheetState,
   TemplateType,
   ChoiceLayout,
-  ItemSize,
   PageOrientation,
   MatchPair,
 } from './types/worksheet'
-import { createId, shuffleArray } from './utils'
+import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX } from './types/worksheet'
+import { createId, shuffleArray, clamp } from './utils'
 import { downloadWorksheetJson, parseWorksheetJson } from './worksheetIO'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
@@ -20,12 +20,23 @@ const INITIAL_WORKSHEET: WorksheetState = {
   pairs: [],
   countRepetitions: 5,
   layout: 'row',
-  itemSize: 'lg',
+  itemScale: ITEM_SCALE_DEFAULT,
   orientation: 'portrait',
   simpleMode: false,
   sequenceItems: [],
   sequenceRepetitions: 3,
   sequenceBlanks: 1,
+}
+
+/**
+ * Miękki limit liczby elementów w szablonach "Wybierz" i "Co nie pasuje?", żeby karta
+ * czytelnie mieściła się na A4. "Wybierz" pozwala na więcej elementów niż "Co nie pasuje?",
+ * dla którego sensowne jest tylko kilka elementów do porównania.
+ */
+function getMaxItems(template: TemplateType, simpleMode: boolean): number | null {
+  if (template === 'choice') return simpleMode ? 6 : 12
+  if (template === 'oddOneOut') return simpleMode ? 4 : 6
+  return null
 }
 
 function App() {
@@ -51,8 +62,44 @@ function App() {
     setWorksheet((prev) => ({ ...prev, layout }))
   }
 
-  function handleItemSizeChange(itemSize: ItemSize) {
-    setWorksheet((prev) => ({ ...prev, itemSize }))
+  function handleItemScaleChange(itemScale: number) {
+    setWorksheet((prev) => ({ ...prev, itemScale: clamp(itemScale, ITEM_SCALE_MIN, ITEM_SCALE_MAX) }))
+  }
+
+  function handleUpdateItemScale(id: string, scale: number) {
+    setWorksheet((prev) =>
+      updateItemById(prev, id, (item) => ({ ...item, scale: clamp(scale, ITEM_SCALE_MIN, ITEM_SCALE_MAX) })),
+    )
+  }
+
+  function handleResetItemScale(id: string) {
+    setWorksheet((prev) =>
+      updateItemById(prev, id, (item) => {
+        const { scale, ...rest } = item
+        void scale
+        return rest
+      }),
+    )
+  }
+
+  function handleResetAllItemScales() {
+    setWorksheet((prev) => {
+      const stripScale = (item: WorksheetItem): WorksheetItem => {
+        const { scale, ...rest } = item
+        void scale
+        return rest
+      }
+      return {
+        ...prev,
+        items: prev.items.map(stripScale),
+        pairs: prev.pairs.map((pair) => ({
+          ...pair,
+          left: stripScale(pair.left),
+          right: pair.right ? stripScale(pair.right) : null,
+        })),
+        sequenceItems: prev.sequenceItems.map(stripScale),
+      }
+    })
   }
 
   function handleOrientationChange(orientation: PageOrientation) {
@@ -99,9 +146,8 @@ function App() {
       }
 
       // Szablony "choice" i "oddOneOut" - miękki limit elementów, żeby karta czytelnie się mieściła na A4.
-      // W trybie prostym elementy są większe, więc limit jest niższy.
-      const maxItems = prev.simpleMode ? 4 : 6
-      if (prev.items.length >= maxItems) {
+      const maxItems = getMaxItems(prev.template, prev.simpleMode)
+      if (maxItems !== null && prev.items.length >= maxItems) {
         alert(`W tym szablonie można dodać maksymalnie ${maxItems} elementów.`)
         return prev
       }
@@ -149,8 +195,8 @@ function App() {
 
       const index = prev.items.findIndex((item) => item.id === id)
       if (index === -1) return prev
-      const maxItems = prev.simpleMode ? 4 : 6
-      if ((prev.template === 'choice' || prev.template === 'oddOneOut') && prev.items.length >= maxItems) {
+      const maxItems = getMaxItems(prev.template, prev.simpleMode)
+      if (maxItems !== null && prev.items.length >= maxItems) {
         alert(`W tym szablonie można dodać maksymalnie ${maxItems} elementów.`)
         return prev
       }
@@ -230,7 +276,10 @@ function App() {
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}
-          onItemSizeChange={handleItemSizeChange}
+          onItemScaleChange={handleItemScaleChange}
+          onUpdateItemScale={handleUpdateItemScale}
+          onResetItemScale={handleResetItemScale}
+          onResetAllItemScales={handleResetAllItemScales}
           onOrientationChange={handleOrientationChange}
           onSimpleModeChange={handleSimpleModeChange}
           onSequenceRepetitionsChange={handleSequenceRepetitionsChange}

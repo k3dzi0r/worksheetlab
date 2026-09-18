@@ -1,4 +1,4 @@
-import type { ItemSize, WorksheetItem } from '../types/worksheet'
+import type { WorksheetItem } from '../types/worksheet'
 import { WorksheetItemView } from '../components/WorksheetPreview/WorksheetItemView'
 import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
@@ -7,11 +7,11 @@ interface SequenceTemplateProps {
   patternItems: WorksheetItem[]
   repetitions: number
   blanks: number
-  itemSize: ItemSize
+  itemScale: number
   simpleMode?: boolean
 }
 
-const BLANK_DIMENSION_REM: Record<ItemSize, number> = { sm: 2.75, md: 3.75, lg: 5 }
+const BASE_DIMENSION_REM = 3.75
 
 /** Szablon „Sekwencja”: wzór z elementów powtórzony kilka razy + puste pola na końcu do uzupełnienia. */
 export function SequenceTemplate({
@@ -19,11 +19,11 @@ export function SequenceTemplate({
   patternItems,
   repetitions,
   blanks,
-  itemSize,
+  itemScale,
   simpleMode = false,
 }: SequenceTemplateProps) {
-  const scale = simpleMode ? 1.35 : 1
-  const blankDimension = `${BLANK_DIMENSION_REM[itemSize] * scale}rem`
+  const simpleModeMultiplier = simpleMode ? 1.35 : 1
+  const blankDimension = `${BASE_DIMENSION_REM * itemScale * simpleModeMultiplier}rem`
 
   // Wzór (np. 🍎 🍌) powtórzony `repetitions` razy, jeden po drugim.
   const sequence: WorksheetItem[] = []
@@ -37,7 +37,7 @@ export function SequenceTemplate({
       <div className={`flex-1 flex flex-wrap justify-center items-center content-center ${simpleMode ? 'gap-8' : 'gap-5'}`}>
         {patternItems.length === 0 && <p className="text-gray-400">Dodaj 2-4 elementy tworzące wzór.</p>}
         {sequence.map((item, index) => (
-          <WorksheetItemView key={`${item.id}-${index}`} item={item} size={itemSize} simpleMode={simpleMode} />
+          <WorksheetItemView key={`${item.id}-${index}`} item={item} baseScale={itemScale} simpleMode={simpleMode} />
         ))}
         {patternItems.length > 0 &&
           Array.from({ length: blanks }).map((_, index) => (

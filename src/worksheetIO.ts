@@ -5,14 +5,24 @@ import type {
   MatchPair,
   TemplateType,
   ChoiceLayout,
-  ItemSize,
   PageOrientation,
 } from './types/worksheet'
+import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX } from './types/worksheet'
+import { clamp } from './utils'
 
 const VALID_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'count', 'yesNo', 'oddOneOut', 'sequence']
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
-const VALID_SIZES: ItemSize[] = ['sm', 'md', 'lg']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
+
+// Pliki wyeksportowane przed wprowadzeniem płynnego suwaka rozmiaru zapisywały rozmiar
+// jako 'sm'/'md'/'lg' - mapujemy je na przybliżone wartości liczbowe dla zgodności wstecznej.
+const LEGACY_SIZE_TO_SCALE: Record<string, number> = { sm: 0.75, md: 1, lg: 1.35 }
+
+function normalizeItemScale(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return clamp(value, ITEM_SCALE_MIN, ITEM_SCALE_MAX)
+  if (typeof value === 'string' && value in LEGACY_SIZE_TO_SCALE) return LEGACY_SIZE_TO_SCALE[value]
+  return undefined
+}
 
 function isWorksheetItem(value: unknown): value is WorksheetItem {
   if (!value || typeof value !== 'object') return false
@@ -62,7 +72,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     pairs: state.pairs as MatchPair[],
     countRepetitions: typeof state.countRepetitions === 'number' ? state.countRepetitions : 5,
     layout: VALID_LAYOUTS.includes(state.layout as ChoiceLayout) ? (state.layout as ChoiceLayout) : 'row',
-    itemSize: VALID_SIZES.includes(state.itemSize as ItemSize) ? (state.itemSize as ItemSize) : 'lg',
+    itemScale: normalizeItemScale(state.itemScale ?? state.itemSize) ?? ITEM_SCALE_DEFAULT,
     orientation: VALID_ORIENTATIONS.includes(state.orientation as PageOrientation)
       ? (state.orientation as PageOrientation)
       : 'portrait',

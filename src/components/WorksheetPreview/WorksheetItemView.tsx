@@ -1,28 +1,27 @@
-import type { WorksheetItem, ItemSize } from '../../types/worksheet'
+import type { WorksheetItem } from '../../types/worksheet'
 
 interface WorksheetItemViewProps {
   item: WorksheetItem
-  /** Rozmiar czcionki/obrazu — kontrolowany przez użytkownika w edytorze. */
-  size?: ItemSize
+  /** Globalny rozmiar (mnożnik) ustawiony suwakiem w edytorze - używany, gdy element nie ma własnego rozmiaru. */
+  baseScale: number
   /** W trybie prostym elementy i podpisy są dodatkowo powiększone. */
   simpleMode?: boolean
 }
 
-const BASE_DIMENSION_REM: Record<ItemSize, number> = {
-  sm: 2.75,
-  md: 3.75,
-  lg: 5,
-}
+/** Bazowy rozmiar elementu przy mnożniku = 1. */
+const BASE_DIMENSION_REM = 3.75
 
 /** Mnożnik rozmiaru w trybie prostym — jedno miejsce sterujące „powiększeniem” całej karty. */
 const SIMPLE_MODE_SCALE = 1.35
 
 /** Renderuje pojedynczy element karty pracy: obraz albo emoji, z opcjonalnym podpisem pod spodem. */
-export function WorksheetItemView({ item, size = 'lg', simpleMode = false }: WorksheetItemViewProps) {
-  const scale = simpleMode ? SIMPLE_MODE_SCALE : 1
-  const dimension = `${BASE_DIMENSION_REM[size] * scale}rem`
-  const captionMaxWidth = `${(BASE_DIMENSION_REM[size] + 3) * scale}rem`
-  const captionFontSize = `${0.85 * scale}rem`
+export function WorksheetItemView({ item, baseScale, simpleMode = false }: WorksheetItemViewProps) {
+  // Element może mieć własny rozmiar (ustawiony indywidualnie) - w przeciwnym razie używamy globalnego.
+  const effectiveScale = item.scale ?? baseScale
+  const simpleModeMultiplier = simpleMode ? SIMPLE_MODE_SCALE : 1
+  const dimension = `${BASE_DIMENSION_REM * effectiveScale * simpleModeMultiplier}rem`
+  const captionMaxWidth = `${(BASE_DIMENSION_REM * effectiveScale + 3) * simpleModeMultiplier}rem`
+  const captionFontSize = `${0.85 * simpleModeMultiplier}rem`
 
   const caption = item.caption?.trim()
   const showCaption = Boolean(caption) && item.showCaption !== false

@@ -12,8 +12,10 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 ## Funkcje
 
 - Wybór jednego z 6 szablonów karty pracy:
-  - **Wybierz** — polecenie + od 2 do 6 obrazów/emoji do wyboru, w układzie
-    „Rząd” (równa linia) lub „Rozrzucone” (elementy porozrzucane po kartce),
+  - **Wybierz** — polecenie + od 2 do 12 obrazów/emoji do wyboru (6 w trybie
+    prostym), w układzie „Rząd” (równa linia) lub „Rozrzucone” (elementy
+    porozrzucane po kartce, rozmieszczane automatycznie niezależnie od liczby
+    elementów),
   - **Połącz w parę** — dwie kolumny elementów z miejscem na rysowanie linii,
   - **Policz** — jeden element powtórzony 1–10 razy + pole na odpowiedź,
   - **Tak / Nie** — jeden element, pytanie nad nim i dwa duże pola odpowiedzi,
@@ -24,8 +26,13 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 - **Tryb prosty** — globalny przełącznik powiększający polecenie, elementy i
   odstępy (przydatny dla młodszych uczniów); w tym trybie limit elementów w
   szablonie „Wybierz”/„Co nie pasuje?” jest niższy, żeby karta była czytelna.
-- Kontrola rozmiaru elementów (małe/średnie/duże) tam, gdzie ma to sens.
-- Opcjonalny podpis tekstowy pod każdym elementem, z możliwością ukrycia.
+- Płynny suwak rozmiaru elementów (globalny, dla wszystkich szablonów) oraz
+  możliwość ustawienia własnego rozmiaru pojedynczego elementu, z przyciskiem
+  „Ujednolić rozmiar wszystkich elementów”, który cofa indywidualne rozmiary
+  do wartości globalnej.
+- Opcjonalny podpis tekstowy pod każdym elementem, z możliwością ukrycia —
+  przy dodawaniu obrazu/emoji podpis jest od razu proponowany na podstawie
+  nazwy pliku lub nazwy emoji, ale można go dowolnie zmienić.
 - Duplikowanie elementu (i pary) jednym kliknięciem.
 - Dodawanie własnych obrazów (PNG, JPG/JPEG, WebP) z dysku — obrazy nie są
   nigdzie wysyłane, są tylko wczytywane lokalnie w przeglądarce.

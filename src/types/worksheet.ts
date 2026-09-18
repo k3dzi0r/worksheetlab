@@ -17,6 +17,8 @@ export interface WorksheetItem {
   caption?: string
   /** Czy podpis ma być widoczny (domyślnie true, jeśli caption jest ustawiony). */
   showCaption?: boolean
+  /** Indywidualny mnożnik rozmiaru elementu. Brak wartości = użyj globalnego rozmiaru szablonu. */
+  scale?: number
 }
 
 export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence'
@@ -24,14 +26,11 @@ export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOne
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
 
-/** Rozmiar elementów (obrazów/emoji) na kartce. */
-export type ItemSize = 'sm' | 'md' | 'lg'
-
-export const ITEM_SIZE_OPTIONS: { value: ItemSize; label: string }[] = [
-  { value: 'sm', label: 'Małe' },
-  { value: 'md', label: 'Średnie' },
-  { value: 'lg', label: 'Duże' },
-]
+/** Zakres płynnego suwaka rozmiaru elementów (mnożnik bazowego rozmiaru 3.75rem). */
+export const ITEM_SCALE_MIN = 0.5
+export const ITEM_SCALE_MAX = 3
+export const ITEM_SCALE_STEP = 0.05
+export const ITEM_SCALE_DEFAULT = 1.3
 
 /** Orientacja kartki A4. */
 export type PageOrientation = 'portrait' | 'landscape'
@@ -97,8 +96,8 @@ export interface WorksheetState {
   countRepetitions: number
   /** Układ elementów - dotyczy szablonu „Wybierz”. */
   layout: ChoiceLayout
-  /** Rozmiar elementów - dotyczy szablonów „Wybierz” i „Policz”. */
-  itemSize: ItemSize
+  /** Rozmiar elementów (mnożnik) - globalny dla wszystkich szablonów, edytowalny suwakiem. */
+  itemScale: number
   /** Orientacja strony A4 — wspólna dla wszystkich szablonów. */
   orientation: PageOrientation
   /** Tryb prosty: większe polecenie, elementy i odstępy, dla lepszej czytelności. */

@@ -4,14 +4,18 @@ import type {
   WorksheetState,
   TemplateType,
   ChoiceLayout,
-  ItemSize,
   PageOrientation,
 } from '../../types/worksheet'
-import { TEMPLATE_OPTIONS, ITEM_SIZE_OPTIONS } from '../../types/worksheet'
+import { TEMPLATE_OPTIONS, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP } from '../../types/worksheet'
 import { ImageUploader } from '../ImageUploader/ImageUploader'
 import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
 import type { EmojiEntry } from '../../data/emojis'
 import { createId } from '../../utils'
+
+/** Usuwa rozszerzenie pliku (np. ".png"), żeby zaproponować czytelną nazwę jako podpis. */
+function stripFileExtension(fileName: string): string {
+  return fileName.replace(/\.[a-z0-9]+$/i, '')
+}
 
 interface EditorProps {
   worksheet: WorksheetState
@@ -19,7 +23,10 @@ interface EditorProps {
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
-  onItemSizeChange: (itemSize: ItemSize) => void
+  onItemScaleChange: (itemScale: number) => void
+  onUpdateItemScale: (id: string, scale: number) => void
+  onResetItemScale: (id: string) => void
+  onResetAllItemScales: () => void
   onOrientationChange: (orientation: PageOrientation) => void
   onSimpleModeChange: (simpleMode: boolean) => void
   onSequenceRepetitionsChange: (count: number) => void
@@ -44,7 +51,10 @@ export function Editor({
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
-  onItemSizeChange,
+  onItemScaleChange,
+  onUpdateItemScale,
+  onResetItemScale,
+  onResetAllItemScales,
   onOrientationChange,
   onSimpleModeChange,
   onSequenceRepetitionsChange,
@@ -79,20 +89,18 @@ export function Editor({
   }
 
   function handleImageSelected(dataUrl: string, fileName: string) {
-    onAddItem({ id: createId(), source: 'image', imageDataUrl: dataUrl, label: fileName })
+    // Podpis jest od razu proponowany na podstawie nazwy pliku - użytkownik może go dowolnie zmienić.
+    const caption = stripFileExtension(fileName)
+    onAddItem({ id: createId(), source: 'image', imageDataUrl: dataUrl, label: fileName, caption, showCaption: false })
   }
 
   function handleEmojiSelected(entry: EmojiEntry) {
-    onAddItem({ id: createId(), source: 'emoji', emoji: entry.emoji, label: entry.name })
+    // Podpis jest od razu proponowany na podstawie polskiej nazwy emoji - można go zmienić.
+    onAddItem({ id: createId(), source: 'emoji', emoji: entry.emoji, label: entry.name, caption: entry.name, showCaption: false })
   }
 
   const showShuffleButton =
     worksheet.template === 'choice' || worksheet.template === 'matchPairs' || worksheet.template === 'oddOneOut'
-  const showItemSizeControl =
-    worksheet.template === 'choice' ||
-    worksheet.template === 'count' ||
-    worksheet.template === 'oddOneOut' ||
-    worksheet.template === 'sequence'
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto">
@@ -263,28 +271,29 @@ export function Editor({
         </section>
       )}
 
-      {/* Rozmiar elementów - dla szablonów "Wybierz" i "Policz" */}
-      {showItemSizeControl && (
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Rozmiar elementów</h2>
-          <div className="flex gap-2">
-            {ITEM_SIZE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => onItemSizeChange(option.value)}
-                className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium ${
-                  worksheet.itemSize === option.value
-                    ? 'border-blue-600 bg-blue-50 text-gray-900'
-                    : 'border-gray-200 bg-white text-gray-700'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Rozmiar elementów - płynny suwak wspólny dla wszystkich szablonów */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold">Rozmiar elementów</h2>
+          <span className="text-sm text-gray-500">{Math.round(worksheet.itemScale * 100)}%</span>
+        </div>
+        <input
+          type="range"
+          min={ITEM_SCALE_MIN}
+          max={ITEM_SCALE_MAX}
+          step={ITEM_SCALE_STEP}
+          value={worksheet.itemScale}
+          onChange={(event) => onItemScaleChange(Number(event.target.value))}
+          className="w-full"
+        />
+        <button
+          type="button"
+          onClick={onResetAllItemScales}
+          className="mt-1 text-sm text-blue-600 hover:underline"
+        >
+          Ujednolić rozmiar wszystkich elementów
+        </button>
+      </section>
 
       {/* Dodawanie elementów */}
       <section>
@@ -323,6 +332,8 @@ export function Editor({
           onMove={onMoveItem}
           onUpdateCaption={onUpdateCaption}
           onToggleCaption={onToggleCaption}
+          onUpdateItemScale={onUpdateItemScale}
+          onResetItemScale={onResetItemScale}
         />
       </section>
 
@@ -386,6 +397,8 @@ interface ElementsListProps {
   onMove: (id: string, direction: 'up' | 'down') => void
   onUpdateCaption: (id: string, caption: string) => void
   onToggleCaption: (id: string) => void
+  onUpdateItemScale: (id: string, scale: number) => void
+  onResetItemScale: (id: string) => void
 }
 
 /** Lista aktualnie użytych elementów – różny widok w zależności od szablonu. */
@@ -396,6 +409,8 @@ function ElementsList({
   onMove,
   onUpdateCaption,
   onToggleCaption,
+  onUpdateItemScale,
+  onResetItemScale,
 }: ElementsListProps) {
   if (worksheet.template === 'matchPairs') {
     if (worksheet.pairs.length === 0) {
@@ -425,13 +440,27 @@ function ElementsList({
                 onUpdateCaption={onUpdateCaption}
                 onToggleCaption={onToggleCaption}
               />
+              <ItemScaleEditor
+                item={pair.left}
+                globalScale={worksheet.itemScale}
+                onUpdateItemScale={onUpdateItemScale}
+                onResetItemScale={onResetItemScale}
+              />
               {pair.right && (
-                <CaptionEditor
-                  item={pair.right}
-                  label="Podpis (prawa)"
-                  onUpdateCaption={onUpdateCaption}
-                  onToggleCaption={onToggleCaption}
-                />
+                <>
+                  <CaptionEditor
+                    item={pair.right}
+                    label="Podpis (prawa)"
+                    onUpdateCaption={onUpdateCaption}
+                    onToggleCaption={onToggleCaption}
+                  />
+                  <ItemScaleEditor
+                    item={pair.right}
+                    globalScale={worksheet.itemScale}
+                    onUpdateItemScale={onUpdateItemScale}
+                    onResetItemScale={onResetItemScale}
+                  />
+                </>
               )}
             </div>
           </li>
@@ -461,12 +490,18 @@ function ElementsList({
               onMove={onMove}
             />
           </div>
-          <div className="mt-2">
+          <div className="mt-2 flex flex-col gap-1">
             <CaptionEditor
               item={item}
               label="Podpis"
               onUpdateCaption={onUpdateCaption}
               onToggleCaption={onToggleCaption}
+            />
+            <ItemScaleEditor
+              item={item}
+              globalScale={worksheet.itemScale}
+              onUpdateItemScale={onUpdateItemScale}
+              onResetItemScale={onResetItemScale}
             />
           </div>
         </li>
@@ -509,6 +544,44 @@ function CaptionEditor({ item, label, onUpdateCaption, onToggleCaption }: Captio
 
 function itemPreview(item: WorksheetItem): string {
   return item.source === 'emoji' ? `${item.emoji} ${item.label}` : `🖼️ ${item.label}`
+}
+
+interface ItemScaleEditorProps {
+  item: WorksheetItem
+  /** Globalny rozmiar ustawiony suwakiem wyżej - używany, gdy element nie ma własnego rozmiaru. */
+  globalScale: number
+  onUpdateItemScale: (id: string, scale: number) => void
+  onResetItemScale: (id: string) => void
+}
+
+/** Suwak indywidualnego rozmiaru elementu - domyślnie podąża za rozmiarem globalnym. */
+function ItemScaleEditor({ item, globalScale, onUpdateItemScale, onResetItemScale }: ItemScaleEditorProps) {
+  const effectiveScale = item.scale ?? globalScale
+  const hasOverride = item.scale !== undefined
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="range"
+        min={ITEM_SCALE_MIN}
+        max={ITEM_SCALE_MAX}
+        step={ITEM_SCALE_STEP}
+        value={effectiveScale}
+        onChange={(event) => onUpdateItemScale(item.id, Number(event.target.value))}
+        className="flex-1"
+      />
+      <span className="text-xs text-gray-500 w-10 text-right">{Math.round(effectiveScale * 100)}%</span>
+      {hasOverride && (
+        <button
+          type="button"
+          onClick={() => onResetItemScale(item.id)}
+          className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+          title="Wróć do rozmiaru globalnego"
+        >
+          Reset
+        </button>
+      )}
+    </div>
+  )
 }
 
 interface RowControlsProps {

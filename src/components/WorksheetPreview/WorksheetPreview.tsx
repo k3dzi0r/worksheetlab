@@ -55,7 +55,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
           instruction={worksheet.instruction}
           items={worksheet.items}
           layout={worksheet.layout}
-          itemSize={worksheet.itemSize}
+          itemScale={worksheet.itemScale}
           seed={shuffleSeed}
           simpleMode={worksheet.simpleMode}
         />
@@ -65,6 +65,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
           instruction={worksheet.instruction}
           pairs={worksheet.pairs}
           shuffledRight={shuffledRight}
+          itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
         />
       )}
@@ -73,18 +74,23 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
           instruction={worksheet.instruction}
           item={worksheet.items[0]}
           repetitions={worksheet.countRepetitions}
-          itemSize={worksheet.itemSize}
+          itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
         />
       )}
       {worksheet.template === 'yesNo' && (
-        <YesNoTemplate instruction={worksheet.instruction} item={worksheet.items[0]} simpleMode={worksheet.simpleMode} />
+        <YesNoTemplate
+          instruction={worksheet.instruction}
+          item={worksheet.items[0]}
+          itemScale={worksheet.itemScale}
+          simpleMode={worksheet.simpleMode}
+        />
       )}
       {worksheet.template === 'oddOneOut' && (
         <OddOneOutTemplate
           instruction={worksheet.instruction}
           items={worksheet.items}
-          itemSize={worksheet.itemSize}
+          itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
         />
       )}
@@ -94,7 +100,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
           patternItems={worksheet.sequenceItems}
           repetitions={worksheet.sequenceRepetitions}
           blanks={worksheet.sequenceBlanks}
-          itemSize={worksheet.itemSize}
+          itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
         />
       )}
