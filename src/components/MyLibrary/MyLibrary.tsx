@@ -12,6 +12,67 @@ export function MyLibrary({ onSelectItem }: Props) {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const importInputRef = useRef<HTMLInputElement>(null)
+
+  function handleExportLibrary() {
+    getLibraryItems().then((items) => {
+      const exportData = {
+        version: 1,
+        type: 'worksheetlab-library',
+        items,
+      }
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `worksheetlab-library-${new Date().toISOString().slice(0, 10)}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+    })
+  }
+
+  function handleImportLibrary(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        try {
+          const data = JSON.parse(reader.result)
+          if (data.type !== 'worksheetlab-library' || !Array.isArray(data.items)) {
+            alert('Nieprawidłowy plik biblioteki.')
+            return
+          }
+          
+          // Import with predictable conflict resolution: update existing items with same ID, add new ones
+          Promise.all(data.items.map((item: any) => {
+            if (typeof item.id === 'string' && typeof item.dataUrl === 'string' && typeof item.name === 'string') {
+              const validItem: LibraryItem = {
+                id: item.id,
+                name: item.name,
+                category: item.category || 'Ogólne',
+                tags: Array.isArray(item.tags) ? item.tags : [],
+                dataUrl: item.dataUrl,
+                createdAt: item.createdAt || Date.now()
+              }
+              return saveLibraryItem(validItem)
+            }
+            return Promise.resolve()
+          })).then(() => {
+            loadItems()
+            alert('Biblioteka została zaimportowana.')
+          })
+        } catch {
+          alert('Błąd podczas odczytu pliku biblioteki. Upewnij się, że to poprawny plik JSON.')
+        }
+      }
+    }
+    reader.readAsText(file)
+  }
+
   
   // State for editing an item
   const [editingItem, setEditingItem] = useState<LibraryItem | null>(null)
@@ -102,6 +163,7 @@ export function MyLibrary({ onSelectItem }: Props) {
         </p>
       </div>
 
+      
       <div className="flex gap-2">
         <button
           type="button"
@@ -109,7 +171,25 @@ export function MyLibrary({ onSelectItem }: Props) {
           className="flex-1 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-3 rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-          Wgraj plik do biblioteki
+          Wgraj obraz
+        </button>
+        <button
+          type="button"
+          onClick={handleExportLibrary}
+          className="flex-1 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-3 rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-2"
+          title="Eksportuj bibliotekę"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Kopia
+        </button>
+        <button
+          type="button"
+          onClick={() => importInputRef.current?.click()}
+          className="flex-1 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-3 rounded-lg text-sm hover:bg-gray-50 flex items-center justify-center gap-2"
+          title="Importuj bibliotekę"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Odtwórz
         </button>
         <input
           ref={fileInputRef}
@@ -118,7 +198,15 @@ export function MyLibrary({ onSelectItem }: Props) {
           className="hidden"
           onChange={handleFileSelected}
         />
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleImportLibrary}
+        />
       </div>
+
 
       {items.length > 0 && (
         <input
