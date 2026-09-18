@@ -1,4 +1,5 @@
 // Eksport/import całego stanu karty pracy do/z pliku JSON - bez backendu, bez localStorage.
+import { normalizeHandwritingFont } from './handwritingFonts'
 import type {
   ProjectState,
   WorksheetState,
@@ -23,6 +24,8 @@ const VALID_TEMPLATES: TemplateType[] = [
   'sameOrDifferent',
   'categorize',
   'handwriting',
+  'wordSearch',
+  'maze',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -119,7 +122,13 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingText: typeof state.handwritingText === 'string' ? state.handwritingText : '',
     handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
     handwritingRepeat: typeof state.handwritingRepeat === 'boolean' ? state.handwritingRepeat : false,
-    handwritingFont: typeof state.handwritingFont === 'string' ? state.handwritingFont : '"Comic Sans MS", "Chalkboard SE", sans-serif',
+    handwritingFont: normalizeHandwritingFont(state.handwritingFont),
+    mazeLevel: typeof state.mazeLevel === 'number' ? state.mazeLevel : 2,
+    wordSearchWords: typeof state.wordSearchWords === 'string' ? state.wordSearchWords : '',
+    wordSearchGridSize: typeof state.wordSearchGridSize === 'number' ? state.wordSearchGridSize : 10,
+    wordSearchAllowDiagonals: typeof state.wordSearchAllowDiagonals === 'boolean' ? state.wordSearchAllowDiagonals : false,
+    wordSearchAllowReverse: typeof state.wordSearchAllowReverse === 'boolean' ? state.wordSearchAllowReverse : false,
+    wordSearchUppercase: typeof state.wordSearchUppercase === 'boolean' ? state.wordSearchUppercase : true,
   }
 }
 

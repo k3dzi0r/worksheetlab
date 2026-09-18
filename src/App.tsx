@@ -179,6 +179,14 @@ function App() {
     setWorksheet((prev) => ({ ...prev, handwritingMode: mode }))
   }
 
+  function handleWordSearchOptionsChange(options: Partial<WorksheetState>) {
+    setWorksheet((prev) => ({ ...prev, ...options }))
+  }
+
+  function handleMazeLevelChange(level: number) {
+    setWorksheet((prev) => ({ ...prev, mazeLevel: level }))
+  }
+
   function handleInstructionChange(instruction: string) {
     setWorksheet((prev) => ({ ...prev, instruction }))
   }
@@ -496,6 +504,8 @@ function App() {
           onHandwritingModeChange={handleHandwritingModeChange}
           onHandwritingRepeatChange={handleHandwritingRepeatChange}
           onHandwritingFontChange={handleHandwritingFontChange}
+          onWordSearchOptionsChange={handleWordSearchOptionsChange}
+          onMazeLevelChange={handleMazeLevelChange}
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}
