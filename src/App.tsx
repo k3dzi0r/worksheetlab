@@ -254,6 +254,40 @@ function App() {
     })
   }
 
+  function handleReorderItems(activeId: string, overId: string) {
+    setWorksheet((prev) => {
+      if (prev.template === 'matchPairs') {
+        const oldIndex = prev.pairs.findIndex((p) => p.id === activeId)
+        const newIndex = prev.pairs.findIndex((p) => p.id === overId)
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newPairs = [...prev.pairs]
+          const [moved] = newPairs.splice(oldIndex, 1)
+          newPairs.splice(newIndex, 0, moved)
+          return { ...prev, pairs: newPairs }
+        }
+      } else if (prev.template === 'sequence') {
+        const oldIndex = prev.sequenceItems.findIndex((p) => p.id === activeId)
+        const newIndex = prev.sequenceItems.findIndex((p) => p.id === overId)
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newSequence = [...prev.sequenceItems]
+          const [moved] = newSequence.splice(oldIndex, 1)
+          newSequence.splice(newIndex, 0, moved)
+          return { ...prev, sequenceItems: newSequence }
+        }
+      } else {
+        const oldIndex = prev.items.findIndex((p) => p.id === activeId)
+        const newIndex = prev.items.findIndex((p) => p.id === overId)
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newItems = [...prev.items]
+          const [moved] = newItems.splice(oldIndex, 1)
+          newItems.splice(newIndex, 0, moved)
+          return { ...prev, items: newItems }
+        }
+      }
+      return prev
+    })
+  }
+
   function handleUpdateCaption(id: string, caption: string) {
     setWorksheet((prev) => updateItemById(prev, id, (item) => ({ ...item, caption, showCaption: true })))
   }
@@ -374,6 +408,7 @@ function App() {
           canUndo={canUndo}
           canRedo={canRedo}
           saveStatus={saveStatus}
+          onReorderItems={handleReorderItems}
         />
       </div>
       <div className="preview-panel">
