@@ -8,6 +8,7 @@ import { CountTemplate } from '../../templates/CountTemplate'
 import { YesNoTemplate } from '../../templates/YesNoTemplate'
 import { OddOneOutTemplate } from '../../templates/OddOneOutTemplate'
 import { SequenceTemplate } from '../../templates/SequenceTemplate'
+import { CutCardsTemplate } from '../../templates/CutCardsTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
@@ -103,6 +104,15 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
           repetitions={worksheet.sequenceRepetitions}
           blanks={worksheet.sequenceBlanks}
           itemScale={worksheet.itemScale}
+          simpleMode={worksheet.simpleMode}
+        />
+      )}
+      {worksheet.template === 'cutCards' && (
+        <CutCardsTemplate
+          instruction={worksheet.instruction}
+          items={worksheet.items}
+          itemScale={worksheet.itemScale}
+          showBorder={worksheet.cutCardsShowBorder}
           simpleMode={worksheet.simpleMode}
         />
       )}

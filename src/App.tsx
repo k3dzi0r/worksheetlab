@@ -28,6 +28,7 @@ const INITIAL_WORKSHEET: WorksheetState = {
   sequenceRepetitions: 3,
   sequenceBlanks: 1,
   header: DEFAULT_WORKSHEET_HEADER,
+  cutCardsShowBorder: true,
 }
 
 /**
@@ -36,7 +37,7 @@ const INITIAL_WORKSHEET: WorksheetState = {
  * dla którego sensowne jest tylko kilka elementów do porównania.
  */
 function getMaxItems(template: TemplateType, simpleMode: boolean): number | null {
-  if (template === 'choice') return simpleMode ? 6 : 12
+  if (template === 'choice' || template === 'cutCards') return simpleMode ? 6 : 12
   if (template === 'oddOneOut') return simpleMode ? 4 : 6
   return null
 }
@@ -114,6 +115,10 @@ function App() {
 
   function handleHeaderChange(header: Partial<WorksheetHeader>) {
     setWorksheet((prev) => ({ ...prev, header: { ...prev.header, ...header } }))
+  }
+
+  function handleCutCardsShowBorderChange(cutCardsShowBorder: boolean) {
+    setWorksheet((prev) => ({ ...prev, cutCardsShowBorder }))
   }
 
   function handleSequenceRepetitionsChange(sequenceRepetitions: number) {
@@ -290,6 +295,7 @@ function App() {
           onOrientationChange={handleOrientationChange}
           onSimpleModeChange={handleSimpleModeChange}
           onHeaderChange={handleHeaderChange}
+          onCutCardsShowBorderChange={handleCutCardsShowBorderChange}
           onSequenceRepetitionsChange={handleSequenceRepetitionsChange}
           onSequenceBlanksChange={handleSequenceBlanksChange}
           onAddItem={handleAddItem}

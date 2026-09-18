@@ -31,6 +31,7 @@ interface EditorProps {
   onOrientationChange: (orientation: PageOrientation) => void
   onSimpleModeChange: (simpleMode: boolean) => void
   onHeaderChange: (header: Partial<WorksheetHeader>) => void
+  onCutCardsShowBorderChange: (showBorder: boolean) => void
   onSequenceRepetitionsChange: (count: number) => void
   onSequenceBlanksChange: (count: number) => void
   onAddItem: (item: WorksheetItem) => void
@@ -60,6 +61,7 @@ export function Editor({
   onOrientationChange,
   onSimpleModeChange,
   onHeaderChange,
+  onCutCardsShowBorderChange,
   onSequenceRepetitionsChange,
   onSequenceBlanksChange,
   onAddItem,
@@ -255,6 +257,24 @@ export function Editor({
         </section>
       )}
 
+      {/* Ramka wokół kartoników - tylko dla szablonu "Kartoniki do wycinania" */}
+      {worksheet.template === 'cutCards' && (
+        <section>
+          <label className="flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-gray-200 bg-white cursor-pointer">
+            <input
+              type="checkbox"
+              checked={worksheet.cutCardsShowBorder}
+              onChange={(event) => onCutCardsShowBorderChange(event.target.checked)}
+              className="w-5 h-5"
+            />
+            <span>
+              <span className="font-semibold text-gray-900">Ramka wokół kartoników</span>
+              <span className="block text-sm text-gray-500">Przerywana linia ułatwiająca wycinanie.</span>
+            </span>
+          </label>
+        </section>
+      )}
+
       {/* Ustawienia wzoru - tylko dla szablonu "Sekwencja" */}
       {worksheet.template === 'sequence' && (
         <section className="flex gap-6">
@@ -357,6 +377,9 @@ export function Editor({
         )}
         {worksheet.template === 'sequence' && (
           <p className="text-sm text-gray-500 mb-2">Dodaj 2-4 elementy tworzące wzór (np. 🍎 🍌).</p>
+        )}
+        {worksheet.template === 'cutCards' && (
+          <p className="text-sm text-gray-500 mb-2">Dodaj od 2 do 12 elementów - każdy trafi na osobny kartonik.</p>
         )}
         <div className="flex flex-col gap-3">
           <ImageUploader onImageSelected={handleImageSelected} />
@@ -551,6 +574,7 @@ function ElementsList({
               globalScale={worksheet.itemScale}
               onUpdateItemScale={onUpdateItemScale}
               onResetItemScale={onResetItemScale}
+              hidden={worksheet.template === 'cutCards'}
             />
           </div>
         </li>
@@ -601,10 +625,13 @@ interface ItemScaleEditorProps {
   globalScale: number
   onUpdateItemScale: (id: string, scale: number) => void
   onResetItemScale: (id: string) => void
+  /** Ukrywa suwak - używane, gdy szablon wymaga jednolitego rozmiaru wszystkich elementów. */
+  hidden?: boolean
 }
 
 /** Suwak indywidualnego rozmiaru elementu - domyślnie podąża za rozmiarem globalnym. */
-function ItemScaleEditor({ item, globalScale, onUpdateItemScale, onResetItemScale }: ItemScaleEditorProps) {
+function ItemScaleEditor({ item, globalScale, onUpdateItemScale, onResetItemScale, hidden = false }: ItemScaleEditorProps) {
+  if (hidden) return null
   const effectiveScale = item.scale ?? globalScale
   const hasOverride = item.scale !== undefined
   return (

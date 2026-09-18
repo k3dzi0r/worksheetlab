@@ -11,7 +11,7 @@ import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_H
 import type { WorksheetHeader } from './types/worksheet'
 import { clamp } from './utils'
 
-const VALID_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'count', 'yesNo', 'oddOneOut', 'sequence']
+const VALID_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'count', 'yesNo', 'oddOneOut', 'sequence', 'cutCards']
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
 
@@ -98,6 +98,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     sequenceRepetitions: typeof state.sequenceRepetitions === 'number' ? state.sequenceRepetitions : 3,
     sequenceBlanks: typeof state.sequenceBlanks === 'number' ? state.sequenceBlanks : 1,
     header: normalizeHeader(state.header),
+    cutCardsShowBorder: typeof state.cutCardsShowBorder === 'boolean' ? state.cutCardsShowBorder : true,
   }
 }
 

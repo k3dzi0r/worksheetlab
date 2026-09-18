@@ -21,7 +21,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -72,6 +72,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     label: 'Sekwencja',
     description: 'Wzór z elementów powtórzony kilka razy + puste pola.',
   },
+  {
+    value: 'cutCards',
+    label: 'Kartoniki do wycinania',
+    description: 'Równe kartoniki w siatce, gotowe do wydruku i wycięcia.',
+  },
 ]
 
 /**
@@ -110,6 +115,8 @@ export interface WorksheetState {
   sequenceBlanks: number
   /** Nagłówek karty - wspólny dla wszystkich szablonów. */
   header: WorksheetHeader
+  /** Czy pokazywać przerywaną ramkę wokół kartoników w szablonie „Kartoniki do wycinania”. */
+  cutCardsShowBorder: boolean
 }
 
 /** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */
