@@ -5,6 +5,7 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
   background-color: #f3f4f6;
@@ -15,7 +16,7 @@ body {
 .app-layout {
   display: flex;
   flex-direction: row;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .editor-panel {
@@ -23,6 +24,9 @@ body {
   flex-shrink: 0;
   border-right: 1px solid #e5e7eb;
   background: #ffffff;
+  /* Panel przewija się niezależnie od podglądu, żeby ten zawsze był widoczny. */
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .preview-panel {
@@ -31,17 +35,25 @@ body {
   justify-content: center;
   align-items: flex-start;
   padding: 2rem;
-  overflow-x: auto;
+  height: 100vh;
+  overflow: auto;
 }
 
 @media (max-width: 900px) {
   .app-layout {
     flex-direction: column;
+    height: auto;
   }
   .editor-panel {
     width: 100%;
+    height: auto;
+    overflow-y: visible;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
+  }
+  .preview-panel {
+    height: auto;
+    overflow: visible;
   }
 }
 
@@ -77,6 +89,7 @@ body {
     padding: 0;
     margin: 0;
     display: block;
+    height: auto;
     overflow: visible;
   }
 
