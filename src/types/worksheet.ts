@@ -1,3 +1,5 @@
+import type { MathMissing, MathOperation } from '../mathTasks'
+
 // Wspólny model danych dla każdego elementu dodanego do karty pracy,
 // niezależnie od tego, czy jest to własny obraz, czy emoji z biblioteki.
 
@@ -21,7 +23,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -56,6 +58,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'coloring',
     label: 'Kolorowanka',
     description: 'Mandala do pokolorowania, także w wersji „koloruj według kodu”.',
+  },
+  {
+    value: 'math',
+    label: 'Działania',
+    description: 'Dodawanie, odejmowanie, mnożenie i dzielenie z kluczem odpowiedzi.',
   },
   {
     value: 'choice',
@@ -161,6 +168,14 @@ export interface WorksheetState {
   handwritingMode?: 'solid' | 'tracing' | 'empty'
   handwritingRepeat?: boolean
   handwritingFont?: string
+  /** Rodzaje działań w szablonie „Działania”. */
+  mathOperations?: MathOperation[]
+  /** Górna granica zakresu liczbowego (10, 20, 100). */
+  mathMax?: number
+  /** Czy wolno przekraczać próg dziesiątkowy. */
+  mathCrossTen?: boolean
+  /** Które miejsce w działaniu zostaje puste. */
+  mathMissing?: MathMissing
   /** Złożoność wzoru kolorowanki (1-5). */
   coloringLevel?: number
   /** Zwykła kolorowanka albo kolorowanie według kodu (numer w każdym polu). */

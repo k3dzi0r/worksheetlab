@@ -191,6 +191,10 @@ function App() {
     setWorksheet((prev) => ({ ...prev, ...options }))
   }
 
+  function handleMathOptionsChange(options: Partial<WorksheetState>) {
+    setWorksheet((prev) => ({ ...prev, ...options }))
+  }
+
   function handleInstructionChange(instruction: string) {
     setWorksheet((prev) => ({ ...prev, instruction }))
   }
@@ -511,6 +515,7 @@ function App() {
           onWordSearchOptionsChange={handleWordSearchOptionsChange}
           onMazeLevelChange={handleMazeLevelChange}
           onColoringOptionsChange={handleColoringOptionsChange}
+          onMathOptionsChange={handleMathOptionsChange}
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}

@@ -1,5 +1,15 @@
 // Eksport/import całego stanu karty pracy do/z pliku JSON - bez backendu, bez localStorage.
 import { normalizeHandwritingFont } from './handwritingFonts'
+import type { MathMissing, MathOperation } from './mathTasks'
+
+const VALID_MATH_OPERATIONS: MathOperation[] = ['add', 'sub', 'mul', 'div']
+
+/** Karta bez zaznaczonego działania byłaby pusta, więc zawsze zostawiamy przynajmniej dodawanie. */
+function normalizeMathOperations(value: unknown): MathOperation[] {
+  if (!Array.isArray(value)) return ['add']
+  const operations = value.filter((op): op is MathOperation => VALID_MATH_OPERATIONS.includes(op as MathOperation))
+  return operations.length > 0 ? operations : ['add']
+}
 import type {
   ProjectState,
   WorksheetState,
@@ -27,6 +37,7 @@ const VALID_TEMPLATES: TemplateType[] = [
   'wordSearch',
   'maze',
   'coloring',
+  'math',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -124,6 +135,12 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
     handwritingRepeat: typeof state.handwritingRepeat === 'boolean' ? state.handwritingRepeat : false,
     handwritingFont: normalizeHandwritingFont(state.handwritingFont),
+    mathOperations: normalizeMathOperations(state.mathOperations),
+    mathMax: typeof state.mathMax === 'number' ? state.mathMax : 20,
+    mathCrossTen: typeof state.mathCrossTen === 'boolean' ? state.mathCrossTen : true,
+    mathMissing: (['result', 'operand', 'mixed'] as const).includes(state.mathMissing as MathMissing)
+      ? (state.mathMissing as MathMissing)
+      : 'result',
     coloringLevel: typeof state.coloringLevel === 'number' ? state.coloringLevel : 2,
     coloringMode: state.coloringMode === 'numbers' ? 'numbers' : 'blank',
     coloringColorCount: typeof state.coloringColorCount === 'number' ? state.coloringColorCount : 4,
