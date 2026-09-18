@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import type {
   WorksheetItem,
   WorksheetState,
+  ProjectState,
   TemplateType,
   ChoiceLayout,
   PageOrientation,
@@ -10,13 +11,15 @@ import type {
 import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
 import type { WorksheetHeader } from './types/worksheet'
 import { createId, shuffleArray, clamp } from './utils'
-import { downloadWorksheetJson, parseWorksheetJson } from './worksheetIO'
+import { downloadProjectJson, parseProjectJson } from './worksheetIO'
 import { useUndoRedo } from './hooks/useUndoRedo'
 import { useAutosave } from './hooks/useAutosave'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
+import { PageManager } from './components/PageManager'
 
-const INITIAL_WORKSHEET: WorksheetState = {
+export const INITIAL_WORKSHEET: WorksheetState = {
+  id: createId(),
   template: 'choice',
   instruction: '',
   items: [],
@@ -36,6 +39,11 @@ const INITIAL_WORKSHEET: WorksheetState = {
   correctAnswers: [],
 }
 
+export const INITIAL_PROJECT: ProjectState = {
+  pages: [INITIAL_WORKSHEET],
+  activePageIndex: 0,
+}
+
 /**
  * Miękki limit liczby elementów w niektórych szablonach, żeby karta czytelnie
  * mieściła się na A4. W trybie prostym limit jest niższy, bo elementy są większe.
@@ -49,21 +57,35 @@ function getMaxItems(template: TemplateType, simpleMode: boolean): number | null
 
 function App() {
   const {
-    state: worksheet,
-    set: setWorksheet,
-    reset: resetWorksheet,
+    state: project,
+    set: setProject,
+    reset: resetProject,
     undo,
     redo,
     canUndo,
     canRedo,
-  } = useUndoRedo<WorksheetState>(INITIAL_WORKSHEET)
+  } = useUndoRedo<ProjectState>(INITIAL_PROJECT)
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [showAnswerKey, setShowAnswerKey] = useState(false)
 
-  const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(worksheet, (state) => {
-    resetWorksheet(state)
+  const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(project, (state) => {
+    resetProject(state)
   })
 
+
+
+
+  
+  const worksheet = project.pages[project.activePageIndex] || INITIAL_WORKSHEET
+
+  const setWorksheet = useCallback((updater: (prev: WorksheetState) => WorksheetState) => {
+    setProject((prevProj) => {
+      const newPages = [...prevProj.pages]
+      const activeIdx = prevProj.activePageIndex
+      newPages[activeIdx] = updater(newPages[activeIdx] || INITIAL_WORKSHEET)
+      return { ...prevProj, pages: newPages }
+    })
+  }, [setProject])
 
   const handleToggleCorrectAnswer = useCallback(
     (answerId: string) => {
@@ -78,6 +100,61 @@ function App() {
     },
     [setWorksheet]
   )
+
+  const addPage = useCallback(() => {
+    setProject((prev) => {
+      const newPage = { ...INITIAL_WORKSHEET, id: createId(), orientation: prev.pages[0]?.orientation || 'portrait' }
+      return {
+        ...prev,
+        pages: [...prev.pages, newPage],
+        activePageIndex: prev.pages.length,
+      }
+    })
+  }, [setProject])
+
+  const removePage = useCallback((index: number) => {
+    setProject((prev) => {
+      if (prev.pages.length <= 1) return prev
+      const newPages = prev.pages.filter((_, i) => i !== index)
+      const newActiveIndex = Math.min(prev.activePageIndex, newPages.length - 1)
+      return { ...prev, pages: newPages, activePageIndex: newActiveIndex }
+    })
+  }, [setProject])
+
+  const duplicatePage = useCallback((index: number) => {
+    setProject((prev) => {
+      const pageToCopy = prev.pages[index]
+      if (!pageToCopy) return prev
+      const newPage = { ...pageToCopy, id: createId() }
+      const newPages = [...prev.pages]
+      newPages.splice(index + 1, 0, newPage)
+      return { ...prev, pages: newPages, activePageIndex: index + 1 }
+    })
+  }, [setProject])
+
+  const setActivePage = useCallback((index: number) => {
+    setProject((prev) => ({ ...prev, activePageIndex: index }))
+  }, [setProject])
+
+  const reorderPages = useCallback((oldIndex: number, newIndex: number) => {
+    setProject((prev) => {
+      const newPages = [...prev.pages]
+      const [moved] = newPages.splice(oldIndex, 1)
+      newPages.splice(newIndex, 0, moved)
+      
+      let newActiveIndex = prev.activePageIndex
+      if (prev.activePageIndex === oldIndex) {
+        newActiveIndex = newIndex
+      } else if (oldIndex < prev.activePageIndex && newIndex >= prev.activePageIndex) {
+        newActiveIndex--
+      } else if (oldIndex > prev.activePageIndex && newIndex <= prev.activePageIndex) {
+        newActiveIndex++
+      }
+
+      return { ...prev, pages: newPages, activePageIndex: newActiveIndex }
+    })
+  }, [setProject])
+
 
   function handleTemplateChange(template: TemplateType) {
     // Każdy szablon ma inny kształt danych, więc przy zmianie czyścimy zawartość,
@@ -335,25 +412,30 @@ function App() {
   }
 
   function handleExport() {
-    downloadWorksheetJson(worksheet)
+    downloadProjectJson(project)
   }
 
   function handleImport(text: string) {
-    const imported = parseWorksheetJson(text)
+    const imported = parseProjectJson(text)
     if (!imported) {
       alert('Nie udało się wczytać pliku - to nie jest poprawny projekt WorksheetLab.')
       return
     }
-    resetWorksheet(imported)
+    resetProject(imported)
   }
 
   function handleClear() {
-    resetWorksheet({
-      ...INITIAL_WORKSHEET,
-      template: worksheet.template,
-      orientation: worksheet.orientation,
-      simpleMode: worksheet.simpleMode,
-      header: worksheet.header,
+    resetProject({
+      ...INITIAL_PROJECT,
+      pages: [
+        {
+          ...INITIAL_WORKSHEET,
+          template: worksheet.template,
+          orientation: worksheet.orientation,
+          simpleMode: worksheet.simpleMode,
+          header: worksheet.header,
+        },
+      ],
     })
   }
 
@@ -431,10 +513,36 @@ function App() {
             onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
         />
       </div>
-      <div className="preview-panel">
-        {Array.from({ length: worksheet.variantCount ?? 1 }).map((_, index) => (
-          <WorksheetPreview key={index} worksheet={worksheet} shuffleSeed={shuffleSeed} variantIndex={index} />
-        ))}
+      <div className="preview-panel print:overflow-visible">
+        <div className="print:hidden w-full max-w-[21cm] mb-4">
+          <PageManager
+            project={project}
+            onAdd={addPage}
+            onRemove={removePage}
+            onDuplicate={duplicatePage}
+            onSelect={setActivePage}
+            onReorder={reorderPages}
+          />
+        </div>
+        <div className="flex flex-col items-center w-full gap-8 print:gap-0">
+          {project.pages.map((page, idx) => (
+            <div
+              key={page.id}
+              className={`w-full flex flex-col items-center gap-8 ${idx === project.activePageIndex ? 'flex' : 'hidden print:flex'}`}
+              style={{ pageBreakAfter: 'always' }}
+            >
+              {Array.from({ length: page.variantCount ?? 1 }).map((_, variantIndex) => (
+                <WorksheetPreview
+                  key={`${page.id}-${variantIndex}`}
+                  worksheet={page}
+                  shuffleSeed={shuffleSeed}
+                  variantIndex={variantIndex}
+                  showAnswerKey={showAnswerKey}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

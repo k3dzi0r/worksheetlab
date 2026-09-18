@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { set, get, del } from '../idb'
-import type { WorksheetState } from '../types/worksheet'
+import type { ProjectState } from '../types/worksheet'
 
-import { parseWorksheetJson } from '../worksheetIO'
+import { parseProjectJson } from '../worksheetIO'
 
 const AUTOSAVE_KEY = 'worksheet-autosave'
 
 export function useAutosave(
-  worksheet: WorksheetState,
-  onRestore: (state: WorksheetState) => void
+  project: ProjectState,
+  onRestore: (state: ProjectState) => void
 ) {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle')
   const [hasDraft, setHasDraft] = useState(false)
@@ -33,11 +33,11 @@ export function useAutosave(
 
     if (isFirstRender.current) {
       isFirstRender.current = false
-      lastSavedState.current = JSON.stringify(worksheet)
+      lastSavedState.current = JSON.stringify(project)
       return
     }
 
-    const currentSerialized = JSON.stringify(worksheet)
+    const currentSerialized = JSON.stringify(project)
     if (currentSerialized === lastSavedState.current) return
 
     setSaveStatus('saving')
@@ -51,12 +51,12 @@ export function useAutosave(
     }, 1000)
 
     return () => clearTimeout(handler)
-  }, [worksheet, isReady, hasDraft])
+  }, [project, isReady, hasDraft])
 
   const loadDraft = async () => {
     const data = await get<string>(AUTOSAVE_KEY)
     if (data) {
-      const parsed = parseWorksheetJson(data)
+      const parsed = parseProjectJson(data)
       if (parsed) onRestore(parsed)
     }
     setHasDraft(false)

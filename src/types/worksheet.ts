@@ -101,6 +101,8 @@ export interface MatchPair {
 
 /** Pełny stan karty pracy edytowanej przez użytkownika. */
 export interface WorksheetState {
+  /** Unikalny identyfikator strony w projekcie */
+  id?: string
   template: TemplateType
   instruction: string
   /** Elementy używane przez szablony „Wybierz” i „Policz”. */
@@ -161,4 +163,10 @@ export const DEFAULT_WORKSHEET_HEADER: WorksheetHeader = {
   dateLabel: 'Data',
   showClass: false,
   classLabel: 'Klasa',
+}
+
+/** Model reprezentujący cały projekt (wiele stron). */
+export interface ProjectState {
+  pages: WorksheetState[]
+  activePageIndex: number
 }

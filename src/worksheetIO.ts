@@ -1,5 +1,6 @@
 // Eksport/import całego stanu karty pracy do/z pliku JSON - bez backendu, bez localStorage.
 import type {
+  ProjectState,
   WorksheetState,
   WorksheetItem,
   MatchPair,
@@ -122,6 +123,51 @@ export function downloadWorksheetJson(worksheet: WorksheetState) {
   const dateStr = new Date().toISOString().slice(0, 10)
   const fileName = `worksheetlab-${dateStr}.json`
   const blob = new Blob([JSON.stringify(worksheet, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+
+/** Paruje cały projekt z pliku JSON. Zapewnia kompatybilność wsteczną. */
+export function parseProjectJson(text: string): ProjectState | null {
+  let data: any
+  try {
+    data = JSON.parse(text)
+  } catch {
+    return null
+  }
+  
+  if (!data || typeof data !== 'object') return null
+
+  // Jeśli JSON to stary pojedynczy WorksheetState:
+  if (typeof data.template === 'string') {
+    const single = parseWorksheetJson(text)
+    if (!single) return null
+    return { pages: [single], activePageIndex: 0 }
+  }
+
+  // Jeśli JSON to nowy ProjectState:
+  if (Array.isArray(data.pages)) {
+    const pages = data.pages.map((p: any) => parseWorksheetJson(JSON.stringify(p))).filter(Boolean) as WorksheetState[]
+    if (pages.length === 0) return null
+    return {
+      pages,
+      activePageIndex: typeof data.activePageIndex === 'number' && data.activePageIndex < pages.length ? data.activePageIndex : 0
+    }
+  }
+
+  return null
+}
+
+/** Pobiera cały projekt jako plik .json. */
+export function downloadProjectJson(project: ProjectState) {
+  const dateStr = new Date().toISOString().slice(0, 10)
+  const fileName = `worksheetlab-project-${dateStr}.json`
+  const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
