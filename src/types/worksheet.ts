@@ -108,4 +108,34 @@ export interface WorksheetState {
   sequenceRepetitions: number
   /** Liczba pustych pól na końcu sekwencji (1-3). */
   sequenceBlanks: number
+  /** Nagłówek karty - wspólny dla wszystkich szablonów. */
+  header: WorksheetHeader
+}
+
+/** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */
+export interface WorksheetHeader {
+  /** Czy tytuł karty ma być pokazany. */
+  showTitle: boolean
+  title: string
+  /** Czy pokazać pole na imię i nazwisko. */
+  showName: boolean
+  /** Etykieta pola - domyślnie "Imię i nazwisko", edytowalna. */
+  nameLabel: string
+  /** Czy pokazać pole na datę. */
+  showDate: boolean
+  dateLabel: string
+  /** Czy pokazać pole na klasę. */
+  showClass: boolean
+  classLabel: string
+}
+
+export const DEFAULT_WORKSHEET_HEADER: WorksheetHeader = {
+  showTitle: false,
+  title: '',
+  showName: false,
+  nameLabel: 'Imię i nazwisko',
+  showDate: false,
+  dateLabel: 'Data',
+  showClass: false,
+  classLabel: 'Klasa',
 }

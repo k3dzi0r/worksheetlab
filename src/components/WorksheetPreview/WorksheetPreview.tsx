@@ -8,6 +8,7 @@ import { CountTemplate } from '../../templates/CountTemplate'
 import { YesNoTemplate } from '../../templates/YesNoTemplate'
 import { OddOneOutTemplate } from '../../templates/OddOneOutTemplate'
 import { SequenceTemplate } from '../../templates/SequenceTemplate'
+import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
   worksheet: WorksheetState
@@ -50,6 +51,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed }: WorksheetPreviewPro
 
   return (
     <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto" style={pageStyle}>
+      <WorksheetHeaderView header={worksheet.header} simpleMode={worksheet.simpleMode} />
       {worksheet.template === 'choice' && (
         <ChoiceTemplate
           instruction={worksheet.instruction}

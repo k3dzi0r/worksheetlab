@@ -7,7 +7,8 @@ import type {
   ChoiceLayout,
   PageOrientation,
 } from './types/worksheet'
-import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX } from './types/worksheet'
+import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
+import type { WorksheetHeader } from './types/worksheet'
 import { clamp } from './utils'
 
 const VALID_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'count', 'yesNo', 'oddOneOut', 'sequence']
@@ -38,6 +39,22 @@ function isMatchPair(value: unknown): value is MatchPair {
   if (!value || typeof value !== 'object') return false
   const pair = value as Record<string, unknown>
   return typeof pair.id === 'string' && isWorksheetItem(pair.left) && (pair.right === null || isWorksheetItem(pair.right))
+}
+
+/** Normalizuje nagłówek karty z pliku JSON - brakujące pole lub zły typ zastępujemy wartością domyślną. */
+function normalizeHeader(value: unknown): WorksheetHeader {
+  if (!value || typeof value !== 'object') return DEFAULT_WORKSHEET_HEADER
+  const header = value as Record<string, unknown>
+  return {
+    showTitle: typeof header.showTitle === 'boolean' ? header.showTitle : DEFAULT_WORKSHEET_HEADER.showTitle,
+    title: typeof header.title === 'string' ? header.title : DEFAULT_WORKSHEET_HEADER.title,
+    showName: typeof header.showName === 'boolean' ? header.showName : DEFAULT_WORKSHEET_HEADER.showName,
+    nameLabel: typeof header.nameLabel === 'string' ? header.nameLabel : DEFAULT_WORKSHEET_HEADER.nameLabel,
+    showDate: typeof header.showDate === 'boolean' ? header.showDate : DEFAULT_WORKSHEET_HEADER.showDate,
+    dateLabel: typeof header.dateLabel === 'string' ? header.dateLabel : DEFAULT_WORKSHEET_HEADER.dateLabel,
+    showClass: typeof header.showClass === 'boolean' ? header.showClass : DEFAULT_WORKSHEET_HEADER.showClass,
+    classLabel: typeof header.classLabel === 'string' ? header.classLabel : DEFAULT_WORKSHEET_HEADER.classLabel,
+  }
 }
 
 /**
@@ -80,6 +97,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     sequenceItems,
     sequenceRepetitions: typeof state.sequenceRepetitions === 'number' ? state.sequenceRepetitions : 3,
     sequenceBlanks: typeof state.sequenceBlanks === 'number' ? state.sequenceBlanks : 1,
+    header: normalizeHeader(state.header),
   }
 }
 

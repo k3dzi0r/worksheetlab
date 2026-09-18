@@ -7,7 +7,8 @@ import type {
   PageOrientation,
   MatchPair,
 } from './types/worksheet'
-import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX } from './types/worksheet'
+import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
+import type { WorksheetHeader } from './types/worksheet'
 import { createId, shuffleArray, clamp } from './utils'
 import { downloadWorksheetJson, parseWorksheetJson } from './worksheetIO'
 import { Editor } from './components/Editor/Editor'
@@ -26,6 +27,7 @@ const INITIAL_WORKSHEET: WorksheetState = {
   sequenceItems: [],
   sequenceRepetitions: 3,
   sequenceBlanks: 1,
+  header: DEFAULT_WORKSHEET_HEADER,
 }
 
 /**
@@ -108,6 +110,10 @@ function App() {
 
   function handleSimpleModeChange(simpleMode: boolean) {
     setWorksheet((prev) => ({ ...prev, simpleMode }))
+  }
+
+  function handleHeaderChange(header: Partial<WorksheetHeader>) {
+    setWorksheet((prev) => ({ ...prev, header: { ...prev.header, ...header } }))
   }
 
   function handleSequenceRepetitionsChange(sequenceRepetitions: number) {
@@ -264,6 +270,7 @@ function App() {
       template: prev.template,
       orientation: prev.orientation,
       simpleMode: prev.simpleMode,
+      header: prev.header,
     }))
   }
 
@@ -282,6 +289,7 @@ function App() {
           onResetAllItemScales={handleResetAllItemScales}
           onOrientationChange={handleOrientationChange}
           onSimpleModeChange={handleSimpleModeChange}
+          onHeaderChange={handleHeaderChange}
           onSequenceRepetitionsChange={handleSequenceRepetitionsChange}
           onSequenceBlanksChange={handleSequenceBlanksChange}
           onAddItem={handleAddItem}

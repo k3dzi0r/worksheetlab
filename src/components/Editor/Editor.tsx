@@ -5,6 +5,7 @@ import type {
   TemplateType,
   ChoiceLayout,
   PageOrientation,
+  WorksheetHeader,
 } from '../../types/worksheet'
 import { TEMPLATE_OPTIONS, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP } from '../../types/worksheet'
 import { ImageUploader } from '../ImageUploader/ImageUploader'
@@ -29,6 +30,7 @@ interface EditorProps {
   onResetAllItemScales: () => void
   onOrientationChange: (orientation: PageOrientation) => void
   onSimpleModeChange: (simpleMode: boolean) => void
+  onHeaderChange: (header: Partial<WorksheetHeader>) => void
   onSequenceRepetitionsChange: (count: number) => void
   onSequenceBlanksChange: (count: number) => void
   onAddItem: (item: WorksheetItem) => void
@@ -57,6 +59,7 @@ export function Editor({
   onResetAllItemScales,
   onOrientationChange,
   onSimpleModeChange,
+  onHeaderChange,
   onSequenceRepetitionsChange,
   onSequenceBlanksChange,
   onAddItem,
@@ -174,6 +177,52 @@ export function Editor({
             <span className="block text-sm text-gray-500">Większe elementy i polecenie — dla młodszych uczniów.</span>
           </span>
         </label>
+      </section>
+
+      {/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">Nagłówek karty</h2>
+        <div className="flex flex-col gap-2 border border-gray-200 rounded-lg p-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={worksheet.header.showTitle}
+              onChange={(event) => onHeaderChange({ showTitle: event.target.checked })}
+              className="w-5 h-5"
+            />
+            <span>Tytuł karty</span>
+          </label>
+          {worksheet.header.showTitle && (
+            <input
+              type="text"
+              value={worksheet.header.title}
+              onChange={(event) => onHeaderChange({ title: event.target.value })}
+              placeholder='np. "Karta pracy - Wiosna"'
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            />
+          )}
+          <HeaderFieldToggle
+            checked={worksheet.header.showName}
+            label={worksheet.header.nameLabel}
+            defaultLabel="Imię i nazwisko"
+            onToggle={(checked) => onHeaderChange({ showName: checked })}
+            onLabelChange={(nameLabel) => onHeaderChange({ nameLabel })}
+          />
+          <HeaderFieldToggle
+            checked={worksheet.header.showDate}
+            label={worksheet.header.dateLabel}
+            defaultLabel="Data"
+            onToggle={(checked) => onHeaderChange({ showDate: checked })}
+            onLabelChange={(dateLabel) => onHeaderChange({ dateLabel })}
+          />
+          <HeaderFieldToggle
+            checked={worksheet.header.showClass}
+            label={worksheet.header.classLabel}
+            defaultLabel="Klasa"
+            onToggle={(checked) => onHeaderChange({ showClass: checked })}
+            onLabelChange={(classLabel) => onHeaderChange({ classLabel })}
+          />
+        </div>
       </section>
 
       {/* Polecenie */}
@@ -631,6 +680,38 @@ function RowControls({ index, total, id, onRemove, onDuplicate, onMove }: RowCon
       >
         ✕
       </button>
+    </div>
+  )
+}
+
+interface HeaderFieldToggleProps {
+  checked: boolean
+  label: string
+  defaultLabel: string
+  onToggle: (checked: boolean) => void
+  onLabelChange: (label: string) => void
+}
+
+/** Przełącznik jednego pola nagłówka (np. "Data") z możliwością zmiany jego etykiety. */
+function HeaderFieldToggle({ checked, label, defaultLabel, onToggle, onLabelChange }: HeaderFieldToggleProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onToggle(event.target.checked)}
+          className="w-5 h-5"
+        />
+      </label>
+      <input
+        type="text"
+        value={label}
+        onChange={(event) => onLabelChange(event.target.value)}
+        disabled={!checked}
+        placeholder={defaultLabel}
+        className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+      />
     </div>
   )
 }

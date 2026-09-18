@@ -39,6 +39,8 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 - Wbudowany picker emoji (ok. 130 emoji, 8 kategorii, wyszukiwarka po polskich
   nazwach i słowach kluczowych).
 - Podgląd kartki A4 w proporcjach rzeczywistej strony.
+- Opcjonalny nagłówek karty — tytuł oraz pola „Imię i nazwisko”, „Data”,
+  „Klasa” (z edytowalnymi etykietami), wspólny dla wszystkich szablonów.
 - Zmiana kolejności elementów (przesuwanie w górę/w dół), usuwanie elementów.
 - Losowanie kolejności elementów (dla szablonów, gdzie ma to sens).
 - **Eksport i import projektu do pliku `.json`** — pozwala zapisać kartę na
