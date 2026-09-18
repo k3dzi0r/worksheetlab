@@ -22,6 +22,7 @@ const VALID_TEMPLATES: TemplateType[] = [
   'cutCards',
   'sameOrDifferent',
   'categorize',
+  'handwriting',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -115,6 +116,8 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
       : ['Kategoria 1', 'Kategoria 2'],
     variantCount: typeof state.variantCount === 'number' ? state.variantCount : 1,
     correctAnswers: Array.isArray(state.correctAnswers) ? state.correctAnswers : [],
+    handwritingText: typeof state.handwritingText === 'string' ? state.handwritingText : '',
+    handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
   }
 }
 

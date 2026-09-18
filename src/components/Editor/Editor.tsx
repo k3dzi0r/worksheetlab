@@ -60,6 +60,8 @@ interface EditorProps {
   onToggleCorrectAnswer?: (answerId: string) => void
   worksheet: WorksheetState
   onTemplateChange: (template: TemplateType) => void
+  onHandwritingTextChange: (text: string) => void
+  onHandwritingModeChange: (mode: 'solid' | 'tracing' | 'empty') => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -98,6 +100,8 @@ interface EditorProps {
 export function Editor({
   worksheet,
   onTemplateChange,
+  onHandwritingTextChange,
+  onHandwritingModeChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -416,7 +420,51 @@ export function Editor({
 </Accordion>
 
 <Accordion title="3. Edycja elementów" defaultOpen={false}>
-{/* Dodawanie elementów */}
+  {worksheet.template === 'handwriting' ? (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">3. Tekst do pisania</h2>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Wpisz tekst (litery, słowa, zdania)
+          </label>
+          <textarea
+            value={worksheet.handwritingText || ''}
+            onChange={(e) => onHandwritingTextChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={3}
+            placeholder="np. Ala ma kota."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Styl pisma
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onHandwritingModeChange('solid')}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${worksheet.handwritingMode === 'solid' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Zwykły
+            </button>
+            <button
+              onClick={() => onHandwritingModeChange('tracing')}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${worksheet.handwritingMode === 'tracing' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Po śladzie
+            </button>
+            <button
+              onClick={() => onHandwritingModeChange('empty')}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${worksheet.handwritingMode === 'empty' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Tylko linie
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  ) : (
+    <>
       <section>
         <h2 className="text-lg font-semibold mb-2">3. Dodaj elementy</h2>
         {worksheet.template === 'matchPairs' && (
@@ -469,7 +517,6 @@ export function Editor({
         </div>
       </section>
 
-      {/* Lista elementów */}
       <section>
         <h2 className="text-lg font-semibold mb-2">4. Aktualne elementy</h2>
         <ElementsList
@@ -485,8 +532,8 @@ export function Editor({
           onToggleCorrectAnswer={onToggleCorrectAnswer}
         />
       </section>
-
-      
+    </>
+  )}
 </Accordion>
 
 <Accordion title="4. Warianty" defaultOpen={false}>

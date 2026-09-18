@@ -11,6 +11,7 @@ import { SequenceTemplate } from '../../templates/SequenceTemplate'
 import { CutCardsTemplate } from '../../templates/CutCardsTemplate'
 import { SameOrDifferentTemplate } from '../../templates/SameOrDifferentTemplate'
 import { CategorizeTemplate } from '../../templates/CategorizeTemplate'
+import { HandwritingTemplate } from '../../templates/HandwritingTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
@@ -162,6 +163,9 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0 }: W
           itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
         />
+      )}
+      {worksheet.template === 'handwriting' && (
+        <HandwritingTemplate worksheet={worksheet} />
       )}
     </div>
   )

@@ -163,6 +163,14 @@ function App() {
     setWorksheet((prev) => ({ ...INITIAL_WORKSHEET, template, orientation: prev.orientation, simpleMode: prev.simpleMode }))
   }
 
+  function handleHandwritingTextChange(text: string) {
+    setWorksheet((prev) => ({ ...prev, handwritingText: text }))
+  }
+
+  function handleHandwritingModeChange(mode: 'solid' | 'tracing' | 'empty') {
+    setWorksheet((prev) => ({ ...prev, handwritingMode: mode }))
+  }
+
   function handleInstructionChange(instruction: string) {
     setWorksheet((prev) => ({ ...prev, instruction }))
   }
@@ -476,6 +484,8 @@ function App() {
         <Editor
           worksheet={worksheet}
           onTemplateChange={handleTemplateChange}
+          onHandwritingTextChange={handleHandwritingTextChange}
+          onHandwritingModeChange={handleHandwritingModeChange}
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}

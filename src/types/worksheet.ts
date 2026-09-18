@@ -21,7 +21,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -87,6 +87,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     label: 'Podziel na kategorie',
     description: 'Elementy i 2–3 kategorie, do których należy je przyporządkować.',
   },
+  {
+    value: 'handwriting',
+    label: 'Nauka pisania',
+    description: 'Szkolna liniatura i wpisywanie tekstu po śladzie.',
+  },
 ]
 
 /**
@@ -135,6 +140,10 @@ export interface WorksheetState {
   variantCount?: number
   /** Identyfikatory poprawnych odpowiedzi (dla Wybierz, Co nie pasuje, Taki sam/inny) lub "yes"/"no" (dla Tak/Nie) */
   correctAnswers?: string[]
+  /** Tekst dla szablonu nauka pisania */
+  handwritingText?: string
+  /** Tryb linii dla szablonu nauka pisania */
+  handwritingMode?: 'solid' | 'tracing' | 'empty'
 }
 
 /** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */
