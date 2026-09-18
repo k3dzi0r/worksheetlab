@@ -41,6 +41,7 @@ const VALID_TEMPLATES: TemplateType[] = [
   'math',
   'pattern',
   'crossword',
+  'dotToDot',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -147,6 +148,14 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingEveryOther:
       typeof state.handwritingEveryOther === 'boolean' ? state.handwritingEveryOther : false,
     handwritingStartDot: typeof state.handwritingStartDot === 'boolean' ? state.handwritingStartDot : false,
+    dotShape: typeof state.dotShape === 'string' ? state.dotShape : 'star',
+    dotCount: typeof state.dotCount === 'number' ? state.dotCount : 20,
+    dotNumbering: (['numbers', 'evens', 'backwards', 'letters'] as const).includes(
+      state.dotNumbering as 'numbers',
+    )
+      ? (state.dotNumbering as 'numbers')
+      : 'numbers',
+    dotShowOutline: typeof state.dotShowOutline === 'boolean' ? state.dotShowOutline : false,
     crosswordWords: typeof state.crosswordWords === 'string' ? state.crosswordWords : '',
     crosswordKeyword: typeof state.crosswordKeyword === 'string' ? state.crosswordKeyword : '',
     crosswordShowClues: typeof state.crosswordShowClues === 'boolean' ? state.crosswordShowClues : true,

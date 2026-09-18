@@ -24,7 +24,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword' | 'dotToDot'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -74,6 +74,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'crossword',
     label: 'Krzyżówka',
     description: 'Hasło w kolumnie, definicje pod spodem, klucz odpowiedzi.',
+  },
+  {
+    value: 'dotToDot',
+    label: 'Połącz kropki',
+    description: 'Numerowane kropki układają się w obrazek do odkrycia.',
   },
   {
     value: 'choice',
@@ -187,6 +192,14 @@ export interface WorksheetState {
   handwritingEveryOther?: boolean
   /** Czy zaznaczyć kropką miejsce startu wiersza. */
   handwritingStartDot?: boolean
+  /** Obrazek w „Połącz kropki" albo „random" - inny w każdym wariancie. */
+  dotShape?: string
+  /** Liczba kropek na konturze. */
+  dotCount?: number
+  /** Sposób numerowania kropek. */
+  dotNumbering?: 'numbers' | 'evens' | 'backwards' | 'letters'
+  /** Czy pokazać blady kontur jako podpowiedź. */
+  dotShowOutline?: boolean
   /** Słowa krzyżówki w formacie „słowo - definicja", jedno w wierszu. */
   crosswordWords?: string
   /** Hasło do odczytania w kolumnie. Puste oznacza dobór liter losowo. */

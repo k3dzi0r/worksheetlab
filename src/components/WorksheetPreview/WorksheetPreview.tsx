@@ -18,6 +18,7 @@ import { ColoringTemplate } from '../../templates/ColoringTemplate'
 import { MathTemplate } from '../../templates/MathTemplate'
 import { PatternTemplate } from '../../templates/PatternTemplate'
 import { CrosswordTemplate } from '../../templates/CrosswordTemplate'
+import { DotToDotTemplate } from '../../templates/DotToDotTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
@@ -173,6 +174,13 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
       )}
       {worksheet.template === 'handwriting' && (
         <HandwritingTemplate worksheet={worksheet} />
+      )}
+      {worksheet.template === 'dotToDot' && (
+        <DotToDotTemplate
+          worksheet={worksheet}
+          seed={shuffleSeed + variantIndex * 100}
+          showAnswerKey={showAnswerKey}
+        />
       )}
       {worksheet.template === 'crossword' && (
         <CrosswordTemplate

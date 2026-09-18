@@ -195,6 +195,10 @@ function App() {
     setWorksheet((prev) => ({ ...prev, ...options }))
   }
 
+  function handleDotOptionsChange(options: Partial<WorksheetState>) {
+    setWorksheet((prev) => ({ ...prev, ...options }))
+  }
+
   function handleCrosswordOptionsChange(options: Partial<WorksheetState>) {
     setWorksheet((prev) => ({ ...prev, ...options }))
   }
@@ -536,6 +540,7 @@ function App() {
           onPatternOptionsChange={handlePatternOptionsChange}
           onHandwritingOptionsChange={handleHandwritingOptionsChange}
           onCrosswordOptionsChange={handleCrosswordOptionsChange}
+          onDotOptionsChange={handleDotOptionsChange}
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}
