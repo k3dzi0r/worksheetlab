@@ -22,7 +22,13 @@ function parseHandwritingText(text: string, defaultMode: 'solid' | 'tracing' | '
 }
 
 export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
-  const { handwritingText = '', handwritingMode = 'tracing', handwritingRepeat = false, itemScale = 1 } = worksheet
+  const { 
+    handwritingText = '', 
+    handwritingMode = 'tracing', 
+    handwritingRepeat = false, 
+    handwritingFont = '"Comic Sans MS", "Chalkboard SE", sans-serif',
+    itemScale = 1 
+  } = worksheet
 
   let textLines = handwritingText ? handwritingText.split('\n') : []
   
@@ -46,7 +52,7 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
   }
 
   return (
-    <div className="flex flex-col w-full p-8" style={{ gap: gapSize, fontFamily: '"Comic Sans MS", "Chalkboard SE", sans-serif' }}>
+    <div className="flex flex-col w-full p-8" style={{ gap: gapSize, fontFamily: handwritingFont }}>
       {lines.map((line, index) => {
         const parts = parseHandwritingText(line, handwritingMode)
         return (

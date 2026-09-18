@@ -101,3 +101,10 @@ body {
     page-break-after: always;
   }
 }
+
+@font-face {
+  font-family: 'Elementarz';
+  src: url('/fonts/Elementarz.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}

@@ -119,6 +119,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingText: typeof state.handwritingText === 'string' ? state.handwritingText : '',
     handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
     handwritingRepeat: typeof state.handwritingRepeat === 'boolean' ? state.handwritingRepeat : false,
+    handwritingFont: typeof state.handwritingFont === 'string' ? state.handwritingFont : '"Comic Sans MS", "Chalkboard SE", sans-serif',
   }
 }
 

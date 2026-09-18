@@ -63,6 +63,7 @@ interface EditorProps {
   onHandwritingTextChange: (text: string) => void
   onHandwritingModeChange: (mode: 'solid' | 'tracing' | 'empty') => void
   onHandwritingRepeatChange: (repeat: boolean) => void
+  onHandwritingFontChange: (font: string) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -104,6 +105,7 @@ export function Editor({
   onHandwritingTextChange,
   onHandwritingModeChange,
   onHandwritingRepeatChange,
+  onHandwritingFontChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -500,6 +502,20 @@ export function Editor({
             <span className="block text-xs text-gray-500">Powiel pierwszy wiersz na wszystkie linie.</span>
           </span>
         </label>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Czcionka
+          </label>
+          <select
+            value={worksheet.handwritingFont || '"Comic Sans MS", "Chalkboard SE", sans-serif'}
+            onChange={(e) => onHandwritingFontChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          >
+            <option value='"Comic Sans MS", "Chalkboard SE", sans-serif'>Podstawowa (Comic Sans / Chalkboard)</option>
+            <option value='Elementarz, sans-serif'>Elementarz (Pisana)</option>
+          </select>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

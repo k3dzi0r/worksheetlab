@@ -145,6 +145,7 @@ export interface WorksheetState {
   /** Tryb linii dla szablonu nauka pisania */
   handwritingMode?: 'solid' | 'tracing' | 'empty'
   handwritingRepeat?: boolean
+  handwritingFont?: string
 }
 
 /** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */
