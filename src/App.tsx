@@ -167,6 +167,10 @@ function App() {
     setWorksheet((prev) => ({ ...prev, handwritingText: text }))
   }
 
+  function handleHandwritingRepeatChange(repeat: boolean) {
+    setWorksheet((prev) => ({ ...prev, handwritingRepeat: repeat }))
+  }
+
   function handleHandwritingModeChange(mode: 'solid' | 'tracing' | 'empty') {
     setWorksheet((prev) => ({ ...prev, handwritingMode: mode }))
   }
@@ -486,6 +490,7 @@ function App() {
           onTemplateChange={handleTemplateChange}
           onHandwritingTextChange={handleHandwritingTextChange}
           onHandwritingModeChange={handleHandwritingModeChange}
+          onHandwritingRepeatChange={handleHandwritingRepeatChange}
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}

@@ -62,6 +62,7 @@ interface EditorProps {
   onTemplateChange: (template: TemplateType) => void
   onHandwritingTextChange: (text: string) => void
   onHandwritingModeChange: (mode: 'solid' | 'tracing' | 'empty') => void
+  onHandwritingRepeatChange: (repeat: boolean) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -102,6 +103,7 @@ export function Editor({
   onTemplateChange,
   onHandwritingTextChange,
   onHandwritingModeChange,
+  onHandwritingRepeatChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -138,9 +140,28 @@ export function Editor({
   onToggleAnswerKey,
   onToggleCorrectAnswer,
 }: EditorProps) {
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showLibrary, setShowLibrary] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
+
+  const handwritingTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const insertHandwritingTag = (tag: string) => {
+    const el = handwritingTextareaRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const text = worksheet.handwritingText || ''
+    const before = text.substring(0, start)
+    const selected = text.substring(start, end)
+    const after = text.substring(end)
+    const newText = before + `[${tag}]` + selected + `[/${tag}]` + after
+    onHandwritingTextChange(newText)
+    setTimeout(() => {
+      el.focus()
+      el.setSelectionRange(start + 3, end + 3)
+    }, 0)
+  }
 
   function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -425,20 +446,64 @@ export function Editor({
       <h2 className="text-lg font-semibold mb-2">3. Tekst do pisania</h2>
       <div className="flex flex-col gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Wpisz tekst (litery, słowa, zdania)
-          </label>
+          <div className="flex justify-between items-end mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Wpisz tekst
+            </label>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => insertHandwritingTag('z')}
+                className="text-xs px-2 py-1 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200"
+                title="Czarny (zaznacz tekst i kliknij)"
+              >
+                Czarny
+              </button>
+              <button
+                type="button"
+                onClick={() => insertHandwritingTag('s')}
+                className="text-xs px-2 py-1 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200"
+                title="Ślad (zaznacz tekst i kliknij)"
+              >
+                Ślad
+              </button>
+              <button
+                type="button"
+                onClick={() => insertHandwritingTag('p')}
+                className="text-xs px-2 py-1 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200"
+                title="Pusto (zaznacz tekst i kliknij)"
+              >
+                Puste
+              </button>
+            </div>
+          </div>
           <textarea
+            ref={handwritingTextareaRef}
             value={worksheet.handwritingText || ''}
             onChange={(e) => onHandwritingTextChange(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={3}
             placeholder="np. Ala ma kota."
           />
+          <p className="text-xs text-gray-500 mt-1">Zaznacz fragment i kliknij przycisk, aby zmienić jego styl.</p>
         </div>
+        
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.handwritingRepeat}
+            onChange={(event) => onHandwritingRepeatChange(event.target.checked)}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Zapełnij stronę</span>
+            <span className="block text-xs text-gray-500">Powiel pierwszy wiersz na wszystkie linie.</span>
+          </span>
+        </label>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Styl pisma
+            Domyślny styl pisma
           </label>
           <div className="flex gap-2">
             <button

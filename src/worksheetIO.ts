@@ -118,6 +118,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     correctAnswers: Array.isArray(state.correctAnswers) ? state.correctAnswers : [],
     handwritingText: typeof state.handwritingText === 'string' ? state.handwritingText : '',
     handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
+    handwritingRepeat: typeof state.handwritingRepeat === 'boolean' ? state.handwritingRepeat : false,
   }
 }
 
