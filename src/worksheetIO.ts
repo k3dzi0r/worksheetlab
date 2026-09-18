@@ -26,6 +26,7 @@ const VALID_TEMPLATES: TemplateType[] = [
   'handwriting',
   'wordSearch',
   'maze',
+  'coloring',
 ]
 const VALID_LAYOUTS: ChoiceLayout[] = ['row', 'scattered']
 const VALID_ORIENTATIONS: PageOrientation[] = ['portrait', 'landscape']
@@ -123,6 +124,9 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
     handwritingRepeat: typeof state.handwritingRepeat === 'boolean' ? state.handwritingRepeat : false,
     handwritingFont: normalizeHandwritingFont(state.handwritingFont),
+    coloringLevel: typeof state.coloringLevel === 'number' ? state.coloringLevel : 2,
+    coloringMode: state.coloringMode === 'numbers' ? 'numbers' : 'blank',
+    coloringColorCount: typeof state.coloringColorCount === 'number' ? state.coloringColorCount : 4,
     mazeLevel: typeof state.mazeLevel === 'number' ? state.mazeLevel : 2,
     wordSearchWords: typeof state.wordSearchWords === 'string' ? state.wordSearchWords : '',
     wordSearchGridSize: typeof state.wordSearchGridSize === 'number' ? state.wordSearchGridSize : 10,

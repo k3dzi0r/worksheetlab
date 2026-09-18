@@ -4,6 +4,8 @@
 // Generowanie jest deterministyczne dla danego seeda, dzięki czemu podgląd nie zmienia się przy
 // każdym renderze, a kolejne warianty karty dostają różne, powtarzalne labirynty.
 
+import { createSeededRandom } from './utils'
+
 export interface MazeCell {
   /** Ściany pola w kolejności: góra, prawo, dół, lewo. */
   walls: [boolean, boolean, boolean, boolean]
@@ -25,19 +27,8 @@ const DIRECTIONS: { dCol: number; dRow: number; wall: number; opposite: number }
   { dCol: -1, dRow: 0, wall: 3, opposite: 1 },
 ]
 
-function makeRandom(seed: number) {
-  let state = (seed | 0) || 1
-  return () => {
-    // xorshift32 - szybki i deterministyczny
-    state ^= state << 13
-    state ^= state >>> 17
-    state ^= state << 5
-    return (state >>> 0) / 4294967296
-  }
-}
-
 export function generateMaze(cols: number, rows: number, seed: number): Maze {
-  const random = makeRandom(seed)
+  const random = createSeededRandom(seed)
   const cells: MazeCell[][] = Array.from({ length: rows }, () =>
     Array.from({ length: cols }, () => ({ walls: [true, true, true, true] as [boolean, boolean, boolean, boolean] })),
   )

@@ -44,18 +44,31 @@ interface LineMetrics {
 interface FontMetrics {
   /** Wysokość małej litery (x-height) w przeliczeniu na 1em danego kroju. */
   xRatio: number
-  /** Najwyższy punkt pisma (wydłużenia górne z diakrytykami) w przeliczeniu na 1em. */
+  /** Wysokość wydłużeń górnych (b, d, h, k, l) w przeliczeniu na 1em - tu wypada górna linia. */
   ascentRatio: number
+  /** Najwyższy punkt pisma razem z diakrytykami (Ż, Ł, Ó) - zapas ponad górną linią. */
+  diacriticRatio: number
+  /** Głębokość wydłużeń dolnych (g, j, p, y) - tu wypada dno interlinii. */
+  descentRatio: number
   /** Wymiary poszczególnych wierszy (klucz: treść wiersza wraz ze znacznikami). */
   lines: Map<string, LineMetrics>
 }
 
 /**
- * Mierzy krój pisma na canvasie, żeby litery realnie siadały w liniaturze:
- * rozmiar czcionki dobieramy tak, aby x-height dokładnie wypełnił śródlinię.
+ * Mierzy krój pisma na canvasie. Liniatura jest potem rysowana pod konkretny krój:
+ * górna linia na wysokości jego wydłużeń górnych, przerywana na x-height, a dno
+ * interlinii na głębokości wydłużeń dolnych. Kroje mają bardzo różne proporcje
+ * (Playwrite PL ma wydłużenie górne 1,93 x-height, Elementarz tylko 1,53), więc
+ * stała liniatura pasowałaby tylko do jednego z nich.
  */
 function useFontMetrics(fontFamily: string, lines: string[]): FontMetrics {
-  const [metrics, setMetrics] = useState<FontMetrics>({ xRatio: 0.52, ascentRatio: 0.95, lines: new Map() })
+  const [metrics, setMetrics] = useState<FontMetrics>({
+    xRatio: 0.52,
+    ascentRatio: 0.78,
+    diacriticRatio: 0.95,
+    descentRatio: 0.24,
+    lines: new Map(),
+  })
   const linesKey = lines.join('\n')
 
   useEffect(() => {
@@ -66,12 +79,25 @@ function useFontMetrics(fontFamily: string, lines: string[]): FontMetrics {
       if (!ctx || cancelled) return
       ctx.font = `100px ${fontFamily}`
 
-      const xBox = ctx.measureText('x')
+      // Do pomiaru x-height używamy liter częstych w polszczyźnie. Litery 'x' nie ma
+      // w polskim alfabecie i szkolne kroje (jak Elementarz) potrafią jej w ogóle nie mieć.
+      const xBox = ctx.measureText('aeomnsuc')
       const xRatio = xBox.actualBoundingBoxAscent > 0 ? xBox.actualBoundingBoxAscent / 100 : 0.52
 
-      // Litery z najwyższymi wydłużeniami i polskimi znakami - wyznaczają zapas nad pierwszym wierszem.
-      const ascentBox = ctx.measureText('ŻŁÓbdhklft')
-      const ascentRatio = ascentBox.actualBoundingBoxAscent > 0 ? ascentBox.actualBoundingBoxAscent / 100 : 0.95
+      // Wydłużenia górne bez diakrytyków - to one mają dotykać górnej linii.
+      const ascentBox = ctx.measureText('bdhklft')
+      const ascentRatio = ascentBox.actualBoundingBoxAscent > 0 ? ascentBox.actualBoundingBoxAscent / 100 : 0.78
+
+      // Polskie znaki wychodzą ponad górną linię - tak samo jak w zeszycie.
+      const diacriticBox = ctx.measureText('ŻŁÓĆŃŚ')
+      const diacriticRatio = Math.max(
+        ascentRatio,
+        diacriticBox.actualBoundingBoxAscent > 0 ? diacriticBox.actualBoundingBoxAscent / 100 : 0.95,
+      )
+
+      // Wydłużenia dolne wyznaczają dno interlinii.
+      const descentBox = ctx.measureText('gjpy')
+      const descentRatio = descentBox.actualBoundingBoxDescent > 0 ? descentBox.actualBoundingBoxDescent / 100 : 0.24
 
       const measured = new Map<string, LineMetrics>()
       for (const raw of linesKey.split('\n')) {
@@ -80,7 +106,7 @@ function useFontMetrics(fontFamily: string, lines: string[]): FontMetrics {
         measured.set(raw, { width100: ctx.measureText(plain).width, chars: plain.length })
       }
 
-      setMetrics({ xRatio, ascentRatio, lines: measured })
+      setMetrics({ xRatio, ascentRatio, diacriticRatio, descentRatio, lines: measured })
     }
 
     measure()
@@ -126,19 +152,23 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
     worksheet.orientation,
   ])
 
-  // Śródlinia (odległość linii przerywanej od podstawowej) wyznacza rozmiar całej liniatury.
-  // Liniatura zależy wyłącznie od suwaka rozmiaru, więc wszystkie wiersze są identyczne.
+  // Suwak rozmiaru steruje wysokością śródlinii, czyli tym, jak duże są małe litery.
   const unit = BASE_UNIT * itemScale
   const sidePadding = BASE_SIDE_PADDING * itemScale
   const usableWidth = Math.max(0, width - 2 * sidePadding)
 
-  // Wiersz = strefa górnych wydłużeń + śródlinia + strefa dolnych wydłużeń (interlinia).
-  const rowHeight = unit * 3
-  // Zapas nad pierwszym wierszem: wydłużenia górne i polskie diakrytyki (Ó, Ż, Ł) wychodzą
-  // ponad górną linię - tak samo jak w zeszycie. Wysokość liczymy z metryk konkretnego kroju,
-  // bo pisane (Playwrite PL) sięga znacznie wyżej niż drukowane.
-  const ascentAboveTopLine = unit * (metrics.ascentRatio / metrics.xRatio - 2)
-  const topPadding = Math.max(unit * 0.25, ascentAboveTopLine)
+  // Liniatura jest rysowana pod konkretny krój: górna linia dokładnie na wysokości jego
+  // wydłużeń górnych, przerywana na x-height, dno interlinii na głębokości wydłużeń dolnych.
+  // Dzięki temu każda czcionka - nie tylko Playwrite PL - sięga od dolnej linii do górnej.
+  const fontSize = unit / metrics.xRatio
+  const ascent = fontSize * metrics.ascentRatio
+  const descent = fontSize * metrics.descentRatio
+  // Odstęp między wierszami, żeby ogonki jednego nie dotykały wydłużeń następnego.
+  const rowGap = unit * 0.4
+  const rowHeight = ascent + descent + rowGap
+  // Zapas nad pierwszym wierszem na polskie diakrytyki (Ó, Ż, Ł), które w zeszycie
+  // też wychodzą ponad górną linię.
+  const topPadding = fontSize * (metrics.diacriticRatio - metrics.ascentRatio)
   // 2px zapasu, żeby zaokrąglenia przy drukowaniu nie zepchnęły ostatniego wiersza na kolejną stronę.
   const maxRows = height > 0 ? Math.floor((height - topPadding - 2) / rowHeight) : 0
   const totalLines = Math.max(1, Math.min(MAX_LINES, maxRows || 1))
@@ -148,7 +178,6 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
     return textLines[i] || ''
   })
 
-  const fontSize = unit / metrics.xRatio
   const letterSpacing = unit * letterSpacingPerUnit
   const viewWidth = Math.max(width, 1)
 
@@ -185,22 +214,22 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
             style={{ overflow: 'visible' }}
           >
             {/* Liniatura: linia górnych wydłużeń, przerywana linia śródlinii, czerwona linia podstawowa. */}
-            <line x1="0" y1="1" x2={viewWidth} y2="1" stroke="#60a5fa" strokeWidth="2" />
+            <line x1="0" y1={1} x2={viewWidth} y2={1} stroke="#60a5fa" strokeWidth="2" />
             <line
               x1="0"
-              y1={unit}
+              y1={ascent - unit}
               x2={viewWidth}
-              y2={unit}
+              y2={ascent - unit}
               stroke="#9ca3af"
               strokeWidth="1"
               strokeDasharray="6 6"
             />
-            <line x1="0" y1={unit * 2} x2={viewWidth} y2={unit * 2} stroke="#f87171" strokeWidth="2" />
+            <line x1="0" y1={ascent} x2={viewWidth} y2={ascent} stroke="#f87171" strokeWidth="2" />
 
             {/* Tekst osadzony na linii podstawowej - dzięki temu litery realnie stoją w liniaturze. */}
             <text
               x={sidePadding}
-              y={unit * 2}
+              y={ascent}
               xmlSpace="preserve"
               dominantBaseline="alphabetic"
               fontFamily={handwritingFont}

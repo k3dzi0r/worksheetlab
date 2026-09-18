@@ -32,6 +32,7 @@ import { createId } from '../../utils'
 import { generateWordSearch, parseWords } from '../../wordSearch'
 import { DEFAULT_HANDWRITING_FONT, HANDWRITING_FONTS, getHandwritingFont } from '../../handwritingFonts'
 import { MAZE_LEVELS, getMazeLevel } from '../../maze'
+import { COLORING_LEVELS, COLOR_COUNT_MAX, COLOR_COUNT_MIN, getColoringLevel } from '../../coloring'
 
 /** Usuwa rozszerzenie pliku (np. ".png"), żeby zaproponować czytelną nazwę jako podpis. */
 function stripFileExtension(fileName: string): string {
@@ -69,6 +70,7 @@ interface EditorProps {
   onHandwritingFontChange: (font: string) => void
   onWordSearchOptionsChange: (options: Partial<WorksheetState>) => void
   onMazeLevelChange: (level: number) => void
+  onColoringOptionsChange: (options: Partial<WorksheetState>) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -113,6 +115,7 @@ export function Editor({
   onHandwritingFontChange,
   onWordSearchOptionsChange,
   onMazeLevelChange,
+  onColoringOptionsChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -467,7 +470,7 @@ export function Editor({
 </Accordion>
 
 <Accordion title="3. Edycja elementów" defaultOpen={false}>
-  {worksheet.template === 'maze' ? (
+  {worksheet.template === 'maze' && (
     <section>
       <h2 className="text-lg font-semibold mb-2">3. Labirynt</h2>
       <div className="flex flex-col gap-4">
@@ -490,8 +493,74 @@ export function Editor({
         </div>
 
         <p className="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-          Dodaj poniżej dwa elementy, żeby oznaczyć start i metę (np. 🐭 i 🧀). Bez nich pojawią się
-          podpisy START i META. Zaznacz „Pokaż klucz odpowiedzi", aby zobaczyć rozwiązanie.
+          Zaznacz „Pokaż klucz odpowiedzi", aby zobaczyć rozwiązanie. Każdy wariant karty to inny labirynt.
+        </p>
+      </div>
+    </section>
+  )}
+
+  {worksheet.template === 'coloring' ? (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">3. Kolorowanka</h2>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onColoringOptionsChange({ coloringMode: 'blank' })}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${(worksheet.coloringMode ?? 'blank') === 'blank' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Zwykła
+            </button>
+            <button
+              type="button"
+              onClick={() => onColoringOptionsChange({ coloringMode: 'numbers' })}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${worksheet.coloringMode === 'numbers' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Koloruj wg kodu
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Złożoność wzoru: {getColoringLevel(worksheet.coloringLevel).label}
+          </label>
+          <input
+            type="range"
+            min={COLORING_LEVELS[0].value}
+            max={COLORING_LEVELS[COLORING_LEVELS.length - 1].value}
+            step={1}
+            value={worksheet.coloringLevel ?? 2}
+            onChange={(event) => onColoringOptionsChange({ coloringLevel: Number(event.target.value) })}
+            className="w-full"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Im prostszy wzór, tym większe pola - dla młodszych dzieci wybierz niższy poziom.
+          </p>
+        </div>
+
+        {worksheet.coloringMode === 'numbers' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Liczba kolorów: {worksheet.coloringColorCount ?? 4}
+            </label>
+            <input
+              type="range"
+              min={COLOR_COUNT_MIN}
+              max={COLOR_COUNT_MAX}
+              step={1}
+              value={worksheet.coloringColorCount ?? 4}
+              onChange={(event) => onColoringOptionsChange({ coloringColorCount: Number(event.target.value) })}
+              className="w-full"
+            />
+          </div>
+        )}
+
+        <p className="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+          Każdy wariant karty to inny wzór - ustaw liczbę wariantów w sekcji „Warianty”, żeby wydrukować
+          kilka różnych kolorowanek naraz. „Pokaż klucz odpowiedzi" pokazuje gotowy, pokolorowany wzór.
         </p>
       </div>
     </section>
@@ -681,6 +750,12 @@ export function Editor({
     <>
       <section>
         <h2 className="text-lg font-semibold mb-2">3. Dodaj elementy</h2>
+        {worksheet.template === 'maze' && (
+          <p className="text-sm text-gray-500 mb-2">
+            Dodaj dwa elementy: pierwszy oznaczy start, drugi metę (np. 🐭 i 🧀). Bez nich labirynt
+            dostanie podpisy START i META.
+          </p>
+        )}
         {worksheet.template === 'matchPairs' && (
           <p className="text-sm text-gray-500 mb-2">
             Elementy dodajesz na przemian: najpierw lewa kolumna pary, potem prawa.
