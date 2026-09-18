@@ -123,11 +123,25 @@ function useFontMetrics(fontFamily: string, lines: string[]): FontMetrics {
   return metrics
 }
 
-const MODE_COLOR: Record<PartMode, string> = {
-  solid: '#111827',
-  // Ślad musi być widoczny na wydruku, ale na tyle jasny, żeby dziecko pisało po nim.
-  tracing: '#c3c9d4',
-  empty: 'transparent',
+/**
+ * Kontrast śladu do obrysowania. Jasny jest ledwie widoczny - dla dziecka, które już pisze
+ * samodzielnie; ciemny zostaje czytelny nawet na słabej drukarce.
+ */
+export const TRACE_LEVELS = [
+  { value: 'light', label: 'Jasny', color: '#d8dce3' },
+  { value: 'medium', label: 'Średni', color: '#c3c9d4' },
+  { value: 'dark', label: 'Ciemny', color: '#9aa3b2' },
+] as const
+
+/** Co pokazuje liniatura: pełne trzy linie, samą linię podstawową albo nic. */
+export const GUIDE_LEVELS = [
+  { value: 'full', label: 'Pełna' },
+  { value: 'baseline', label: 'Tylko podstawowa' },
+  { value: 'none', label: 'Bez linii' },
+] as const
+
+function getTraceColor(value: string | undefined) {
+  return (TRACE_LEVELS.find((level) => level.value === value) ?? TRACE_LEVELS[1]).color
 }
 
 export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
@@ -136,8 +150,18 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
     handwritingMode = 'tracing',
     handwritingRepeat = false,
     handwritingFont = DEFAULT_HANDWRITING_FONT,
+    handwritingTrace = 'medium',
+    handwritingGuides = 'full',
+    handwritingEveryOther = false,
+    handwritingStartDot = false,
     itemScale = 1,
   } = worksheet
+
+  const modeColor: Record<PartMode, string> = {
+    solid: '#111827',
+    tracing: getTraceColor(handwritingTrace),
+    empty: 'transparent',
+  }
 
   // Światło międzyliterowe zależy od kroju: pismo łączone musi mieć 0, inaczej pęka łączenie liter.
   const letterSpacingPerUnit = getHandwritingFont(handwritingFont).letterSpacing
@@ -147,6 +171,9 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
   const { containerRef, width, height } = usePageSpace([
     handwritingText,
     handwritingFont,
+    handwritingGuides,
+    handwritingEveryOther,
+    handwritingStartDot,
     itemScale,
     worksheet.header,
     worksheet.orientation,
@@ -174,8 +201,11 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
   const totalLines = Math.max(1, Math.min(MAX_LINES, maxRows || 1))
 
   const lines = Array.from({ length: totalLines }).map((_, i) => {
+    // Z opcją „co drugi wiersz pusty" nieparzyste wiersze zostają na samodzielne pisanie.
+    if (handwritingEveryOther && i % 2 === 1) return ''
+    const index = handwritingEveryOther ? i / 2 : i
     if (handwritingRepeat && textLines.length > 0) return textLines[0]
-    return textLines[i] || ''
+    return textLines[index] || ''
   })
 
   const letterSpacing = unit * letterSpacingPerUnit
@@ -214,17 +244,27 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
             style={{ overflow: 'visible' }}
           >
             {/* Liniatura: linia górnych wydłużeń, przerywana linia śródlinii, czerwona linia podstawowa. */}
-            <line x1="0" y1={1} x2={viewWidth} y2={1} stroke="#60a5fa" strokeWidth="2" />
-            <line
-              x1="0"
-              y1={ascent - unit}
-              x2={viewWidth}
-              y2={ascent - unit}
-              stroke="#9ca3af"
-              strokeWidth="1"
-              strokeDasharray="6 6"
-            />
-            <line x1="0" y1={ascent} x2={viewWidth} y2={ascent} stroke="#f87171" strokeWidth="2" />
+            {handwritingGuides === 'full' && (
+              <>
+                <line x1="0" y1={1} x2={viewWidth} y2={1} stroke="#60a5fa" strokeWidth="2" />
+                <line
+                  x1="0"
+                  y1={ascent - unit}
+                  x2={viewWidth}
+                  y2={ascent - unit}
+                  stroke="#9ca3af"
+                  strokeWidth="1"
+                  strokeDasharray="6 6"
+                />
+              </>
+            )}
+            {handwritingGuides !== 'none' && (
+              <line x1="0" y1={ascent} x2={viewWidth} y2={ascent} stroke="#f87171" strokeWidth="2" />
+            )}
+
+            {handwritingStartDot && (
+              <circle cx={sidePadding * 0.5} cy={ascent} r={Math.max(2, unit * 0.11)} fill="#16a34a" />
+            )}
 
             {/* Tekst osadzony na linii podstawowej - dzięki temu litery realnie stoją w liniaturze. */}
             <text
@@ -237,7 +277,7 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
               letterSpacing={letterSpacing * lineScale}
             >
               {parts.map((part, partIndex) => (
-                <tspan key={partIndex} fill={MODE_COLOR[part.mode]}>
+                <tspan key={partIndex} fill={modeColor[part.mode]}>
                   {part.text}
                 </tspan>
               ))}

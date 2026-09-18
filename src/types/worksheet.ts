@@ -174,6 +174,14 @@ export interface WorksheetState {
   handwritingMode?: 'solid' | 'tracing' | 'empty'
   handwritingRepeat?: boolean
   handwritingFont?: string
+  /** Jak ciemny jest ślad do obrysowania. */
+  handwritingTrace?: 'light' | 'medium' | 'dark'
+  /** Co pokazuje liniatura: pełne linie, samą podstawową albo nic. */
+  handwritingGuides?: 'full' | 'baseline' | 'none'
+  /** Czy zostawiać co drugi wiersz pusty na samodzielne pisanie. */
+  handwritingEveryOther?: boolean
+  /** Czy zaznaczyć kropką miejsce startu wiersza. */
+  handwritingStartDot?: boolean
   /** Wzór szlaczka albo „mixed" - inny w każdym wierszu. */
   patternId?: string
   /** Ile wiersza zajmuje gotowy wzór i ślad do obrysowania. */
@@ -217,6 +225,12 @@ export interface WorksheetState {
   wordSearchAllowDiagonals?: boolean
   wordSearchAllowReverse?: boolean
   wordSearchUppercase?: boolean
+  /** Siatka kwadratowa albo dociągnięta do proporcji kartki. */
+  wordSearchShape?: 'square' | 'page'
+  /** Czy pod siatką drukować listę ukrytych słów. */
+  wordSearchShowWords?: boolean
+  /** Czym wypełniać puste pola: losowymi literami czy literami z ukrytych słów. */
+  wordSearchFiller?: 'random' | 'fromWords'
 }
 
 /** Opcjonalny nagłówek drukowany na górze kartki: tytuł + pola do wpisania przez ucznia. */

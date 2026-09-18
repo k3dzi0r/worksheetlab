@@ -137,6 +137,15 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     handwritingMode: (['solid', 'tracing', 'empty'].includes(state.handwritingMode as string)) ? state.handwritingMode as any : 'tracing',
     handwritingRepeat: typeof state.handwritingRepeat === 'boolean' ? state.handwritingRepeat : false,
     handwritingFont: normalizeHandwritingFont(state.handwritingFont),
+    handwritingTrace: (['light', 'medium', 'dark'] as const).includes(state.handwritingTrace as 'light')
+      ? (state.handwritingTrace as 'light')
+      : 'medium',
+    handwritingGuides: (['full', 'baseline', 'none'] as const).includes(state.handwritingGuides as 'full')
+      ? (state.handwritingGuides as 'full')
+      : 'full',
+    handwritingEveryOther:
+      typeof state.handwritingEveryOther === 'boolean' ? state.handwritingEveryOther : false,
+    handwritingStartDot: typeof state.handwritingStartDot === 'boolean' ? state.handwritingStartDot : false,
     patternId: typeof state.patternId === 'string' ? state.patternId : 'waves',
     patternHelp: typeof state.patternHelp === 'string' ? state.patternHelp : 'medium',
     patternGuides: typeof state.patternGuides === 'boolean' ? state.patternGuides : true,
@@ -172,6 +181,9 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     wordSearchAllowDiagonals: typeof state.wordSearchAllowDiagonals === 'boolean' ? state.wordSearchAllowDiagonals : false,
     wordSearchAllowReverse: typeof state.wordSearchAllowReverse === 'boolean' ? state.wordSearchAllowReverse : false,
     wordSearchUppercase: typeof state.wordSearchUppercase === 'boolean' ? state.wordSearchUppercase : true,
+    wordSearchShape: state.wordSearchShape === 'page' ? 'page' : 'square',
+    wordSearchShowWords: typeof state.wordSearchShowWords === 'boolean' ? state.wordSearchShowWords : true,
+    wordSearchFiller: state.wordSearchFiller === 'fromWords' ? 'fromWords' : 'random',
   }
 }
 

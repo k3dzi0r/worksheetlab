@@ -20,9 +20,16 @@ export interface WordSearchResult {
 }
 
 export interface WordSearchOptions {
-  size: number
+  cols: number
+  rows: number
   allowDiagonals: boolean
   allowReverse: boolean
+  /**
+   * Czym wypełniamy puste pola. „fromWords" bierze litery z ukrytych słów, przez co
+   * siatka wygląda spójniej, ale jest trudniejsza - przypadkowa litera nie zdradza już,
+   * że w danym miejscu nic nie ma.
+   */
+  filler: 'random' | 'fromWords'
   seed: number
 }
 
@@ -52,10 +59,10 @@ export function parseWords(text: string): string[] {
 }
 
 export function generateWordSearch(words: string[], options: WordSearchOptions): WordSearchResult {
-  const { size, allowDiagonals, allowReverse, seed } = options
+  const { cols, rows, allowDiagonals, allowReverse, filler, seed } = options
   const random = createSeededRandom(seed)
 
-  const grid: (string | null)[][] = Array.from({ length: size }, () => Array<string | null>(size).fill(null))
+  const grid: (string | null)[][] = Array.from({ length: rows }, () => Array<string | null>(cols).fill(null))
   const placed: PlacedWord[] = []
   const skipped: string[] = []
 
@@ -69,7 +76,7 @@ export function generateWordSearch(words: string[], options: WordSearchOptions):
     .map((entry) => entry.word)
 
   for (const word of ordered) {
-    if (word.length > size) {
+    if (word.length > Math.max(cols, rows)) {
       skipped.push(word)
       continue
     }
@@ -79,11 +86,11 @@ export function generateWordSearch(words: string[], options: WordSearchOptions):
       for (const reverse of allowReverse ? [false, true] : [false]) {
         const stepRow = reverse ? -dRow : dRow
         const stepCol = reverse ? -dCol : dCol
-        for (let row = 0; row < size; row++) {
-          for (let col = 0; col < size; col++) {
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
             const endRow = row + stepRow * (word.length - 1)
             const endCol = col + stepCol * (word.length - 1)
-            if (endRow < 0 || endRow >= size || endCol < 0 || endCol >= size) continue
+            if (endRow < 0 || endRow >= rows || endCol < 0 || endCol >= cols) continue
 
             let fits = true
             for (let i = 0; i < word.length; i++) {
@@ -115,9 +122,11 @@ export function generateWordSearch(words: string[], options: WordSearchOptions):
     placed.push({ word, cells })
   }
 
-  const filled = grid.map((row) =>
-    row.map((cell) => cell ?? FILLER_LETTERS[Math.floor(random() * FILLER_LETTERS.length)]),
-  )
+  // Litery do wypełnienia pustych pól: cały alfabet albo tylko te z ukrytych słów.
+  const wordLetters = Array.from(new Set(placed.flatMap((entry) => entry.word.split(''))))
+  const pool = filler === 'fromWords' && wordLetters.length >= 4 ? wordLetters.join('') : FILLER_LETTERS
+
+  const filled = grid.map((row) => row.map((cell) => cell ?? pool[Math.floor(random() * pool.length)]))
 
   return { grid: filled, placed, skipped }
 }

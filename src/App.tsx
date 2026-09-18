@@ -195,6 +195,10 @@ function App() {
     setWorksheet((prev) => ({ ...prev, ...options }))
   }
 
+  function handleHandwritingOptionsChange(options: Partial<WorksheetState>) {
+    setWorksheet((prev) => ({ ...prev, ...options }))
+  }
+
   function handlePatternOptionsChange(options: Partial<WorksheetState>) {
     setWorksheet((prev) => ({ ...prev, ...options }))
   }
@@ -526,6 +530,7 @@ function App() {
           onColoringOptionsChange={handleColoringOptionsChange}
           onMathOptionsChange={handleMathOptionsChange}
           onPatternOptionsChange={handlePatternOptionsChange}
+          onHandwritingOptionsChange={handleHandwritingOptionsChange}
           onInstructionChange={handleInstructionChange}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}

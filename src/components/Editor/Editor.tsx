@@ -64,6 +64,7 @@ const COLORING_CROWNS: { value: CrownStyle; label: string }[] = [
 import { MATH_OPERATION_LABELS, MATH_OPERATION_SIGNS, MATH_RANGES } from '../../mathTasks'
 import { PATTERNS } from '../../patterns'
 import { PATTERN_HELP_LEVELS } from '../../templates/PatternTemplate'
+import { GUIDE_LEVELS, TRACE_LEVELS } from '../../templates/HandwritingTemplate'
 import type { MathOperation } from '../../mathTasks'
 
 /** Przełącza rodzaj działania, ale nie pozwala odznaczyć ostatniego - karta nie może być pusta. */
@@ -114,6 +115,7 @@ interface EditorProps {
   onColoringOptionsChange: (options: Partial<WorksheetState>) => void
   onMathOptionsChange: (options: Partial<WorksheetState>) => void
   onPatternOptionsChange: (options: Partial<WorksheetState>) => void
+  onHandwritingOptionsChange: (options: Partial<WorksheetState>) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -162,6 +164,7 @@ export function Editor({
   onColoringOptionsChange,
   onMathOptionsChange,
   onPatternOptionsChange,
+  onHandwritingOptionsChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -207,10 +210,13 @@ export function Editor({
   // Ostrzeżenie w edytorze: które słowa nie zmieściły się w siatce wykreślanki.
   const wordSearchSkipped = useMemo(() => {
     if (worksheet.template !== 'wordSearch') return []
+    const size = worksheet.wordSearchGridSize || 10
     return generateWordSearch(parseWords(worksheet.wordSearchWords || ''), {
-      size: worksheet.wordSearchGridSize || 10,
+      cols: size,
+      rows: size,
       allowDiagonals: worksheet.wordSearchAllowDiagonals ?? false,
       allowReverse: worksheet.wordSearchAllowReverse ?? false,
+      filler: 'random',
       seed: 1,
     }).skipped
   }, [
@@ -916,6 +922,67 @@ export function Editor({
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Kształt siatki</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onWordSearchOptionsChange({ wordSearchShape: 'square' })}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${(worksheet.wordSearchShape ?? 'square') === 'square' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Kwadrat
+            </button>
+            <button
+              type="button"
+              onClick={() => onWordSearchOptionsChange({ wordSearchShape: 'page' })}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${worksheet.wordSearchShape === 'page' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Na całą kartkę
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Na całą kartkę siatka dostaje tyle wierszy, ile zmieści się w pionie - zmieści więcej słów.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Wypełnienie pustych pól</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onWordSearchOptionsChange({ wordSearchFiller: 'random' })}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${(worksheet.wordSearchFiller ?? 'random') === 'random' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Losowe litery
+            </button>
+            <button
+              type="button"
+              onClick={() => onWordSearchOptionsChange({ wordSearchFiller: 'fromWords' })}
+              className={`flex-1 py-2 px-2 text-sm rounded-lg border ${worksheet.wordSearchFiller === 'fromWords' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+            >
+              Litery z ukrytych słów
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Litery z ukrytych słów są trudniejsze - żadna przypadkowa litera nie zdradza pustego miejsca.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.wordSearchShowWords ?? true}
+            onChange={(event) => onWordSearchOptionsChange({ wordSearchShowWords: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Lista słów pod siatką</span>
+            <span className="block text-xs text-gray-500">
+              Bez listy zostaje sama liczba ukrytych słów - zadanie jest wtedy dużo trudniejsze.
+            </span>
+          </span>
+        </label>
+
         <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
           <input
             type="checkbox"
@@ -1035,6 +1102,69 @@ export function Editor({
             {getHandwritingFont(worksheet.handwritingFont).description}
           </p>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Kontrast śladu</label>
+          <div className="flex gap-2">
+            {TRACE_LEVELS.map((level) => (
+              <button
+                key={level.value}
+                type="button"
+                onClick={() => onHandwritingOptionsChange({ handwritingTrace: level.value })}
+                className={`flex-1 py-2 px-2 text-sm rounded-lg border ${(worksheet.handwritingTrace ?? 'medium') === level.value ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+              >
+                {level.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Liniatura</label>
+          <div className="flex gap-2">
+            {GUIDE_LEVELS.map((level) => (
+              <button
+                key={level.value}
+                type="button"
+                onClick={() => onHandwritingOptionsChange({ handwritingGuides: level.value })}
+                className={`flex-1 py-2 px-2 text-sm rounded-lg border ${(worksheet.handwritingGuides ?? 'full') === level.value ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
+              >
+                {level.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Sama linia podstawowa albo brak linii to kolejne etapy usamodzielniania dziecka.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.handwritingEveryOther ?? false}
+            onChange={(event) => onHandwritingOptionsChange({ handwritingEveryOther: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Co drugi wiersz pusty</span>
+            <span className="block text-xs text-gray-500">
+              Dziecko przepisuje wzór do pustego wiersza pod spodem.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.handwritingStartDot ?? false}
+            onChange={(event) => onHandwritingOptionsChange({ handwritingStartDot: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Kropka startowa</span>
+            <span className="block text-xs text-gray-500">Zielona kropka na początku każdego wiersza.</span>
+          </span>
+        </label>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

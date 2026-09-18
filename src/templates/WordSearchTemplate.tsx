@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { WorksheetState } from '../types/worksheet'
 import { generateWordSearch, parseWords } from '../wordSearch'
+import { usePageSpace } from '../usePageSpace'
 import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
 interface WordSearchTemplateProps {
@@ -9,6 +10,9 @@ interface WordSearchTemplateProps {
   showAnswerKey?: boolean
 }
 
+/** Najmniejsza sensowna liczba wierszy siatki. */
+const MIN_ROWS = 5
+
 export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: WordSearchTemplateProps) {
   const {
     wordSearchWords = '',
@@ -16,20 +20,49 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
     wordSearchAllowDiagonals = false,
     wordSearchAllowReverse = false,
     wordSearchUppercase = true,
+    wordSearchShape = 'square',
+    wordSearchShowWords = true,
+    wordSearchFiller = 'random',
+    instruction,
     itemScale = 1,
     simpleMode = false,
   } = worksheet
 
+  const { containerRef, width, height } = usePageSpace([
+    wordSearchWords,
+    wordSearchGridSize,
+    wordSearchShape,
+    wordSearchShowWords,
+    itemScale,
+    instruction,
+    worksheet.header,
+    worksheet.orientation,
+    simpleMode,
+  ])
+
   const words = useMemo(() => parseWords(wordSearchWords), [wordSearchWords])
+
+  // Siatka albo kwadratowa, albo dociągnięta do proporcji wolnego miejsca na kartce.
+  // Lista słów stoi pod siatką, więc najpierw rezerwujemy na nią miejsce.
+  const wordsHeight = wordSearchShowWords ? Math.min(140, 26 + Math.ceil(words.length / 4) * 26) : 0
+  const gridHeight = Math.max(0, height - wordsHeight)
+  const cols = wordSearchGridSize
+  const rows =
+    wordSearchShape === 'page' && width > 0 && gridHeight > 0
+      ? Math.max(MIN_ROWS, Math.min(30, Math.round((cols * gridHeight) / width)))
+      : cols
+
   const { grid, placed } = useMemo(
     () =>
       generateWordSearch(words, {
-        size: wordSearchGridSize,
+        cols,
+        rows,
         allowDiagonals: wordSearchAllowDiagonals,
         allowReverse: wordSearchAllowReverse,
+        filler: wordSearchFiller === 'fromWords' ? 'fromWords' : 'random',
         seed,
       }),
-    [words, wordSearchGridSize, wordSearchAllowDiagonals, wordSearchAllowReverse, seed],
+    [words, cols, rows, wordSearchAllowDiagonals, wordSearchAllowReverse, wordSearchFiller, seed],
   )
 
   // Komórki należące do ukrytych słów - podświetlamy je tylko w kluczu odpowiedzi.
@@ -42,56 +75,65 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
     return set
   }, [placed, showAnswerKey])
 
-  // Siatka zawsze mieści się w szerokości kartki: rozmiar komórki liczymy w procentach,
-  // a cały blok ograniczamy suwakiem rozmiaru elementów.
-  const gridMaxWidth = `${Math.min(100, 62 * itemScale)}%`
+  // Bok komórki dobieramy tak, aby cała siatka zmieściła się i w szerokość, i w wysokość.
+  // 1px zapasu na zaokrąglenia przy drukowaniu.
+  const cell = width > 0 && gridHeight > 0 ? Math.min((width - 1) / cols, (gridHeight - 1) / rows) : 0
+  const scaledCell = wordSearchShape === 'square' ? Math.min(cell, (width * Math.min(1, 0.62 * itemScale)) / cols) : cell
+  const gridWidth = scaledCell * cols
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      <InstructionText instruction={worksheet.instruction} simpleMode={simpleMode} />
-
-      <div className="w-full flex justify-center">
-        <div
-          className="grid w-full"
-          style={{
-            maxWidth: gridMaxWidth,
-            gridTemplateColumns: `repeat(${wordSearchGridSize}, minmax(0, 1fr))`,
-            // Litery skalują się wraz z siatką (jednostka cqw = 1% szerokości siatki),
-            // więc nigdy nie wychodzą poza komórki ani poza kartkę.
-            containerType: 'inline-size',
-          }}
-        >
-          {grid.map((row, rowIndex) =>
-            row.map((letter, colIndex) => {
-              const isSolution = solutionCells.has(`${rowIndex}:${colIndex}`)
-              return (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  className={`aspect-square flex items-center justify-center border border-gray-300 font-semibold ${
-                    isSolution ? 'bg-yellow-200 text-gray-900' : 'text-gray-800'
-                  }`}
-                  style={{ fontSize: `${(100 / wordSearchGridSize) * 0.55}cqw` }}
-                >
-                  {wordSearchUppercase ? letter : letter.toLowerCase()}
-                </div>
-              )
-            }),
-          )}
-        </div>
-      </div>
-
-      {placed.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 px-4">
-          {placed.map((word) => (
-            <span
-              key={word.word}
-              className={`${simpleMode ? 'text-xl' : 'text-base'} text-gray-800 tracking-wide`}
-            >
-              {wordSearchUppercase ? word.word : word.word.toLowerCase()}
-            </span>
-          ))}
+    <div className="flex flex-col w-full">
+      {instruction.trim() && (
+        <div className="mb-3">
+          <InstructionText instruction={instruction} simpleMode={simpleMode} />
         </div>
       )}
+
+      <div ref={containerRef} className="w-full overflow-hidden flex flex-col items-center gap-4">
+        {scaledCell > 0 && (
+          <div
+            className="grid"
+            style={{
+              width: gridWidth,
+              gridTemplateColumns: `repeat(${cols}, ${scaledCell}px)`,
+            }}
+          >
+            {grid.map((gridRow, rowIndex) =>
+              gridRow.map((letter, colIndex) => {
+                const isSolution = solutionCells.has(`${rowIndex}:${colIndex}`)
+                return (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    className={`flex items-center justify-center border border-gray-300 font-semibold ${
+                      isSolution ? 'bg-yellow-200 text-gray-900' : 'text-gray-800'
+                    }`}
+                    style={{ width: scaledCell, height: scaledCell, fontSize: scaledCell * 0.55 }}
+                  >
+                    {wordSearchUppercase ? letter : letter.toLowerCase()}
+                  </div>
+                )
+              }),
+            )}
+          </div>
+        )}
+
+        {wordSearchShowWords && placed.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 px-4">
+            {placed.map((word) => (
+              <span
+                key={word.word}
+                className={`${simpleMode ? 'text-xl' : 'text-base'} text-gray-800 tracking-wide`}
+              >
+                {wordSearchUppercase ? word.word : word.word.toLowerCase()}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {!wordSearchShowWords && placed.length > 0 && (
+          <p className="text-sm text-gray-500">Ukrytych słów: {placed.length}</p>
+        )}
+      </div>
     </div>
   )
 }
