@@ -51,6 +51,7 @@ interface EditorProps {
   onRedo: () => void
   canUndo: boolean
   canRedo: boolean
+  saveStatus: 'saved' | 'saving' | 'idle'
 }
 
 /** Lewy panel edycji: wybór szablonu, treść polecenia, dodawanie elementów, lista elementów. */
@@ -87,6 +88,7 @@ export function Editor({
   onRedo,
   canUndo,
   canRedo,
+  saveStatus,
 }: EditorProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -545,18 +547,26 @@ export function Editor({
           <button
             type="button"
             onClick={() => importInputRef.current?.click()}
-            className="flex-1 bg-gray-100 text-gray-900 font-medium py-3 rounded-lg text-base border border-gray-300 hover:bg-gray-200"
+            className="flex-1 bg-gray-100 text-gray-900 font-medium py-2 rounded-lg text-sm hover:bg-gray-200"
           >
-            Importuj projekt
+            Wczytaj z pliku
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Czy na pewno chcesz usunąć wszystko i zacząć od nowa?')) {
+                onClear()
+              }
+            }}
+            className="flex-1 bg-red-100 text-red-700 font-medium py-2 rounded-lg text-sm hover:bg-red-200"
+          >
+            Wyczyść wszystko
           </button>
         </div>
-        <button
-          type="button"
-          onClick={onClear}
-          className="w-full bg-red-50 text-red-700 font-medium py-3 rounded-lg text-base border border-red-200 hover:bg-red-100"
-        >
-          Wyczyść kartę
-        </button>
+        <div className="text-center h-4 mt-1">
+          {saveStatus === 'saved' && <span className="text-xs text-green-600 font-medium">✔ Zapisano lokalnie</span>}
+          {saveStatus === 'saving' && <span className="text-xs text-gray-400">Zapisywanie robocze...</span>}
+        </div>
       </section>
     </div>
   )

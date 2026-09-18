@@ -12,6 +12,7 @@ import type { WorksheetHeader } from './types/worksheet'
 import { createId, shuffleArray, clamp } from './utils'
 import { downloadWorksheetJson, parseWorksheetJson } from './worksheetIO'
 import { useUndoRedo } from './hooks/useUndoRedo'
+import { useAutosave } from './hooks/useAutosave'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 
@@ -56,6 +57,10 @@ function App() {
     canRedo,
   } = useUndoRedo<WorksheetState>(INITIAL_WORKSHEET)
   const [shuffleSeed, setShuffleSeed] = useState(0)
+
+  const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(worksheet, (state) => {
+    resetWorksheet(state)
+  })
 
   function handleTemplateChange(template: TemplateType) {
     // Każdy szablon ma inny kształt danych, więc przy zmianie czyścimy zawartość,
@@ -301,6 +306,37 @@ function App() {
     })
   }
 
+  if (!isReady) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">Wczytywanie...</div>
+  }
+
+  if (hasDraft) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold mb-4">Wykryto zapis roboczy</h2>
+          <p className="text-gray-600 mb-6">
+            Znalazłem niezapisany projekt z poprzedniej sesji. Chcesz go przywrócić?
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={deleteDraft}
+              className="px-6 py-2 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
+            >
+              Zacznij od nowa
+            </button>
+            <button
+              onClick={loadDraft}
+              className="px-6 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+            >
+              Przywróć projekt
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="app-layout">
       <div className="editor-panel">
@@ -337,6 +373,7 @@ function App() {
           onRedo={redo}
           canUndo={canUndo}
           canRedo={canRedo}
+          saveStatus={saveStatus}
         />
       </div>
       <div className="preview-panel">
