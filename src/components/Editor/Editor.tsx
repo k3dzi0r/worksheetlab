@@ -30,6 +30,7 @@ import { MyLibrary } from '../MyLibrary/MyLibrary'
 import type { EmojiEntry } from '../../data/emojis'
 import { createId } from '../../utils'
 import { generateWordSearch, parseWords } from '../../wordSearch'
+import { buildCrossword, parseCrosswordLines } from '../../crossword'
 import { DEFAULT_HANDWRITING_FONT, HANDWRITING_FONTS, getHandwritingFont } from '../../handwritingFonts'
 import { MAZE_LEVELS, getMazeLevel } from '../../maze'
 import type { MazeCarver, MazeDeadEnds, MazeEnds } from '../../maze'
@@ -116,6 +117,7 @@ interface EditorProps {
   onMathOptionsChange: (options: Partial<WorksheetState>) => void
   onPatternOptionsChange: (options: Partial<WorksheetState>) => void
   onHandwritingOptionsChange: (options: Partial<WorksheetState>) => void
+  onCrosswordOptionsChange: (options: Partial<WorksheetState>) => void
   onInstructionChange: (instruction: string) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
@@ -165,6 +167,7 @@ export function Editor({
   onMathOptionsChange,
   onPatternOptionsChange,
   onHandwritingOptionsChange,
+  onCrosswordOptionsChange,
   onInstructionChange,
   onCountRepetitionsChange,
   onLayoutChange,
@@ -206,6 +209,15 @@ export function Editor({
   const importInputRef = useRef<HTMLInputElement>(null)
 
   const handwritingTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Ostrzeżenie w edytorze: do których liter hasła zabrakło słowa.
+  const crosswordSkipped = useMemo(() => {
+    if (worksheet.template !== 'crossword') return []
+    return buildCrossword(parseCrosswordLines(worksheet.crosswordWords || ''), {
+      keyword: worksheet.crosswordKeyword || '',
+      seed: 1,
+    }).missingLetters
+  }, [worksheet.template, worksheet.crosswordWords, worksheet.crosswordKeyword])
 
   // Ostrzeżenie w edytorze: które słowa nie zmieściły się w siatce wykreślanki.
   const wordSearchSkipped = useMemo(() => {
@@ -606,7 +618,74 @@ export function Editor({
     </section>
   )}
 
-  {worksheet.template === 'pattern' ? (
+  {worksheet.template === 'crossword' ? (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">3. Krzyżówka</h2>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Hasło w kolumnie</label>
+          <input
+            type="text"
+            value={worksheet.crosswordKeyword || ''}
+            onChange={(event) => onCrosswordOptionsChange({ crosswordKeyword: event.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="np. WIOSNA"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Zostaw puste, a hasło ułoży się samo z losowo wybranych liter podanych słów.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Słowa i definicje (jedno w wierszu)
+          </label>
+          <textarea
+            value={worksheet.crosswordWords || ''}
+            onChange={(event) => onCrosswordOptionsChange({ crosswordWords: event.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={7}
+            placeholder={'kwiat - rośnie na łące\nptak - ma skrzydła'}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Format: słowo - definicja. Samo słowo też zadziała, definicję dopiszesz później.
+          </p>
+          {crosswordSkipped.length > 0 && (
+            <p className="text-xs text-amber-600 mt-1">
+              Brakuje słowa z literą: {crosswordSkipped.join(', ')}. Dodaj słowo zawierające tę literę
+              albo skróć hasło.
+            </p>
+          )}
+        </div>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.crosswordShowClues ?? true}
+            onChange={(event) => onCrosswordOptionsChange({ crosswordShowClues: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Definicje pod krzyżówką</span>
+            <span className="block text-xs text-gray-500">Wyłącz, jeśli czytasz definicje na głos.</span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.crosswordNumbers ?? true}
+            onChange={(event) => onCrosswordOptionsChange({ crosswordNumbers: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Numery wierszy</span>
+            <span className="block text-xs text-gray-500">Łączą kratki z definicjami pod spodem.</span>
+          </span>
+        </label>
+      </div>
+    </section>
+  ) : worksheet.template === 'pattern' ? (
     <section>
       <h2 className="text-lg font-semibold mb-2">3. Szlaczek</h2>
       <div className="flex flex-col gap-4">

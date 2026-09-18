@@ -24,7 +24,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -69,6 +69,11 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     value: 'pattern',
     label: 'Szlaczki',
     description: 'Wzory grafomotoryczne do wodzenia ołówkiem, po śladzie i samodzielnie.',
+  },
+  {
+    value: 'crossword',
+    label: 'Krzyżówka',
+    description: 'Hasło w kolumnie, definicje pod spodem, klucz odpowiedzi.',
   },
   {
     value: 'choice',
@@ -182,6 +187,14 @@ export interface WorksheetState {
   handwritingEveryOther?: boolean
   /** Czy zaznaczyć kropką miejsce startu wiersza. */
   handwritingStartDot?: boolean
+  /** Słowa krzyżówki w formacie „słowo - definicja", jedno w wierszu. */
+  crosswordWords?: string
+  /** Hasło do odczytania w kolumnie. Puste oznacza dobór liter losowo. */
+  crosswordKeyword?: string
+  /** Czy drukować definicje pod krzyżówką. */
+  crosswordShowClues?: boolean
+  /** Czy numerować wiersze krzyżówki. */
+  crosswordNumbers?: boolean
   /** Wzór szlaczka albo „mixed" - inny w każdym wierszu. */
   patternId?: string
   /** Ile wiersza zajmuje gotowy wzór i ślad do obrysowania. */
