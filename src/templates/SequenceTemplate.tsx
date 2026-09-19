@@ -9,6 +9,7 @@ interface SequenceTemplateProps {
   blanks: number
   itemScale: number
   simpleMode?: boolean
+  blankStyle?: 'underscore' | 'box'
 }
 
 const BASE_DIMENSION_REM = 3.75
@@ -21,6 +22,7 @@ export function SequenceTemplate({
   blanks,
   itemScale,
   simpleMode = false,
+  blankStyle = 'underscore',
 }: SequenceTemplateProps) {
   const simpleModeMultiplier = simpleMode ? 1.35 : 1
   const blankDimension = `${BASE_DIMENSION_REM * itemScale * simpleModeMultiplier}rem`
@@ -43,8 +45,8 @@ export function SequenceTemplate({
           Array.from({ length: blanks }).map((_, index) => (
             <div
               key={`blank-${index}`}
-              className="border-4 border-dashed border-gray-400 rounded-xl"
-              style={{ width: blankDimension, height: blankDimension }}
+              className={blankStyle === 'box' ? "border-4 border-dashed border-gray-400 rounded-xl" : "border-b-4 border-gray-500"}
+              style={{ width: blankDimension, height: blankStyle === 'box' ? blankDimension : '0.5rem', alignSelf: blankStyle === 'underscore' ? 'flex-end' : 'auto', marginBottom: blankStyle === 'underscore' ? '1rem' : '0' }}
             />
           ))}
       </div>

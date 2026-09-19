@@ -29,7 +29,6 @@ const VALID_TEMPLATES: TemplateType[] = [
   'matchPairs',
   'count',
   'yesNo',
-  'oddOneOut',
   'sequence',
   'cutCards',
   'sameOrDifferent',
@@ -103,6 +102,11 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
   }
   if (!data || typeof data !== 'object') return null
   const state = data as Record<string, unknown>
+
+  if (state.template === 'oddOneOut') {
+    state.template = 'choice';
+    state.layout = 'row';
+  }
 
   if (typeof state.template !== 'string' || !VALID_TEMPLATES.includes(state.template as TemplateType)) return null
   if (typeof state.instruction !== 'string') return null

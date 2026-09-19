@@ -9,6 +9,7 @@ interface MatchPairsTemplateProps {
   shuffledRight: MatchPair[]
   itemScale: number
   simpleMode?: boolean
+  lineStyle?: 'solid' | 'dashed' | 'dotted'
 }
 
 /** Szablon „Połącz w pary”: dwie kolumny z dużą przestrzenią na rysowanie linii. */
@@ -18,6 +19,7 @@ export function MatchPairsTemplate({
   shuffledRight,
   itemScale,
   simpleMode = false,
+  lineStyle = 'solid',
 }: MatchPairsTemplateProps) {
   // Renderujemy tylko pary, które mają już oba elementy.
   const completeLeft = pairs.filter((pair) => pair.right)
@@ -33,7 +35,9 @@ export function MatchPairsTemplate({
           ))}
         </div>
         {/* Pusta przestrzeń środkowa – tutaj uczeń narysuje linie łączące pary. */}
-        <div className="flex-1" />
+        <div className="flex-1 flex justify-center py-4">
+          <div className={`w-0 border-l-2 border-gray-300 ${lineStyle === 'dashed' ? 'border-dashed' : lineStyle === 'dotted' ? 'border-dotted' : 'border-solid'}`} />
+        </div>
         <div className={`flex flex-col ${simpleMode ? 'gap-14' : 'gap-10'}`}>
           {completeRight.map((pair) => (
             <WorksheetItemView key={pair.id} item={pair.right!} baseScale={itemScale} simpleMode={simpleMode} />

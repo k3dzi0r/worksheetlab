@@ -11,6 +11,7 @@ interface ChoiceTemplateProps {
   /** Zmienia się przy „Losuj kolejność” - dla układu rozrzuconego wylicza nowe pozycje. */
   seed: number
   simpleMode?: boolean
+  showCheckboxes?: boolean
 }
 
 /**
@@ -30,7 +31,7 @@ function gridSlot(index: number, total: number): [number, number] {
 }
 
 /** Szablon „Wybierz”: polecenie na górze, poniżej elementy w rzędzie albo rozrzucone po kartce. */
-export function ChoiceTemplate({ instruction, items, layout, itemScale, seed, simpleMode = false }: ChoiceTemplateProps) {
+export function ChoiceTemplate({ instruction, items, layout, itemScale, seed, simpleMode = false, showCheckboxes = false }: ChoiceTemplateProps) {
   return (
     <div className="flex flex-col items-center gap-12 pt-8 h-full">
       <InstructionText instruction={instruction} simpleMode={simpleMode} />
@@ -38,7 +39,10 @@ export function ChoiceTemplate({ instruction, items, layout, itemScale, seed, si
       {layout === 'row' ? (
         <div className={`flex flex-wrap justify-center items-center ${simpleMode ? 'gap-16' : 'gap-10'}`}>
           {items.map((item) => (
-            <WorksheetItemView key={item.id} item={item} baseScale={itemScale} simpleMode={simpleMode} />
+            <div key={item.id} className="flex flex-col items-center">
+              <WorksheetItemView item={item} baseScale={itemScale} simpleMode={simpleMode} />
+              {showCheckboxes && <div className={`border-4 border-gray-400 rounded-lg ${simpleMode ? 'w-12 h-12 mt-4' : 'w-8 h-8 mt-2'}`} />}
+            </div>
           ))}
         </div>
       ) : (
@@ -52,10 +56,11 @@ export function ChoiceTemplate({ instruction, items, layout, itemScale, seed, si
             return (
               <div
                 key={item.id}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
+                className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
                 style={{ left: `${left}%`, top: `${top}%` }}
               >
                 <WorksheetItemView item={item} baseScale={itemScale} simpleMode={simpleMode} />
+                {showCheckboxes && <div className={`border-4 border-gray-400 rounded-lg ${simpleMode ? 'w-12 h-12 mt-4' : 'w-8 h-8 mt-2'}`} />}
               </div>
             )
           })}

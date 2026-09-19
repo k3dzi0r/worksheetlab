@@ -24,7 +24,7 @@ export interface WorksheetItem {
   scale?: number
 }
 
-export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'oddOneOut' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword' | 'dotToDot' | 'clock'
+export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword' | 'dotToDot' | 'clock'
 
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
@@ -131,12 +131,6 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     category: 'pictures',
   },
   {
-    value: 'oddOneOut',
-    label: 'Co nie pasuje?',
-    description: 'Kilka elementów, uczeń wskazuje ten niepasujący.',
-    category: 'puzzles',
-  },
-  {
     value: 'sequence',
     label: 'Sekwencja',
     description: 'Wzór z elementów powtórzony kilka razy + puste pola.',
@@ -211,6 +205,22 @@ export interface WorksheetState {
   /** Nazwy kategorii (2 lub 3) dla szablonu „Podziel na kategorie”. */
   categories: string[]
   /** Liczba generowanych wariantów. */
+  /** Tak/Nie: czy używać kolorów dla kciuków (zielony/czerwony) */
+  yesNoUseColors?: boolean
+  /** Wybierz: czy pokazywać puste kratki na odpowiedzi obok obrazków */
+  choiceShowCheckboxes?: boolean
+  /** Połącz w pary: styl linii */
+  matchPairsLineStyle?: 'solid' | 'dashed' | 'dotted'
+  /** Policz: czy elementy mają być rozrzucone (scattered) */
+  countScattered?: boolean
+  /** Sekwencja: styl pustych pól (underscore lub box) */
+  sequenceBlankStyle?: 'underscore' | 'box'
+  /** Kartoniki do wycinania: liczba kartoników w rzędzie (domyślnie 3) */
+  cutCardsPerRow?: number
+  /** Taki sam/inny: styl wyróżnienia wzorca */
+  sameOrDifferentReferenceStyle?: 'box' | 'underline' | 'none'
+  /** Podziel na kategorie: tryb graficzny */
+  categorizeLayout?: 'columns' | 'areas'
   variantCount?: number
   /** Identyfikatory poprawnych odpowiedzi (dla Wybierz, Co nie pasuje, Taki sam/inny) lub "yes"/"no" (dla Tak/Nie) */
   correctAnswers?: string[]

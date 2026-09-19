@@ -8,6 +8,7 @@ interface CutCardsTemplateProps {
   itemScale: number
   showBorder: boolean
   simpleMode?: boolean
+  cardsPerRow?: number
 }
 
 const BASE_DIMENSION_REM = 3.75
@@ -15,19 +16,14 @@ const SIMPLE_MODE_SCALE = 1.35
 /** Zapas miejsca wokół elementu w kartoniku, żeby ramka nie przylegała bezpośrednio do obrazka/emoji. */
 const CARD_PADDING_REM = 1
 
-/** Liczba kolumn siatki dobrana automatycznie do liczby kartoników (np. 2x2, 3x3, 3x4). */
-function gridColumns(total: number): number {
-  return Math.max(1, Math.ceil(Math.sqrt(total)))
-}
-
 /**
  * Szablon kart do wycinania: wszystkie kartoniki mają identyczny rozmiar (niezależnie od
  * ewentualnego indywidualnego rozmiaru elementu), ułożone w siatce gotowej do wydruku i wycięcia.
  */
-export function CutCardsTemplate({ instruction, items, itemScale, showBorder, simpleMode = false }: CutCardsTemplateProps) {
+export function CutCardsTemplate({ instruction, items, itemScale, showBorder, simpleMode = false, cardsPerRow = 3 }: CutCardsTemplateProps) {
   const simpleModeMultiplier = simpleMode ? SIMPLE_MODE_SCALE : 1
   const cardDimension = `${BASE_DIMENSION_REM * itemScale * simpleModeMultiplier + CARD_PADDING_REM * 2}rem`
-  const columns = gridColumns(items.length)
+  const columns = cardsPerRow; // removed gridColumns fallback as it's explicit now
 
   return (
     <div className="flex flex-col gap-8 pt-8 h-full">

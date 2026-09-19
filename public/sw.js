@@ -13,7 +13,6 @@ self.addEventListener('install', (event) => {
         '/worksheetlab/fonts/ABeeZee-Regular.woff2',
         '/worksheetlab/fonts/PlaywritePL-Regular.woff2',
         '/worksheetlab/fonts/Elementarz.ttf',
-        '/worksheetlab/illustrations/pencil.webp',
         '/worksheetlab/illustrations/books.webp'
       ]);
     })

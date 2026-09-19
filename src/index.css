@@ -47,9 +47,7 @@ body {
 .step-content {
   width: 392px;
   flex-shrink: 0;
-  padding: 1.5rem;
   /* Treść kroku przewija się niezależnie od nawigacji i od podglądu. */
-  overflow-y: auto;
 }
 
 .preview-panel {
@@ -103,16 +101,40 @@ body {
     flex-direction: column;
   }
 
-  .step-nav,
-  .step-content {
-    width: 100%;
-    overflow-y: visible;
-  }
-
   .step-nav {
-    border-right: none;
+    width: 100% !important;
+    max-height: 140px;
+    overflow-y: auto !important;
     border-bottom: 1px solid #f1f5f9;
   }
+  
+  .step-nav > nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .step-nav > nav > button {
+    flex-shrink: 0;
+    width: auto;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .step-nav > nav > button > div:nth-child(2) {
+    display: none;
+  }
+
+  .step-content {
+    width: 100% !important;
+    height: 60vh;
+  }
+  
+  .step-content > div:last-child {
+    width: 100% !important;
+  }
+
   .preview-panel {
     height: auto;
     overflow: visible;

@@ -26,7 +26,7 @@ const PAGE_SIZE_PX = {
 }
 
 /** Szablony, w których losowanie kolejności elementów cokolwiek zmienia. */
-const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'oddOneOut', 'sameOrDifferent']
+const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'sameOrDifferent']
 
 export const INITIAL_WORKSHEET: WorksheetState = {
   id: createId(),
@@ -47,6 +47,14 @@ export const INITIAL_WORKSHEET: WorksheetState = {
   categories: ['Kategoria 1', 'Kategoria 2'],
   variantCount: 1,
   correctAnswers: [],
+  yesNoUseColors: false,
+  choiceShowCheckboxes: false,
+  matchPairsLineStyle: 'solid',
+  countScattered: false,
+  sequenceBlankStyle: 'underscore',
+  cutCardsPerRow: 3,
+  sameOrDifferentReferenceStyle: 'box',
+  categorizeLayout: 'columns',
 }
 
 export const INITIAL_PROJECT: ProjectState = {
@@ -60,7 +68,7 @@ export const INITIAL_PROJECT: ProjectState = {
  * mieściła się na A4. W trybie prostym limit jest niższy, bo elementy są większe.
  */
 function getMaxItems(template: TemplateType, simpleMode: boolean): number | null {
-  if (template === 'choice' || template === 'cutCards' || template === 'oddOneOut' || template === 'categorize') return simpleMode ? 6 : 12
+  if (template === 'choice' || template === 'cutCards' || template === 'categorize') return simpleMode ? 6 : 12
   // "Taki sam / inny": 1 element wzorcowy + odpowiedzi, więc limit jest o 1 wyższy.
   if (template === 'sameOrDifferent') return simpleMode ? 7 : 13
   return null
@@ -240,6 +248,10 @@ function App() {
     setWorksheet((prev) => ({ ...prev, instruction }))
   }
 
+  function handleUpdateOptions(options: Partial<WorksheetState>) {
+    setWorksheet((prev) => ({ ...prev, ...options }))
+  }
+
   function handleCountRepetitionsChange(countRepetitions: number) {
     setWorksheet((prev) => ({ ...prev, countRepetitions }))
   }
@@ -347,7 +359,7 @@ function App() {
         return { ...prev, sequenceItems: [...prev.sequenceItems, newItem] }
       }
 
-      // Szablony "choice" i "oddOneOut" - miękki limit elementów, żeby karta czytelnie się mieściła na A4.
+      // Szablony "choice" - miękki limit elementów, żeby karta czytelnie się mieściła na A4.
       const maxItems = getMaxItems(prev.template, prev.simpleMode)
       if (maxItems !== null && prev.items.length >= maxItems) {
         alert(`W tym szablonie można dodać maksymalnie ${maxItems} elementów.`)
@@ -467,7 +479,7 @@ function App() {
 
   function handleShuffle() {
     setWorksheet((prev) => {
-      if (prev.template === 'choice' || prev.template === 'oddOneOut' || prev.template === 'categorize') {
+      if (prev.template === 'choice' || prev.template === 'categorize') {
         return { ...prev, items: shuffleArray(prev.items) }
       }
       if (prev.template === 'sameOrDifferent') {
@@ -617,6 +629,7 @@ function App() {
           onDotOptionsChange={handleDotOptionsChange}
           onClockOptionsChange={handleClockOptionsChange}
           onInstructionChange={handleInstructionChange}
+          onUpdateOptions={handleUpdateOptions}
           onCountRepetitionsChange={handleCountRepetitionsChange}
           onLayoutChange={handleLayoutChange}
           onItemScaleChange={handleItemScaleChange}

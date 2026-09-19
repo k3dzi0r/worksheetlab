@@ -300,22 +300,6 @@ const THUMBNAILS: Record<TemplateType, React.ReactNode> = {
       <path d="M40 41 l8 8 M48 41 l-8 8" stroke={STROKE} strokeWidth="2" strokeLinecap="round" />
     </>
   ),
-  oddOneOut: (
-    <>
-      {[0, 1, 2, 3].map((i) => (
-        <circle
-          key={i}
-          cx={14 + i * 12}
-          cy="30"
-          r="5"
-          fill="none"
-          stroke={i === 2 ? ACCENT : STROKE}
-          strokeWidth={i === 2 ? 2 : 1.5}
-        />
-      ))}
-      <path d="M32 42 l6 6 M38 42 l-6 6" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" />
-    </>
-  ),
   sequence: (
     <>
       {[0, 1, 2, 3, 4].map((i) => (

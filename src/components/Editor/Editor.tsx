@@ -135,6 +135,7 @@ interface EditorProps {
   onDotOptionsChange: (options: Partial<WorksheetState>) => void
   onClockOptionsChange: (options: Partial<WorksheetState>) => void
   onInstructionChange: (instruction: string) => void
+  onUpdateOptions: (options: Partial<WorksheetState>) => void
   onCountRepetitionsChange: (count: number) => void
   onLayoutChange: (layout: ChoiceLayout) => void
   onItemScaleChange: (itemScale: number) => void
@@ -184,6 +185,7 @@ export function Editor({
   onDotOptionsChange,
   onClockOptionsChange,
   onInstructionChange,
+  onUpdateOptions,
   onCountRepetitionsChange,
   onLayoutChange,
   onItemScaleChange,
@@ -208,6 +210,8 @@ export function Editor({
   onToggleCorrectAnswer,
 }: EditorProps) {
   const [activeStep, setActiveStep] = useState(1)
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false)
+  const [isContentCollapsed, setIsContentCollapsed] = useState(false)
   const [templateCategory, setTemplateCategory] = useState<TemplateCategory>('all')
   const visibleTemplates = useMemo(
     () =>
@@ -281,10 +285,18 @@ export function Editor({
 
   return (
     <div className="editor-shell">
-      <nav className="step-nav">
+      <nav className={`step-nav relative transition-all duration-300 ease-in-out ${isNavCollapsed ? '!w-16 !px-2 overflow-hidden' : ''}`}>
+        <button 
+          onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+          className="absolute -right-3 top-6 bg-white border border-gray-200 rounded-full p-1 shadow-sm z-50 text-gray-500 hover:text-gray-700 hidden md:block"
+        >
+          <svg className={`w-4 h-4 transform transition-transform ${isNavCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
         <header className="mb-5">
-          <h1 className="text-xl font-bold text-gray-900">WorksheetLab</h1>
-          <p className="text-gray-500 text-xs">Kreator kart pracy A4</p>
+          <h1 className={`text-xl font-bold text-gray-900 transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>KartoLab</h1>
+          <p className={`text-gray-500 text-xs transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>Kreator kart pracy A4</p>
         </header>
 
         <ol className="flex flex-col gap-2">
@@ -299,7 +311,7 @@ export function Editor({
                     active
                       ? 'bg-blue-50 border-blue-500'
                       : 'bg-white border-gray-200 hover:border-gray-300'
-                  }`}
+                  } ${isNavCollapsed ? 'justify-center' : ''}`}
                 >
                   <span
                     className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold shrink-0 ${
@@ -308,12 +320,14 @@ export function Editor({
                   >
                     {step.id}
                   </span>
+                  {!isNavCollapsed && (
                   <span className="min-w-0">
                     <span className={`block text-sm font-semibold ${active ? 'text-blue-800' : 'text-gray-900'}`}>
                       {step.title}
                     </span>
                     <span className="block text-xs text-gray-500 truncate">{step.hint}</span>
                   </span>
+                  )}
                 </button>
               </li>
             )
@@ -321,7 +335,7 @@ export function Editor({
         </ol>
 
         {/* Sekcja "Szybkie opcje" */}
-        <div className="mt-6">
+        <div className={`mt-6 transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Szybkie opcje</h2>
           <div className="flex flex-col gap-2">
             <label className="flex items-center justify-between cursor-pointer group">
@@ -399,25 +413,24 @@ export function Editor({
         </div>
 
         {/* Box Wskazówka */}
-        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-3 relative overflow-hidden">
+        <div className={`mt-6 bg-blue-50 border border-blue-200 rounded-xl p-3 relative overflow-hidden transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
           <div className="flex gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 shrink-0 mt-0.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 shrink-0 mt-0.5">
               <path d="M9 18h6" />
               <path d="M10 22h4" />
               <path d="M12 2v1" />
               <path d="M12 7a5 5 0 0 0-5 5c0 2 1.5 3 2 4v2h6v-2c.5-1 2-2 2-4a5 5 0 0 0-5-5z" />
             </svg>
             <div>
-              <h3 className="text-sm font-bold text-amber-900 leading-tight">Wskazówka</h3>
-              <p className="text-xs text-amber-800 mt-1 leading-snug">
+              <h3 className="text-sm font-bold text-blue-900 leading-tight">Wskazówka</h3>
+              <p className="text-xs text-blue-800 mt-1 leading-snug">
                 {TIPS[activeStep as keyof typeof TIPS]}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-auto pt-6 flex flex-col justify-end min-h-[160px]">
-          <img src={`${import.meta.env.BASE_URL}illustrations/pencil.webp`} alt="" className="w-24 opacity-90 hidden 2xl:block self-center mb-4" aria-hidden="true" />
+        <div className={`mt-auto pt-6 flex flex-col justify-end min-h-[160px] transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
           <p className="text-xs font-medium text-gray-700 text-center mb-1">
             ❤️ Tworzone z myślą o nauczycielach
           </p>
@@ -427,7 +440,16 @@ export function Editor({
         </div>
       </nav>
 
-      <div className="step-content">
+      <div className={`step-content relative transition-all duration-300 ease-in-out bg-white ${isContentCollapsed ? '!w-0 overflow-hidden border-none' : ''}`}>
+        <button 
+          onClick={() => setIsContentCollapsed(!isContentCollapsed)}
+          className={`absolute top-6 bg-white border border-gray-200 rounded-full p-1 shadow-sm z-50 text-gray-500 hover:text-gray-700 hidden md:block transition-all ${isContentCollapsed ? '-left-8' : '-left-3'}`}
+        >
+          <svg className={`w-4 h-4 transform transition-transform ${isContentCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div className={`w-[392px] max-w-[100vw] h-full overflow-y-auto p-6 transition-opacity duration-200 ${isContentCollapsed ? 'opacity-0 invisible' : 'opacity-100'}`}>
 
       <Step step={1} active={activeStep}>
 {/* Wybór szablonu */}
@@ -699,6 +721,96 @@ export function Editor({
 </Step>
 
 <Step step={3} active={activeStep}>
+
+  {worksheet.template === 'choice' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Opcje "Wybierz"</h2>
+      <label className="flex items-center gap-2 cursor-pointer mt-2">
+        <input type="checkbox" checked={worksheet.choiceShowCheckboxes || false} onChange={(e) => onUpdateOptions({ choiceShowCheckboxes: e.target.checked })} className="w-4 h-4 cursor-pointer" />
+        <span className="text-sm font-medium text-gray-700">Pokaż puste kratki obok odpowiedzi (na ✓/✗)</span>
+      </label>
+    </section>
+  )}
+
+  {worksheet.template === 'matchPairs' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Styl linii bazowej</h2>
+      <div className="flex gap-2">
+        {(['solid', 'dashed', 'dotted'] as const).map(style => (
+          <button key={style} type="button" onClick={() => onUpdateOptions({ matchPairsLineStyle: style })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${(worksheet.matchPairsLineStyle ?? 'solid') === style ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>
+            {style === 'solid' ? 'Ciągła' : style === 'dashed' ? 'Przerywana' : 'Kropkowana'}
+          </button>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {worksheet.template === 'yesNo' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Opcje Tak/Nie</h2>
+      <label className="flex items-center gap-2 cursor-pointer mt-2">
+        <input type="checkbox" checked={worksheet.yesNoUseColors || false} onChange={(e) => onUpdateOptions({ yesNoUseColors: e.target.checked })} className="w-4 h-4 cursor-pointer" />
+        <span className="text-sm font-medium text-gray-700">Użyj kolorów (zielone Tak, czerwone Nie)</span>
+      </label>
+    </section>
+  )}
+
+  {worksheet.template === 'count' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Ułożenie elementów</h2>
+      <div className="flex gap-2">
+        <button type="button" onClick={() => onUpdateOptions({ countScattered: false })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${!worksheet.countScattered ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>Siatka</button>
+        <button type="button" onClick={() => onUpdateOptions({ countScattered: true })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${worksheet.countScattered ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>Losowo</button>
+      </div>
+    </section>
+  )}
+
+  {worksheet.template === 'sequence' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Puste pola na odpowiedź</h2>
+      <div className="flex gap-2">
+        <button type="button" onClick={() => onUpdateOptions({ sequenceBlankStyle: 'underscore' })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${(worksheet.sequenceBlankStyle ?? 'underscore') === 'underscore' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>Podkreślenia</button>
+        <button type="button" onClick={() => onUpdateOptions({ sequenceBlankStyle: 'box' })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${(worksheet.sequenceBlankStyle ?? 'underscore') === 'box' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>Puste ramki</button>
+      </div>
+    </section>
+  )}
+
+  {worksheet.template === 'cutCards' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Kolumny kartoników</h2>
+      <div className="flex gap-2">
+        {[2, 3, 4, 5].map(cols => (
+          <button key={cols} type="button" onClick={() => onUpdateOptions({ cutCardsPerRow: cols })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${(worksheet.cutCardsPerRow ?? 3) === cols ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>
+            {cols}
+          </button>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {worksheet.template === 'sameOrDifferent' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Wyróżnienie wzorca</h2>
+      <div className="flex gap-2">
+        {(['box', 'underline', 'none'] as const).map(style => (
+          <button key={style} type="button" onClick={() => onUpdateOptions({ sameOrDifferentReferenceStyle: style })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${(worksheet.sameOrDifferentReferenceStyle ?? 'box') === style ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>
+            {style === 'box' ? 'Ramka' : style === 'underline' ? 'Podkreślenie' : 'Brak'}
+          </button>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {worksheet.template === 'categorize' && (
+    <section>
+      <h2 className="text-lg font-semibold mb-2">Tryb wyświetlania</h2>
+      <div className="flex gap-2">
+        <button type="button" onClick={() => onUpdateOptions({ categorizeLayout: 'columns' })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${(worksheet.categorizeLayout ?? 'columns') === 'columns' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>Kolumny</button>
+        <button type="button" onClick={() => onUpdateOptions({ categorizeLayout: 'areas' })} className={`flex-1 py-1.5 px-2 text-sm rounded-lg border ${(worksheet.categorizeLayout ?? 'columns') === 'areas' ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}>Zamknięte obszary</button>
+      </div>
+    </section>
+  )}
+
   {worksheet.template === 'maze' && (
     <section>
       <h2 className="text-lg font-semibold mb-2">Labirynt</h2>
@@ -1781,6 +1893,7 @@ export function Editor({
       </section>
       </Step>
       </div>
+      </div>
     </div>
   )
 }
@@ -1981,7 +2094,7 @@ function ElementsList({
                   hidden={worksheet.template === 'cutCards'}
                 />
 
-                {['choice', 'oddOneOut', 'sameOrDifferent', 'categorize'].includes(worksheet.template) && !(worksheet.template === 'sameOrDifferent' && index === 0) && onToggleCorrectAnswer && (
+                {['choice', 'sameOrDifferent', 'categorize'].includes(worksheet.template) && !(worksheet.template === 'sameOrDifferent' && index === 0) && onToggleCorrectAnswer && (
                   <label className="flex items-center gap-1 text-sm text-green-700 font-medium mt-1 cursor-pointer">
                     <input type="checkbox" checked={worksheet.correctAnswers?.includes(item.id)} onChange={() => onToggleCorrectAnswer(item.id)} /> Poprawna odpowiedź
                   </label>

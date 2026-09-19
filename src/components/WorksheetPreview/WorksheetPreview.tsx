@@ -6,7 +6,6 @@ import { ChoiceTemplate } from '../../templates/ChoiceTemplate'
 import { MatchPairsTemplate } from '../../templates/MatchPairsTemplate'
 import { CountTemplate } from '../../templates/CountTemplate'
 import { YesNoTemplate } from '../../templates/YesNoTemplate'
-import { OddOneOutTemplate } from '../../templates/OddOneOutTemplate'
 import { SequenceTemplate } from '../../templates/SequenceTemplate'
 import { CutCardsTemplate } from '../../templates/CutCardsTemplate'
 import { SameOrDifferentTemplate } from '../../templates/SameOrDifferentTemplate'
@@ -104,6 +103,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           itemScale={worksheet.itemScale}
           seed={shuffleSeed + variantIndex * 100}
           simpleMode={worksheet.simpleMode}
+          showCheckboxes={worksheet.choiceShowCheckboxes}
         />
       )}
       {worksheet.template === 'matchPairs' && (
@@ -113,6 +113,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           shuffledRight={shuffledRight}
           itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
+          lineStyle={worksheet.matchPairsLineStyle}
         />
       )}
       {worksheet.template === 'count' && (
@@ -122,6 +123,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           repetitions={worksheet.countRepetitions}
           itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
+          scattered={worksheet.countScattered}
         />
       )}
       {worksheet.template === 'yesNo' && (
@@ -130,14 +132,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           item={items[0]}
           itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
-        />
-      )}
-      {worksheet.template === 'oddOneOut' && (
-        <OddOneOutTemplate
-          instruction={worksheet.instruction}
-          items={items}
-          itemScale={worksheet.itemScale}
-          simpleMode={worksheet.simpleMode}
+          useColors={worksheet.yesNoUseColors}
         />
       )}
       {worksheet.template === 'sequence' && (
@@ -148,6 +143,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           blanks={worksheet.sequenceBlanks}
           itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
+          blankStyle={worksheet.sequenceBlankStyle}
         />
       )}
       {worksheet.template === 'cutCards' && (
@@ -165,6 +161,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           items={items}
           itemScale={worksheet.itemScale}
           simpleMode={worksheet.simpleMode}
+          referenceStyle={worksheet.sameOrDifferentReferenceStyle}
         />
       )}
       {worksheet.template === 'categorize' && (

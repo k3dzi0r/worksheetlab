@@ -1,6 +1,6 @@
 {
-  "name": "WorksheetLab",
-  "short_name": "WorksheetLab",
+  "name": "KartoLab",
+  "short_name": "KartoLab",
   "description": "Twórz karty pracy w przeglądarce",
   "start_url": "/worksheetlab/",
   "display": "standalone",

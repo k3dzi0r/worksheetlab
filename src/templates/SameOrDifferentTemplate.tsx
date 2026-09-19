@@ -8,13 +8,14 @@ interface SameOrDifferentTemplateProps {
   items: WorksheetItem[]
   itemScale: number
   simpleMode?: boolean
+  referenceStyle?: 'box' | 'underline' | 'none'
 }
 
 /**
  * Szablon „Taki sam / inny”: jeden element wzorcowy wizualnie odseparowany ramką,
  * niżej odpowiedzi do porównania (np. „znajdź taki sam” albo „wskaż inny”).
  */
-export function SameOrDifferentTemplate({ instruction, items, itemScale, simpleMode = false }: SameOrDifferentTemplateProps) {
+export function SameOrDifferentTemplate({ instruction, items, itemScale, simpleMode = false, referenceStyle = 'box' }: SameOrDifferentTemplateProps) {
   const [reference, ...answers] = items
 
   return (
@@ -22,7 +23,7 @@ export function SameOrDifferentTemplate({ instruction, items, itemScale, simpleM
       <InstructionText instruction={instruction} simpleMode={simpleMode} />
       <div className="flex flex-col items-center gap-2">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Wzorzec</span>
-        <div className="border-2 border-gray-800 rounded-xl px-8 py-6 min-w-[6rem] min-h-[6rem] flex items-center justify-center">
+        <div className={`${referenceStyle === 'box' ? 'border-2 border-gray-800 rounded-xl px-8 py-6' : referenceStyle === 'underline' ? 'border-b-4 border-gray-800 pb-4 px-4' : 'px-8 py-6'} min-w-[6rem] min-h-[6rem] flex items-center justify-center`}>
           {reference ? (
             <WorksheetItemView item={reference} baseScale={itemScale} simpleMode={simpleMode} />
           ) : (
