@@ -30,7 +30,7 @@ body {
    Dzięki temu ustawienia jednego kroku mają wygodną szerokość, a nie stos zwiniętych sekcji. */
 .editor-shell {
   display: flex;
-  height: 100%;
+  flex: 1;
 }
 
 .step-nav {
@@ -38,10 +38,17 @@ body {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  padding: 1.25rem 1rem;
   border-right: 1px solid #f1f5f9;
   background: #fafafa;
+}
+
+.step-nav-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
 }
 
 .step-content {
@@ -104,25 +111,34 @@ body {
   .step-nav {
     width: 100% !important;
     max-height: 140px;
-    overflow-y: auto !important;
     border-bottom: 1px solid #f1f5f9;
   }
+  .step-nav-inner {
+    overflow-y: auto !important;
+    padding: 0.5rem;
+  }
   
-  .step-nav > nav {
+  .step-nav-inner > header {
+    display: none;
+  }
+  .step-nav-inner > div.mt-auto {
+    display: none;
+  }
+  .step-nav-inner > ol {
     flex-direction: row;
     overflow-x: auto;
     gap: 0.5rem;
     padding-bottom: 0.5rem;
   }
   
-  .step-nav > nav > button {
+  .step-nav-inner > ol > li > button {
     flex-shrink: 0;
     width: auto;
     flex-direction: column;
     text-align: center;
   }
   
-  .step-nav > nav > button > div:nth-child(2) {
+  .step-nav-inner > ol > li > button > span:nth-child(2) {
     display: none;
   }
 
