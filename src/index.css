@@ -41,6 +41,7 @@ body {
   padding: 1.25rem 1rem;
   border-right: 1px solid #f1f5f9;
   background: #fafafa;
+  overflow-y: auto;
 }
 
 .step-content {

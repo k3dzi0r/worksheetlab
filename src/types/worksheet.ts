@@ -337,4 +337,5 @@ export const DEFAULT_WORKSHEET_HEADER: WorksheetHeader = {
 export interface ProjectState {
   pages: WorksheetState[]
   activePageIndex: number
+  showPageNumbers?: boolean
 }

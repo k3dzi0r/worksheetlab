@@ -52,6 +52,7 @@ export const INITIAL_WORKSHEET: WorksheetState = {
 export const INITIAL_PROJECT: ProjectState = {
   pages: [INITIAL_WORKSHEET],
   activePageIndex: 0,
+  showPageNumbers: false,
 }
 
 /**
@@ -97,6 +98,10 @@ function App() {
       newPages[activeIdx] = updater(newPages[activeIdx] || INITIAL_WORKSHEET)
       return { ...prevProj, pages: newPages }
     })
+  }, [setProject])
+
+  const handleTogglePageNumbers = useCallback(() => {
+    setProject((prev) => ({ ...prev, showPageNumbers: !prev.showPageNumbers }))
   }, [setProject])
 
   const handleToggleCorrectAnswer = useCallback(
@@ -560,6 +565,7 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full text-center">
+          <img src={`${import.meta.env.BASE_URL}illustrations/books.webp`} alt="" className="w-32 mx-auto mb-6" aria-hidden="true" />
           <h2 className="text-2xl font-bold mb-4">Wykryto zapis roboczy</h2>
           <p className="text-gray-600 mb-6">
             Znalazłem niezapisany projekt z poprzedniej sesji. Chcesz go przywrócić?
@@ -588,6 +594,13 @@ function App() {
       <div className="editor-panel">
         <Editor
           worksheet={worksheet}
+          showAnswerKey={showAnswerKey}
+          onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
+          showPageNumbers={project.showPageNumbers ?? false}
+          onTogglePageNumbers={handleTogglePageNumbers}
+          onExport={handleExport}
+          onImport={handleImport}
+          onClear={handleClear}
           onTemplateChange={handleTemplateChange}
           onHandwritingTextChange={handleHandwritingTextChange}
           onHandwritingModeChange={handleHandwritingModeChange}
@@ -635,11 +648,7 @@ function App() {
           onUndo={undo}
           onRedo={redo}
           onPrint={handlePrint}
-          onExport={handleExport}
-          onImport={handleImport}
-          onClear={handleClear}
-          showAnswerKey={showAnswerKey}
-          onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
+          
           showShuffle={SHUFFLEABLE_TEMPLATES.includes(worksheet.template)}
           onShuffle={handleShuffle}
           saveStatus={saveStatus}
@@ -677,6 +686,9 @@ function App() {
                   shuffleSeed={shuffleSeed}
                   variantIndex={variantIndex}
                   showAnswerKey={showAnswerKey}
+                  showPageNumbers={project.showPageNumbers ?? false}
+                  pageIndex={idx}
+                  totalPages={project.pages.length}
                 />
               ))}
             </div>

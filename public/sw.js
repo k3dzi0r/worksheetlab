@@ -1,4 +1,4 @@
-const CACHE_NAME = 'worksheetlab-v3';
+const CACHE_NAME = 'worksheetlab-v4';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -12,7 +12,9 @@ self.addEventListener('install', (event) => {
         '/worksheetlab/fonts/Andika-Regular.woff2',
         '/worksheetlab/fonts/ABeeZee-Regular.woff2',
         '/worksheetlab/fonts/PlaywritePL-Regular.woff2',
-        '/worksheetlab/fonts/Elementarz.ttf'
+        '/worksheetlab/fonts/Elementarz.ttf',
+        '/worksheetlab/illustrations/pencil.webp',
+        '/worksheetlab/illustrations/books.webp'
       ]);
     })
   );

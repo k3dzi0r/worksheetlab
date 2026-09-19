@@ -87,6 +87,14 @@ function stripFileExtension(fileName: string): string {
 }
 
 /** Kroki kreatora - nawigacja po lewej, treść aktywnego kroku w środkowej kolumnie. */
+const TIPS: Record<number, string> = {
+  1: "Nie wiesz, co wybrać? Filtry nad kafelkami zawężają listę do jednego przedmiotu.",
+  2: "Zmieniając orientację lub tryb prosty dostosowujesz zadanie do potrzeb uczniów.",
+  3: "Ustaw parametry zadania. Wiele z nich pozwala precyzyjnie dostosować poziom trudności.",
+  4: "Każdy wariant to inna wersja tej samej karty — świetne na sprawdzian.",
+  5: "Nagłówek pojawia się tylko na pierwszej stronie wydruku, aby oszczędzić miejsce."
+}
+
 const STEPS = [
   { id: 1, title: 'Szablon', hint: 'Wybierz typ karty' },
   { id: 2, title: 'Układ', hint: 'Rozmiar, orientacja, tryb' },
@@ -102,6 +110,13 @@ function Step({ step, active, children }: { step: number; active: number; childr
 }
 
 interface EditorProps {
+  showAnswerKey: boolean
+  onToggleAnswerKey: () => void
+  showPageNumbers: boolean
+  onTogglePageNumbers: () => void
+  onImport: (text: string) => void
+  onExport: () => void
+  onClear: () => void
   onToggleCorrectAnswer?: (answerId: string) => void
   worksheet: WorksheetState
   onTemplateChange: (template: TemplateType) => void
@@ -145,6 +160,13 @@ interface EditorProps {
 
 /** Lewy panel edycji: wybór szablonu, treść polecenia, dodawanie elementów, lista elementów. */
 export function Editor({
+  showAnswerKey,
+  onToggleAnswerKey,
+  showPageNumbers,
+  onTogglePageNumbers,
+  onImport,
+  onExport,
+  onClear,
   worksheet,
   onTemplateChange,
   onHandwritingTextChange,
@@ -298,9 +320,111 @@ export function Editor({
           })}
         </ol>
 
-        <p className="mt-auto pt-6 text-xs text-gray-400 leading-relaxed">
-          Wszystko liczy się na Twoim komputerze. Karty nie są nigdzie wysyłane.
-        </p>
+        {/* Sekcja "Szybkie opcje" */}
+        <div className="mt-6">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Szybkie opcje</h2>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center justify-between cursor-pointer group">
+              <span className="text-sm font-medium text-gray-700">Pokaż klucz odpowiedzi</span>
+              <div className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2" style={{ backgroundColor: showAnswerKey ? '#2563eb' : '#d1d5db' }}>
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={showAnswerKey}
+                  onChange={onToggleAnswerKey}
+                />
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showAnswerKey ? 'translate-x-4' : 'translate-x-0.5'}`}
+                />
+              </div>
+            </label>
+            <label className="flex items-center justify-between cursor-pointer group">
+              <span className="text-sm font-medium text-gray-700">Numery stron</span>
+              <div className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2" style={{ backgroundColor: showPageNumbers ? '#2563eb' : '#d1d5db' }}>
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={showPageNumbers}
+                  onChange={onTogglePageNumbers}
+                />
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showPageNumbers ? 'translate-x-4' : 'translate-x-0.5'}`}
+                />
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Sekcja "Dodatkowe działania" */}
+        <div className="mt-6">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Dodatkowe działania</h2>
+          <div className="grid grid-cols-3 gap-2">
+            <label className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl bg-indigo-50 text-indigo-700 cursor-pointer hover:bg-indigo-100 transition-colors text-center h-[72px]">
+              <input type="file" accept="application/json" className="hidden" onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  const reader = new FileReader()
+                  reader.onload = (ev) => onImport(ev.target?.result as string)
+                  reader.readAsText(file)
+                }
+                e.target.value = ''
+              }} />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span className="text-[10px] leading-tight font-medium">Wczytaj<br/>z pliku</span>
+            </label>
+            <button type="button" onClick={onExport} className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 transition-colors text-center h-[72px]">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span className="text-[10px] leading-tight font-medium">Eksportuj<br/>projekt</span>
+            </button>
+            <button type="button" onClick={() => {
+              if (window.confirm('Czy na pewno chcesz usunąć całą zawartość?')) {
+                onClear()
+              }
+            }} className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 transition-colors text-center h-[72px]">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              <span className="text-[10px] leading-tight font-medium">Wyczyść<br/>wszystko</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Box Wskazówka */}
+        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-3 relative overflow-hidden">
+          <div className="flex gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 shrink-0 mt-0.5">
+              <path d="M9 18h6" />
+              <path d="M10 22h4" />
+              <path d="M12 2v1" />
+              <path d="M12 7a5 5 0 0 0-5 5c0 2 1.5 3 2 4v2h6v-2c.5-1 2-2 2-4a5 5 0 0 0-5-5z" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-bold text-amber-900 leading-tight">Wskazówka</h3>
+              <p className="text-xs text-amber-800 mt-1 leading-snug">
+                {TIPS[activeStep as keyof typeof TIPS]}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-auto pt-6 flex flex-col justify-end min-h-[160px]">
+          <img src={`${import.meta.env.BASE_URL}illustrations/pencil.webp`} alt="" className="w-24 opacity-90 hidden 2xl:block self-center mb-4" aria-hidden="true" />
+          <p className="text-xs font-medium text-gray-700 text-center mb-1">
+            ❤️ Tworzone z myślą o nauczycielach
+          </p>
+          <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+            Wszystko liczy się na Twoim komputerze. Karty nie są nigdzie wysyłane.
+          </p>
+        </div>
       </nav>
 
       <div className="step-content">

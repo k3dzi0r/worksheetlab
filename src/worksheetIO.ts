@@ -253,7 +253,8 @@ export function parseProjectJson(text: string): ProjectState | null {
     if (pages.length === 0) return null
     return {
       pages,
-      activePageIndex: typeof data.activePageIndex === 'number' && data.activePageIndex < pages.length ? data.activePageIndex : 0
+      activePageIndex: typeof data.activePageIndex === 'number' && data.activePageIndex < pages.length ? data.activePageIndex : 0,
+      showPageNumbers: typeof data.showPageNumbers === 'boolean' ? data.showPageNumbers : false
     }
   }
 

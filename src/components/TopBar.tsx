@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 
 interface TopBarProps {
   canUndo: boolean
@@ -6,11 +5,6 @@ interface TopBarProps {
   onUndo: () => void
   onRedo: () => void
   onPrint: () => void
-  onExport: () => void
-  onImport: (text: string) => void
-  onClear: () => void
-  showAnswerKey: boolean
-  onToggleAnswerKey: () => void
   /** Losowanie kolejności ma sens tylko w części szablonów. */
   showShuffle: boolean
   onShuffle: () => void
@@ -33,11 +27,6 @@ export function TopBar({
   onUndo,
   onRedo,
   onPrint,
-  onExport,
-  onImport,
-  onClear,
-  showAnswerKey,
-  onToggleAnswerKey,
   showShuffle,
   onShuffle,
   saveStatus,
@@ -45,20 +34,6 @@ export function TopBar({
   effectiveZoom,
   onZoomChange,
 }: TopBarProps) {
-  const importInputRef = useRef<HTMLInputElement>(null)
-
-  function handleImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = '' // pozwala zaimportować ten sam plik ponownie
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') onImport(reader.result)
-    }
-    reader.readAsText(file)
-  }
-
   return (
     // Pasek zawija się przy wąskim oknie - lepszy drugi rząd niż przyciski uciekające poza ekran.
     <div className="print:hidden w-full bg-white border-b border-gray-200 px-3 py-2 flex items-center gap-1.5 flex-wrap">
@@ -75,27 +50,15 @@ export function TopBar({
 
       <span className="w-px h-6 bg-gray-200" />
 
-      <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-gray-800 hover:bg-gray-100 cursor-pointer whitespace-nowrap">
-        <input
-          type="checkbox"
-          checked={showAnswerKey}
-          onChange={onToggleAnswerKey}
-          className="w-4 h-4 cursor-pointer"
-        />
-        Klucz odpowiedzi
-      </label>
-
       {showShuffle && (
         <button
           type="button"
           onClick={onShuffle}
-          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 whitespace-nowrap"
+          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 whitespace-nowrap mr-1.5"
         >
           Losuj kolejność
         </button>
       )}
-
-      <span className="w-px h-6 bg-gray-200" />
 
       {/* Zoom podglądu: przy trzech kolumnach kartka A4 nie zawsze mieści się w naturalnej skali. */}
       <div className="flex items-center gap-0.5">
@@ -125,48 +88,18 @@ export function TopBar({
       </div>
 
       <div className="flex items-center gap-1.5 ml-auto">
-      <span className="text-xs text-gray-400 whitespace-nowrap">
-        {saveStatus === 'saved' && <span className="text-green-600 font-medium">✔ zapisano</span>}
-        {saveStatus === 'saving' && 'zapisywanie...'}
-      </span>
+        <span className="text-xs text-gray-400 whitespace-nowrap">
+          {saveStatus === 'saved' && <span className="text-green-600 font-medium">✔ zapisano</span>}
+          {saveStatus === 'saving' && 'zapisywanie...'}
+        </span>
 
-      <button
-        type="button"
-        onClick={() => importInputRef.current?.click()}
-        className="px-2.5 py-1.5 rounded-lg text-xs text-gray-800 border border-gray-300 hover:bg-gray-100"
-      >
-        Wczytaj
-      </button>
-      <input
-        ref={importInputRef}
-        type="file"
-        accept="application/json"
-        onChange={handleImportFileChange}
-        className="hidden"
-      />
-      <button
-        type="button"
-        onClick={onExport}
-        className="px-2.5 py-1.5 rounded-lg text-xs text-gray-800 border border-gray-300 hover:bg-gray-100"
-      >
-        Eksportuj
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          if (window.confirm('Czy na pewno chcesz usunąć wszystko i zacząć od nowa?')) onClear()
-        }}
-        className="px-2.5 py-1.5 rounded-lg text-xs text-red-700 border border-red-200 hover:bg-red-50"
-      >
-        Wyczyść
-      </button>
-      <button
-        type="button"
-        onClick={onPrint}
-        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 whitespace-nowrap"
-      >
-        Drukuj / Zapisz PDF
-      </button>
+        <button
+          type="button"
+          onClick={onPrint}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 whitespace-nowrap ml-2"
+        >
+          Drukuj / Zapisz PDF
+        </button>
       </div>
     </div>
   )

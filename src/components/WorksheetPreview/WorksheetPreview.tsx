@@ -23,6 +23,9 @@ import { ClockTemplate } from '../../templates/ClockTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
 interface WorksheetPreviewProps {
+  showPageNumbers?: boolean
+  pageIndex?: number
+  totalPages?: number
   showAnswerKey?: boolean
   worksheet: WorksheetState
   /** Wartość zmieniana przy każdym „Losuj kolejność”, wymusza nowe tasowanie prawej kolumny. */
@@ -50,7 +53,7 @@ function usePrintOrientation(orientation: WorksheetState['orientation']) {
 }
 
 /** Podgląd kartki A4 – to jedyny fragment strony widoczny podczas drukowania. */
-export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, showAnswerKey = false }: WorksheetPreviewProps) {
+export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, pageIndex, totalPages }: WorksheetPreviewProps) {
   usePrintOrientation(worksheet.orientation)
 
   const items = useMemo(() => {
@@ -91,7 +94,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
   } as CSSProperties
 
   return (
-    <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto" style={pageStyle}>
+    <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto relative" style={pageStyle}>
       <WorksheetHeaderView header={worksheet.header} simpleMode={worksheet.simpleMode} />
       {worksheet.template === 'choice' && (
         <ChoiceTemplate
@@ -228,6 +231,11 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           seed={shuffleSeed + variantIndex * 100}
           showAnswerKey={showAnswerKey}
         />
+      )}
+      {showPageNumbers && pageIndex !== undefined && totalPages !== undefined && (
+        <div className="absolute bottom-[15mm] left-0 right-0 text-center text-xs text-gray-400 font-medium z-10 print:block">
+          {pageIndex + 1} / {totalPages}
+        </div>
       )}
     </div>
   )
