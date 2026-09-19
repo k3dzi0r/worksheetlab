@@ -24,6 +24,8 @@ body {
   border-right: 1px solid #e5e7eb;
   background: #ffffff;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Panel edycji to dwie kolumny: nawigacja po krokach i treść aktywnego kroku.
@@ -31,6 +33,7 @@ body {
 .editor-shell {
   display: flex;
   flex: 1;
+  min-height: 0;
 }
 
 .step-nav {
@@ -40,6 +43,7 @@ body {
   flex-direction: column;
   border-right: 1px solid #f1f5f9;
   background: #fafafa;
+  min-height: 0;
 }
 
 .step-nav-inner {
