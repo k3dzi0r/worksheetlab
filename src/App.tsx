@@ -19,8 +19,11 @@ import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview
 import { PageManager } from './components/PageManager'
 import { TopBar } from './components/TopBar'
 
-/** Szerokość kartki w pikselach przy 96 dpi - potrzebna do dopasowania podglądu do panelu. */
-const PAGE_WIDTH_PX = { portrait: 794, landscape: 1123 }
+/** Wymiary kartki A4 w pikselach przy 96 dpi - potrzebne do dopasowania podglądu do panelu. */
+const PAGE_SIZE_PX = {
+  portrait: { width: 794, height: 1123 },
+  landscape: { width: 1123, height: 794 },
+}
 
 /** Szablony, w których losowanie kolejności elementów cokolwiek zmienia. */
 const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'oddOneOut', 'sameOrDifferent']
@@ -504,29 +507,47 @@ function App() {
     })
   }
 
-  // Dopasowanie podglądu: przy trzech kolumnach kartka A4 bywa szersza niż panel,
-  // więc domyślnie skalujemy ją do jego szerokości. Ręcznie ustawiony zoom ma pierwszeństwo.
+  // Dopasowanie podglądu: domyślnie chcemy widzieć CAŁĄ kartkę, więc skalujemy ją
+  // do szerokości i wysokości wolnego miejsca. Ręcznie ustawiony zoom ma pierwszeństwo.
   const previewPanelRef = useRef<HTMLDivElement>(null)
-  const [panelWidth, setPanelWidth] = useState(0)
+  const previewStackRef = useRef<HTMLDivElement>(null)
+  const [panelSize, setPanelSize] = useState({ width: 0, height: 0 })
 
   // Zależność od `isReady` i `hasDraft` jest konieczna: przy pierwszym renderze na ekranie
   // stoi okno „wykryto zapis roboczy", panelu podglądu jeszcze nie ma i ref jest pusty.
   useLayoutEffect(() => {
     const element = previewPanelRef.current
     if (!element) return
-    const measure = () => setPanelWidth(element.clientWidth)
+    const measure = () => {
+      const stack = previewStackRef.current
+      // Wysokość paska akcji i listy stron liczymy z pozycji stosu kartek względem panelu.
+      // Nie przez `offsetTop`: stos ma własność `zoom`, więc `offsetTop` zwraca wartość
+      // w jego przeskalowanym układzie i powstaje pętla - mniejszy zoom dawał większy
+      // odczyt, przez co zoom schodził jeszcze niżej.
+      const chrome = stack
+        ? stack.getBoundingClientRect().top - element.getBoundingClientRect().top + element.scrollTop
+        : 0
+      setPanelSize({ width: element.clientWidth, height: element.clientHeight - chrome })
+    }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(element)
+    // Obserwujemy też pasek akcji i listę stron: pasek potrafi zawinąć się do dwóch rzędów,
+    // a wtedy miejsca na kartkę ubywa, mimo że sam panel nie zmienia rozmiaru.
+    for (const child of Array.from(element.children)) {
+      if (child !== previewStackRef.current) observer.observe(child)
+    }
     return () => observer.disconnect()
   }, [isReady, hasDraft])
 
   const fitZoom = useMemo(() => {
-    const pageWidth = PAGE_WIDTH_PX[worksheet.orientation]
-    if (panelWidth === 0) return 1
-    // 4rem zapasu na marginesy panelu podglądu.
-    return Math.min(1, Math.max(0.3, (panelWidth - 64) / pageWidth))
-  }, [panelWidth, worksheet.orientation])
+    const page = PAGE_SIZE_PX[worksheet.orientation]
+    if (panelSize.width === 0 || panelSize.height === 0) return 1
+    // 4rem zapasu po bokach i 2rem pod spodem, żeby kartka nie dotykała krawędzi panelu.
+    const byWidth = (panelSize.width - 64) / page.width
+    const byHeight = (panelSize.height - 32) / page.height
+    return Math.min(1, Math.max(0.3, Math.min(byWidth, byHeight)))
+  }, [panelSize, worksheet.orientation])
 
   const effectiveZoom = previewZoom === null ? fitZoom : previewZoom / 100
 
@@ -639,6 +660,7 @@ function App() {
         {/* `zoom` zamiast `transform: scale`, bo przelicza też wysokość - kartki nie zostawiają
             pustego pasa pod spodem ani nie wychodzą poza panel. Na wydruku wracamy do skali 1. */}
         <div
+          ref={previewStackRef}
           className="flex flex-col items-center w-full gap-8 print:gap-0 preview-stack"
           style={{ zoom: effectiveZoom }}
         >

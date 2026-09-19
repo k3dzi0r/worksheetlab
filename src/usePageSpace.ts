@@ -20,8 +20,10 @@ export function usePageSpace(deps: unknown[]) {
       let height = 0
       if (page) {
         const pageRect = page.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const scale = pageRect.height / page.offsetHeight || 1
         const paddingBottom = parseFloat(getComputedStyle(page).paddingBottom) || 0
-        height = pageRect.bottom - paddingBottom - el.getBoundingClientRect().top
+        height = (pageRect.bottom - elRect.top) / scale - paddingBottom
       }
       setSpace((prev) =>
         Math.abs(prev.width - width) < 0.5 && Math.abs(prev.height - height) < 0.5 ? prev : { width, height },

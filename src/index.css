@@ -53,6 +53,9 @@ body {
 
 .preview-panel {
   flex: 1;
+  /* Kontekst pozycjonowania: stos kartek liczy swój `offsetTop` względem panelu,
+     a z tego wychodzi wysokość paska akcji i listy stron. */
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
