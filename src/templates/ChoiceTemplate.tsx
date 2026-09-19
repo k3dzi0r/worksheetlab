@@ -5,12 +5,12 @@ import { clamp, hashToUnit } from '../utils'
 
 interface ChoiceTemplateProps {
   instruction: string
+  instructionScale?: number
   items: WorksheetItem[]
   layout: ChoiceLayout
   itemScale: number
   /** Zmienia się przy „Losuj kolejność” - dla układu rozrzuconego wylicza nowe pozycje. */
   seed: number
-  simpleMode?: boolean
   showCheckboxes?: boolean
 }
 
@@ -31,17 +31,17 @@ function gridSlot(index: number, total: number): [number, number] {
 }
 
 /** Szablon „Wybierz”: polecenie na górze, poniżej elementy w rzędzie albo rozrzucone po kartce. */
-export function ChoiceTemplate({ instruction, items, layout, itemScale, seed, simpleMode = false, showCheckboxes = false }: ChoiceTemplateProps) {
+export function ChoiceTemplate({ instruction, instructionScale = 1, items, layout, itemScale, seed, showCheckboxes = false }: ChoiceTemplateProps) {
   return (
     <div className="flex flex-col items-center gap-12 pt-8 h-full">
-      <InstructionText instruction={instruction} simpleMode={simpleMode} />
+      <InstructionText instruction={instruction} instructionScale={instructionScale} />
 
       {layout === 'row' ? (
-        <div className={`flex flex-wrap justify-center items-center ${simpleMode ? 'gap-16' : 'gap-10'}`}>
+        <div className={`flex flex-wrap justify-center items-center gap-10`}>
           {items.map((item) => (
             <div key={item.id} className="flex flex-col items-center">
-              <WorksheetItemView item={item} baseScale={itemScale} simpleMode={simpleMode} />
-              {showCheckboxes && <div className={`border-4 border-gray-400 rounded-lg ${simpleMode ? 'w-12 h-12 mt-4' : 'w-8 h-8 mt-2'}`} />}
+              <WorksheetItemView item={item} baseScale={itemScale}  />
+              {showCheckboxes && <div className={`border-4 border-gray-400 rounded-lg w-8 h-8 mt-2`} />}
             </div>
           ))}
         </div>
@@ -59,8 +59,8 @@ export function ChoiceTemplate({ instruction, items, layout, itemScale, seed, si
                 className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
                 style={{ left: `${left}%`, top: `${top}%` }}
               >
-                <WorksheetItemView item={item} baseScale={itemScale} simpleMode={simpleMode} />
-                {showCheckboxes && <div className={`border-4 border-gray-400 rounded-lg ${simpleMode ? 'w-12 h-12 mt-4' : 'w-8 h-8 mt-2'}`} />}
+                <WorksheetItemView item={item} baseScale={itemScale}  />
+                {showCheckboxes && <div className={`border-4 border-gray-400 rounded-lg w-8 h-8 mt-2`} />}
               </div>
             )
           })}

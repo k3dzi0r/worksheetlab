@@ -94,7 +94,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
 
   return (
     <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto relative" style={pageStyle}>
-      <WorksheetHeaderView header={worksheet.header} simpleMode={worksheet.simpleMode} />
+      <WorksheetHeaderView header={worksheet.header} instructionScale={worksheet.instructionScale} />
       {worksheet.template === 'choice' && (
         <ChoiceTemplate
           instruction={worksheet.instruction}
@@ -102,7 +102,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           layout={worksheet.layout}
           itemScale={worksheet.itemScale}
           seed={shuffleSeed + variantIndex * 100}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
           showCheckboxes={worksheet.choiceShowCheckboxes}
         />
       )}
@@ -112,7 +112,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           pairs={pairs}
           shuffledRight={shuffledRight}
           itemScale={worksheet.itemScale}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
           lineStyle={worksheet.matchPairsLineStyle}
         />
       )}
@@ -122,7 +122,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           item={items[0]}
           repetitions={worksheet.countRepetitions}
           itemScale={worksheet.itemScale}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
           scattered={worksheet.countScattered}
         />
       )}
@@ -131,7 +131,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           instruction={worksheet.instruction}
           item={items[0]}
           itemScale={worksheet.itemScale}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
           useColors={worksheet.yesNoUseColors}
         />
       )}
@@ -142,7 +142,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           repetitions={worksheet.sequenceRepetitions}
           blanks={worksheet.sequenceBlanks}
           itemScale={worksheet.itemScale}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
           blankStyle={worksheet.sequenceBlankStyle}
         />
       )}
@@ -152,7 +152,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           items={items}
           itemScale={worksheet.itemScale}
           showBorder={worksheet.cutCardsShowBorder}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
         />
       )}
       {worksheet.template === 'sameOrDifferent' && (
@@ -160,7 +160,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           instruction={worksheet.instruction}
           items={items}
           itemScale={worksheet.itemScale}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
           referenceStyle={worksheet.sameOrDifferentReferenceStyle}
         />
       )}
@@ -170,7 +170,7 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           items={items}
           categories={worksheet.categories}
           itemScale={worksheet.itemScale}
-          simpleMode={worksheet.simpleMode}
+          instructionScale={worksheet.instructionScale}
         />
       )}
       {worksheet.template === 'handwriting' && (

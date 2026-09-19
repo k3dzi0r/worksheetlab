@@ -5,18 +5,18 @@ import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
 interface CountTemplateProps {
   instruction: string
+  instructionScale?: number
   item: WorksheetItem | undefined
   repetitions: number
   itemScale: number
-  simpleMode?: boolean
   scattered?: boolean
 }
 
 /** Szablon „Policz”: jeden element powtórzony wiele razy + pole na odpowiedź. */
-export function CountTemplate({ instruction, item, repetitions, itemScale, simpleMode = false, scattered = false }: CountTemplateProps) {
+export function CountTemplate({ instruction, instructionScale = 1, item, repetitions, itemScale, scattered = false }: CountTemplateProps) {
   return (
     <div className="flex flex-col gap-10 pt-8 h-full">
-      <InstructionText instruction={instruction} simpleMode={simpleMode} />
+      <InstructionText instruction={instruction} instructionScale={instructionScale} />
       
         {item && scattered ? (
           <div className="relative w-full h-full flex-1">
@@ -25,21 +25,21 @@ export function CountTemplate({ instruction, item, repetitions, itemScale, simpl
               const top = 10 + hashToUnit(`count-y-${index}`) * 80;
               return (
                 <div key={`${item.id}-${index}`} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${left}%`, top: `${top}%` }}>
-                  <WorksheetItemView item={item} baseScale={itemScale} simpleMode={simpleMode} />
+                  <WorksheetItemView item={item} baseScale={itemScale}  />
                 </div>
               );
             })}
           </div>
         ) : item && !scattered ? (
-          <div className={`flex flex-wrap justify-center items-center flex-1 ${simpleMode ? 'gap-9' : 'gap-6'}`}>
+          <div className={`flex flex-wrap justify-center items-center flex-1 gap-6`}>
             {Array.from({ length: repetitions }).map((_, index) => (
-              <WorksheetItemView key={`${item.id}-${index}`} item={item} baseScale={itemScale} simpleMode={simpleMode} />
+              <WorksheetItemView key={`${item.id}-${index}`} item={item} baseScale={itemScale}  />
             ))}
           </div>
         ) : (
           <p className="text-gray-400">Wybierz element do powielenia.</p>
         )}
-      <p className={simpleMode ? 'text-2xl font-semibold' : 'text-lg font-medium'}>Odpowiedź: __________</p>
+      <p className={'text-lg font-medium'}>Odpowiedź: __________</p>
     </div>
   )
 }

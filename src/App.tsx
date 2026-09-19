@@ -38,7 +38,7 @@ export const INITIAL_WORKSHEET: WorksheetState = {
   layout: 'row',
   itemScale: ITEM_SCALE_DEFAULT,
   orientation: 'portrait',
-  simpleMode: false,
+  instructionScale: 1,
   sequenceItems: [],
   sequenceRepetitions: 3,
   sequenceBlanks: 1,
@@ -67,11 +67,11 @@ export const INITIAL_PROJECT: ProjectState = {
  * Miękki limit liczby elementów w niektórych szablonach, żeby karta czytelnie
  * mieściła się na A4. W trybie prostym limit jest niższy, bo elementy są większe.
  */
-function getMaxItems(template: TemplateType, simpleMode: boolean): number | null {
-  if (template === 'choice' || template === 'cutCards' || template === 'categorize') return simpleMode ? 6 : 12
-  // "Taki sam / inny": 1 element wzorcowy + odpowiedzi, więc limit jest o 1 wyższy.
-  if (template === 'sameOrDifferent') return simpleMode ? 7 : 13
-  return null
+function getMaxItems(template: TemplateType): number | null {
+  if (template === 'choice' || template === 'cutCards' || template === 'categorize') return 12;
+  if (template === 'sameOrDifferent') return 13;
+  if (template === 'matchPairs') return 6;
+  return null;
 }
 
 function App() {
@@ -185,7 +185,7 @@ function App() {
     // Każdy szablon ma inny kształt danych, więc przy zmianie czyścimy zawartość,
     // żeby uniknąć niespójnych stanów (np. par bez odpowiednika w innym szablonie).
     // Orientacja strony to ustawienie globalne, więc ją zachowujemy.
-    setWorksheet((prev) => ({ ...INITIAL_WORKSHEET, template, orientation: prev.orientation, simpleMode: prev.simpleMode }))
+    setWorksheet((prev) => ({ ...INITIAL_WORKSHEET, template, orientation: prev.orientation, instructionScale: prev.instructionScale }))
   }
 
   function handleHandwritingTextChange(text: string) {
@@ -304,9 +304,7 @@ function App() {
     setWorksheet((prev) => ({ ...prev, orientation }))
   }
 
-  function handleSimpleModeChange(simpleMode: boolean) {
-    setWorksheet((prev) => ({ ...prev, simpleMode }))
-  }
+
 
   function handleHeaderChange(header: Partial<WorksheetHeader>) {
     setWorksheet((prev) => ({ ...prev, header: { ...prev.header, ...header } }))
@@ -360,7 +358,7 @@ function App() {
       }
 
       // Szablony "choice" - miękki limit elementów, żeby karta czytelnie się mieściła na A4.
-      const maxItems = getMaxItems(prev.template, prev.simpleMode)
+      const maxItems = getMaxItems(prev.template)
       if (maxItems !== null && prev.items.length >= maxItems) {
         alert(`W tym szablonie można dodać maksymalnie ${maxItems} elementów.`)
         return prev
@@ -409,7 +407,7 @@ function App() {
 
       const index = prev.items.findIndex((item) => item.id === id)
       if (index === -1) return prev
-      const maxItems = getMaxItems(prev.template, prev.simpleMode)
+      const maxItems = getMaxItems(prev.template)
       if (maxItems !== null && prev.items.length >= maxItems) {
         alert(`W tym szablonie można dodać maksymalnie ${maxItems} elementów.`)
         return prev
@@ -517,7 +515,7 @@ function App() {
           ...INITIAL_WORKSHEET,
           template: worksheet.template,
           orientation: worksheet.orientation,
-          simpleMode: worksheet.simpleMode,
+          instructionScale: worksheet.instructionScale,
           header: worksheet.header,
         },
       ],
@@ -637,7 +635,7 @@ function App() {
           onResetItemScale={handleResetItemScale}
           onResetAllItemScales={handleResetAllItemScales}
           onOrientationChange={handleOrientationChange}
-          onSimpleModeChange={handleSimpleModeChange}
+          
           onHeaderChange={handleHeaderChange}
           onCutCardsShowBorderChange={handleCutCardsShowBorderChange}
           onSequenceRepetitionsChange={handleSequenceRepetitionsChange}

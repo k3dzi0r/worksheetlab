@@ -129,7 +129,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     orientation: VALID_ORIENTATIONS.includes(state.orientation as PageOrientation)
       ? (state.orientation as PageOrientation)
       : 'portrait',
-    simpleMode: typeof state.simpleMode === 'boolean' ? state.simpleMode : false,
+    instructionScale: typeof state.instructionScale === 'number' ? state.instructionScale : (state.simpleMode ? 1.25 : 1),
     sequenceItems,
     sequenceRepetitions: typeof state.sequenceRepetitions === 'number' ? state.sequenceRepetitions : 3,
     sequenceBlanks: typeof state.sequenceBlanks === 'number' ? state.sequenceBlanks : 1,

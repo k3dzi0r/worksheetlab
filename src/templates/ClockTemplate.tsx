@@ -36,8 +36,8 @@ export function ClockTemplate({ worksheet, seed, showAnswerKey = false }: ClockT
     clockDial = 'all',
     clockMinuteTicks = true,
     instruction,
+  instructionScale = 1,
     itemScale = 1,
-    simpleMode = false,
   } = worksheet
 
   const { containerRef, width, height } = usePageSpace([
@@ -48,9 +48,9 @@ export function ClockTemplate({ worksheet, seed, showAnswerKey = false }: ClockT
     clockMinuteTicks,
     itemScale,
     instruction,
+  instructionScale,
     worksheet.header,
     worksheet.orientation,
-    simpleMode,
   ])
 
   const columnWidth = BASE_COLUMN * itemScale
@@ -83,7 +83,7 @@ export function ClockTemplate({ worksheet, seed, showAnswerKey = false }: ClockT
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-3">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 

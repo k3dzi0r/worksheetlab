@@ -67,7 +67,7 @@ const COLORING_CROWNS: { value: CrownStyle; label: string }[] = [
   { value: 'points', label: 'Kolce' },
   { value: 'none', label: 'Gładka' },
 ]
-import { MATH_OPERATION_LABELS, MATH_OPERATION_SIGNS, MATH_RANGES } from '../../mathTasks'
+import { MATH_OPERATION_LABELS, MATH_OPERATION_SIGNS } from '../../mathTasks'
 import { PATTERNS } from '../../patterns'
 import { PATTERN_HELP_LEVELS } from '../../templates/PatternTemplate'
 import { GUIDE_LEVELS, TRACE_LEVELS } from '../../templates/HandwritingTemplate'
@@ -143,7 +143,6 @@ interface EditorProps {
   onResetItemScale: (id: string) => void
   onResetAllItemScales: () => void
   onOrientationChange: (orientation: PageOrientation) => void
-  onSimpleModeChange: (simpleMode: boolean) => void
   onHeaderChange: (header: Partial<WorksheetHeader>) => void
   onCutCardsShowBorderChange: (showBorder: boolean) => void
   onSequenceRepetitionsChange: (count: number) => void
@@ -193,7 +192,6 @@ export function Editor({
   onResetItemScale,
   onResetAllItemScales,
   onOrientationChange,
-  onSimpleModeChange,
   onHeaderChange,
   onCutCardsShowBorderChange,
   onSequenceRepetitionsChange,
@@ -537,20 +535,25 @@ export function Editor({
         </div>
       </section>
 
-      {/* Tryb prosty - większe elementy i polecenie, dla łatwiejszej czytelności */}
+      {/* Wielkość polecenia */}
       <section>
-        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-gray-200 bg-white cursor-pointer">
-          <input
-            type="checkbox"
-            checked={worksheet.simpleMode}
-            onChange={(event) => onSimpleModeChange(event.target.checked)}
-            className="w-5 h-5"
-          />
-          <span>
-            <span className="font-semibold text-gray-900">Tryb prosty</span>
-            <span className="block text-sm text-gray-500">Większe elementy i polecenie — dla młodszych uczniów.</span>
-          </span>
-        </label>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">Wielkość polecenia</label>
+          <div className="flex items-center gap-4">
+            <input
+              type="range"
+              min="0.5"
+              max="2.5"
+              step="0.1"
+              value={worksheet.instructionScale ?? 1}
+              onChange={(e) => onUpdateOptions({ instructionScale: parseFloat(e.target.value) })}
+              className="flex-1"
+            />
+            <span className="text-sm font-medium w-12 text-right">
+              {Math.round((worksheet.instructionScale ?? 1) * 100)}%
+            </span>
+          </div>
+        </div>
       </section>
 
       
@@ -1246,17 +1249,24 @@ export function Editor({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Zakres liczbowy</label>
-          <div className="flex gap-2">
-            {MATH_RANGES.map((range) => (
-              <button
-                key={range}
-                type="button"
-                onClick={() => onMathOptionsChange({ mathMax: range })}
-                className={`flex-1 py-2 px-2 text-sm rounded-lg border ${(worksheet.mathMax ?? 20) === range ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
-              >
-                do {range}
-              </button>
-            ))}
+          <div className="flex items-center gap-4">
+            <input
+              type="range"
+              min="10"
+              max="200"
+              step="1"
+              value={worksheet.mathMax ?? 20}
+              onChange={(e) => onMathOptionsChange({ mathMax: parseInt(e.target.value, 10) })}
+              className="flex-1"
+            />
+            <input 
+              type="number"
+              min="10"
+              max="1000"
+              value={worksheet.mathMax ?? 20}
+              onChange={(e) => onMathOptionsChange({ mathMax: parseInt(e.target.value, 10) || 10 })}
+              className="w-20 text-right border border-gray-300 rounded px-2 py-1 text-sm font-medium"
+            />
           </div>
         </div>
 

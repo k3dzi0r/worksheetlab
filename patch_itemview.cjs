@@ -1,4 +1,5 @@
-import type { WorksheetItem } from '../../types/worksheet'
+const fs = require('fs');
+const content = `import type { WorksheetItem } from '../../types/worksheet'
 
 interface WorksheetItemViewProps {
   item: WorksheetItem
@@ -13,9 +14,9 @@ const BASE_DIMENSION_REM = 3.75
 export function WorksheetItemView({ item, baseScale }: WorksheetItemViewProps) {
   // Element może mieć własny rozmiar (ustawiony indywidualnie) - w przeciwnym razie używamy globalnego.
   const effectiveScale = item.scale ?? baseScale
-  const dimension = `${BASE_DIMENSION_REM * effectiveScale}rem`
-  const captionMaxWidth = `${(BASE_DIMENSION_REM * effectiveScale + 3)}rem`
-  const captionFontSize = `0.85rem`
+  const dimension = \`\${BASE_DIMENSION_REM * effectiveScale}rem\`
+  const captionMaxWidth = \`\${(BASE_DIMENSION_REM * effectiveScale + 3)}rem\`
+  const captionFontSize = \`0.85rem\`
 
   const caption = item.caption?.trim()
   const showCaption = Boolean(caption) && item.showCaption !== false
@@ -44,3 +45,5 @@ export function WorksheetItemView({ item, baseScale }: WorksheetItemViewProps) {
     </div>
   )
 }
+`;
+fs.writeFileSync('src/components/WorksheetPreview/WorksheetItemView.tsx', content);

@@ -44,9 +44,6 @@ export const MATH_OPERATION_LABELS: Record<MathOperation, string> = {
   div: 'Dzielenie',
 }
 
-/** Dozwolone zakresy liczbowe - takie, jakimi posługuje się podstawa programowa. */
-export const MATH_RANGES = [10, 20, 100] as const
-
 function randomInt(random: () => number, min: number, max: number) {
   return min + Math.floor(random() * (max - min + 1))
 }

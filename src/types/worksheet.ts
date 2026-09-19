@@ -190,8 +190,8 @@ export interface WorksheetState {
   itemScale: number
   /** Orientacja strony A4 — wspólna dla wszystkich szablonów. */
   orientation: PageOrientation
-  /** Tryb prosty: większe polecenie, elementy i odstępy, dla lepszej czytelności. */
-  simpleMode: boolean
+  /** Skala wielkości polecenia (np. 1.0 = domyślny rozmiar) */
+  instructionScale: number
   /** Elementy tworzące wzór w szablonie „Sekwencja” (2-4 elementy). */
   sequenceItems: WorksheetItem[]
   /** Ile razy wzór ma się powtórzyć w szablonie „Sekwencja”. */

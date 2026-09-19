@@ -24,7 +24,7 @@ export function DotToDotTemplate({ worksheet, seed, showAnswerKey = false }: Dot
     dotNumbering = 'numbers',
     dotShowOutline = false,
     instruction,
-    simpleMode = false,
+  instructionScale = 1,
   } = worksheet
 
   const { containerRef, width, height } = usePageSpace([
@@ -33,9 +33,9 @@ export function DotToDotTemplate({ worksheet, seed, showAnswerKey = false }: Dot
     dotNumbering,
     dotShowOutline,
     instruction,
+  instructionScale,
     worksheet.header,
     worksheet.orientation,
-    simpleMode,
   ])
 
   const shape = useMemo(() => {
@@ -84,7 +84,7 @@ export function DotToDotTemplate({ worksheet, seed, showAnswerKey = false }: Dot
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-3">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 

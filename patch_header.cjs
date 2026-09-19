@@ -1,4 +1,6 @@
-import type { WorksheetHeader } from '../../types/worksheet'
+const fs = require('fs');
+
+const content = `import type { WorksheetHeader } from '../../types/worksheet'
 
 interface WorksheetHeaderViewProps {
   header: WorksheetHeader
@@ -17,7 +19,7 @@ export function WorksheetHeaderView({ header, instructionScale = 1 }: WorksheetH
   return (
     <div className="worksheet-header mb-4">
       {header.showTitle && header.title.trim() && (
-        <h2 className="font-bold text-gray-900" style={{ fontSize: `${1.5 * instructionScale}rem` }}>{header.title}</h2>
+        <h2 className="font-bold text-gray-900" style={{ fontSize: \`\${1.5 * instructionScale}rem\` }}>{header.title}</h2>
       )}
       {hasFields && (
         <div className="flex flex-wrap gap-x-8 gap-y-2 mt-2 text-base text-gray-800">
@@ -40,3 +42,5 @@ function HeaderField({ label, width }: { label: string; width: string }) {
     </div>
   )
 }
+`;
+fs.writeFileSync('src/components/WorksheetPreview/WorksheetHeaderView.tsx', content);

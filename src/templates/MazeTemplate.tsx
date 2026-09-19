@@ -22,8 +22,8 @@ export function MazeTemplate({ worksheet, items, seed, showAnswerKey = false }: 
     mazeCarver = 'random',
     mazeDeadEnds = 'many',
     mazeEnds = 'random',
-    simpleMode = false,
     instruction,
+  instructionScale = 1,
   } = worksheet
   const level = getMazeLevel(mazeLevel)
 
@@ -35,7 +35,7 @@ export function MazeTemplate({ worksheet, items, seed, showAnswerKey = false }: 
     worksheet.header,
     worksheet.orientation,
     instruction,
-    simpleMode,
+  instructionScale,
   ])
 
   // Liczbę wierszy dobieramy do proporcji wolnego miejsca, żeby pola były kwadratowe,
@@ -79,7 +79,7 @@ export function MazeTemplate({ worksheet, items, seed, showAnswerKey = false }: 
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-4">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 

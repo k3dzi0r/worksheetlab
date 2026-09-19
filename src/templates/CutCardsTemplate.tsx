@@ -4,15 +4,14 @@ import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
 interface CutCardsTemplateProps {
   instruction: string
+  instructionScale?: number
   items: WorksheetItem[]
   itemScale: number
   showBorder: boolean
-  simpleMode?: boolean
   cardsPerRow?: number
 }
 
 const BASE_DIMENSION_REM = 3.75
-const SIMPLE_MODE_SCALE = 1.35
 /** Zapas miejsca wokół elementu w kartoniku, żeby ramka nie przylegała bezpośrednio do obrazka/emoji. */
 const CARD_PADDING_REM = 1
 
@@ -20,14 +19,14 @@ const CARD_PADDING_REM = 1
  * Szablon kart do wycinania: wszystkie kartoniki mają identyczny rozmiar (niezależnie od
  * ewentualnego indywidualnego rozmiaru elementu), ułożone w siatce gotowej do wydruku i wycięcia.
  */
-export function CutCardsTemplate({ instruction, items, itemScale, showBorder, simpleMode = false, cardsPerRow = 3 }: CutCardsTemplateProps) {
-  const simpleModeMultiplier = simpleMode ? SIMPLE_MODE_SCALE : 1
-  const cardDimension = `${BASE_DIMENSION_REM * itemScale * simpleModeMultiplier + CARD_PADDING_REM * 2}rem`
+export function CutCardsTemplate({ instruction, instructionScale = 1, items, itemScale, showBorder, cardsPerRow = 3 }: CutCardsTemplateProps) {
+  
+  const cardDimension = `${BASE_DIMENSION_REM * itemScale + CARD_PADDING_REM * 2}rem`
   const columns = cardsPerRow; // removed gridColumns fallback as it's explicit now
 
   return (
     <div className="flex flex-col gap-8 pt-8 h-full">
-      <InstructionText instruction={instruction} simpleMode={simpleMode} />
+      <InstructionText instruction={instruction} instructionScale={instructionScale} />
       <div
         className="grid flex-1 justify-center content-center mx-auto"
         style={{ gridTemplateColumns: `repeat(${columns}, ${cardDimension})`, gap: '1rem' }}
@@ -39,7 +38,7 @@ export function CutCardsTemplate({ instruction, items, itemScale, showBorder, si
             style={{ width: cardDimension, height: cardDimension }}
           >
             {/* Wymuszamy jednolity rozmiar kartoników - pomijamy ewentualny indywidualny rozmiar elementu. */}
-            <WorksheetItemView item={{ ...item, scale: undefined }} baseScale={itemScale} simpleMode={simpleMode} />
+            <WorksheetItemView item={{ ...item, scale: undefined }} baseScale={itemScale}  />
           </div>
         ))}
       </div>

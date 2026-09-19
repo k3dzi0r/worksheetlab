@@ -4,10 +4,10 @@ import { InstructionText } from '../components/WorksheetPreview/InstructionText'
 
 interface SameOrDifferentTemplateProps {
   instruction: string
+  instructionScale?: number
   /** Pierwszy element to wzorzec, pozostałe to odpowiedzi do porównania. */
   items: WorksheetItem[]
   itemScale: number
-  simpleMode?: boolean
   referenceStyle?: 'box' | 'underline' | 'none'
 }
 
@@ -15,25 +15,25 @@ interface SameOrDifferentTemplateProps {
  * Szablon „Taki sam / inny”: jeden element wzorcowy wizualnie odseparowany ramką,
  * niżej odpowiedzi do porównania (np. „znajdź taki sam” albo „wskaż inny”).
  */
-export function SameOrDifferentTemplate({ instruction, items, itemScale, simpleMode = false, referenceStyle = 'box' }: SameOrDifferentTemplateProps) {
+export function SameOrDifferentTemplate({ instruction, instructionScale = 1, items, itemScale, referenceStyle = 'box' }: SameOrDifferentTemplateProps) {
   const [reference, ...answers] = items
 
   return (
     <div className="flex flex-col items-center gap-10 pt-8 h-full">
-      <InstructionText instruction={instruction} simpleMode={simpleMode} />
+      <InstructionText instruction={instruction} instructionScale={instructionScale} />
       <div className="flex flex-col items-center gap-2">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Wzorzec</span>
         <div className={`${referenceStyle === 'box' ? 'border-2 border-gray-800 rounded-xl px-8 py-6' : referenceStyle === 'underline' ? 'border-b-4 border-gray-800 pb-4 px-4' : 'px-8 py-6'} min-w-[6rem] min-h-[6rem] flex items-center justify-center`}>
           {reference ? (
-            <WorksheetItemView item={reference} baseScale={itemScale} simpleMode={simpleMode} />
+            <WorksheetItemView item={reference} baseScale={itemScale}  />
           ) : (
             <span className="text-gray-400 text-sm">Dodaj element wzorcowy</span>
           )}
         </div>
       </div>
-      <div className={`flex flex-1 flex-wrap justify-center items-center ${simpleMode ? 'gap-16' : 'gap-10'}`}>
+      <div className={`flex flex-1 flex-wrap justify-center items-center gap-10`}>
         {answers.map((item) => (
-          <WorksheetItemView key={item.id} item={item} baseScale={itemScale} simpleMode={simpleMode} />
+          <WorksheetItemView key={item.id} item={item} baseScale={itemScale}  />
         ))}
       </div>
     </div>

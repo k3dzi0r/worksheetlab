@@ -24,8 +24,8 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
     wordSearchShowWords = true,
     wordSearchFiller = 'random',
     instruction,
+  instructionScale = 1,
     itemScale = 1,
-    simpleMode = false,
   } = worksheet
 
   const { containerRef, width, height } = usePageSpace([
@@ -35,9 +35,9 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
     wordSearchShowWords,
     itemScale,
     instruction,
+  instructionScale,
     worksheet.header,
     worksheet.orientation,
-    simpleMode,
   ])
 
   const words = useMemo(() => parseWords(wordSearchWords), [wordSearchWords])
@@ -85,7 +85,7 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-3">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 
@@ -122,7 +122,7 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
             {placed.map((word) => (
               <span
                 key={word.word}
-                className={`${simpleMode ? 'text-xl' : 'text-base'} text-gray-800 tracking-wide`}
+                className={`text-base text-gray-800 tracking-wide`}
               >
                 {wordSearchUppercase ? word.word : word.word.toLowerCase()}
               </span>

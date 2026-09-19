@@ -20,8 +20,8 @@ export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: Cr
     crosswordShowClues = true,
     crosswordNumbers = true,
     instruction,
+  instructionScale = 1,
     itemScale = 1,
-    simpleMode = false,
   } = worksheet
 
   const { containerRef, width, height } = usePageSpace([
@@ -31,9 +31,9 @@ export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: Cr
     crosswordNumbers,
     itemScale,
     instruction,
+  instructionScale,
     worksheet.header,
     worksheet.orientation,
-    simpleMode,
   ])
 
   const crossword = useMemo(
@@ -58,7 +58,7 @@ export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: Cr
   if (entries.length === 0) {
     return (
       <div className="flex flex-col w-full">
-        <InstructionText instruction={instruction} simpleMode={simpleMode} />
+        <InstructionText instruction={instruction} instructionScale={instructionScale} />
         <div ref={containerRef} className="w-full" />
       </div>
     )
@@ -68,7 +68,7 @@ export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: Cr
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-3">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 
@@ -112,7 +112,7 @@ export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: Cr
         </div>
 
         {crosswordShowClues && clues.length > 0 && (
-          <ol className="self-start w-full px-2 text-gray-800" style={{ fontSize: simpleMode ? 18 : 15 }}>
+          <ol className="self-start w-full px-2 text-gray-800" style={{ fontSize: 15 }}>
             {entries.map((entry, index) =>
               entry.clue ? (
                 <li key={index} className="mb-1">

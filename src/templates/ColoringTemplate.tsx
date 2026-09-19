@@ -23,7 +23,7 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
     coloringCrown = 'auto',
     coloringStroke = 1,
     instruction,
-    simpleMode = false,
+  instructionScale = 1,
   } = worksheet
 
   const level = getColoringLevel(coloringLevel)
@@ -39,9 +39,9 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
     coloringCrown,
     coloringStroke,
     instruction,
+  instructionScale,
     worksheet.header,
     worksheet.orientation,
-    simpleMode,
   ])
 
   const coloring = useMemo(
@@ -71,7 +71,7 @@ export function ColoringTemplate({ worksheet, seed, showAnswerKey = false }: Col
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-3">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 

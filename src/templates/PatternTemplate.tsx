@@ -37,8 +37,8 @@ export function PatternTemplate({ worksheet, seed }: PatternTemplateProps) {
     patternGuides = true,
     patternStartDot = true,
     instruction,
+  instructionScale = 1,
     itemScale = 1,
-    simpleMode = false,
   } = worksheet
 
   const { containerRef, width, height } = usePageSpace([
@@ -48,9 +48,9 @@ export function PatternTemplate({ worksheet, seed }: PatternTemplateProps) {
     patternStartDot,
     itemScale,
     instruction,
+  instructionScale,
     worksheet.header,
     worksheet.orientation,
-    simpleMode,
   ])
 
   const unit = BASE_UNIT * itemScale
@@ -87,7 +87,7 @@ export function PatternTemplate({ worksheet, seed }: PatternTemplateProps) {
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-3">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 

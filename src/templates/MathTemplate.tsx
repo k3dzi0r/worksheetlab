@@ -23,8 +23,8 @@ export function MathTemplate({ worksheet, seed, showAnswerKey = false }: MathTem
     mathCrossTen = true,
     mathMissing = 'result',
     instruction,
+  instructionScale = 1,
     itemScale = 1,
-    simpleMode = false,
   } = worksheet
 
   const { containerRef, width, height } = usePageSpace([
@@ -34,9 +34,9 @@ export function MathTemplate({ worksheet, seed, showAnswerKey = false }: MathTem
     mathMissing,
     itemScale,
     instruction,
+  instructionScale,
     worksheet.header,
     worksheet.orientation,
-    simpleMode,
   ])
 
   const rowHeight = BASE_ROW_HEIGHT * itemScale
@@ -71,7 +71,7 @@ export function MathTemplate({ worksheet, seed, showAnswerKey = false }: MathTem
     <div className="flex flex-col w-full">
       {instruction.trim() && (
         <div className="mb-4">
-          <InstructionText instruction={instruction} simpleMode={simpleMode} />
+          <InstructionText instruction={instruction} instructionScale={instructionScale} />
         </div>
       )}
 
