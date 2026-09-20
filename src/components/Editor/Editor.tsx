@@ -134,6 +134,8 @@ interface EditorProps {
   onToggleAnswerKey: () => void
   showPageNumbers: boolean
   onTogglePageNumbers: () => void
+  showBranding: boolean
+  onToggleBranding: () => void
   onImport: (text: string) => void
   onExport: () => void
   onClear: () => void
@@ -189,6 +191,8 @@ export function Editor({
   onToggleAnswerKey,
   showPageNumbers,
   onTogglePageNumbers,
+  showBranding,
+  onToggleBranding,
   onImport,
   onExport,
   onClear,
@@ -445,6 +449,18 @@ export function Editor({
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showPageNumbers ? 'translate-x-4' : 'translate-x-0.5'}`}
                 />
+              </div>
+            </label>
+            <label className="flex items-center justify-between cursor-pointer group">
+              <span className="text-sm font-medium text-gray-700">Dodaj podpis KartoLabu</span>
+              <div className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2" style={{ backgroundColor: showBranding ? '#2563eb' : '#d1d5db' }}>
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={showBranding}
+                  onChange={onToggleBranding}
+                />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showBranding ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
             </label>
           </div>

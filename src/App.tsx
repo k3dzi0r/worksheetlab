@@ -19,6 +19,7 @@ import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 import { PageManager } from './components/PageManager'
 import { TopBar } from './components/TopBar'
+import { AppFooter } from './components/AppFooter'
 
 /** Wymiary kartki A4 w pikselach przy 96 dpi - potrzebne do dopasowania podglądu do panelu. */
 const PAGE_SIZE_PX = {
@@ -66,6 +67,7 @@ export const INITIAL_PROJECT: ProjectState = {
   activePageIndex: 0,
   activeTaskIndex: 0,
   showPageNumbers: false,
+  showBranding: true,
 }
 
 function createWorksheet(overrides: Partial<WorksheetState> = {}): WorksheetState {
@@ -152,6 +154,10 @@ function App() {
 
   const handleTogglePageNumbers = useCallback(() => {
     setProject((prev) => ({ ...prev, showPageNumbers: !prev.showPageNumbers }))
+  }, [setProject])
+
+  const handleToggleBranding = useCallback(() => {
+    setProject((prev) => ({ ...prev, showBranding: !(prev.showBranding ?? true) }))
   }, [setProject])
 
   const handleToggleCorrectAnswer = useCallback(
@@ -602,7 +608,7 @@ function App() {
     const task = createWorksheet({ template: worksheet.template, instructionScale: worksheet.instructionScale })
     const page = createPage(worksheet.orientation, task)
     page.header = { ...worksheet.header }
-    resetProject({ pages: [page], activePageIndex: 0, activeTaskIndex: 0, showPageNumbers: false })
+    resetProject({ pages: [page], activePageIndex: 0, activeTaskIndex: 0, showPageNumbers: false, showBranding: true })
   }
 
   // Dopasowanie podglądu: domyślnie chcemy widzieć CAŁĄ kartkę, więc skalujemy ją
@@ -696,6 +702,8 @@ function App() {
           onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
           showPageNumbers={project.showPageNumbers ?? false}
           onTogglePageNumbers={handleTogglePageNumbers}
+          showBranding={project.showBranding ?? true}
+          onToggleBranding={handleToggleBranding}
           onExport={handleExport}
           onImport={handleImport}
           onClear={handleClear}
@@ -786,6 +794,7 @@ function App() {
                   variantIndex={variantIndex}
                   showAnswerKey={showAnswerKey}
                   showPageNumbers={project.showPageNumbers ?? false}
+                  showBranding={project.showBranding ?? true}
                   pageIndex={idx}
                   totalPages={project.pages.length}
                 />
@@ -793,6 +802,7 @@ function App() {
             </div>
           ))}
         </div>
+        <AppFooter />
       </div>
     </div>
   )

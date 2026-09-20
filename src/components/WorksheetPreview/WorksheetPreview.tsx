@@ -32,6 +32,7 @@ interface WorksheetTaskPreviewProps {
 
 interface WorksheetPreviewProps {
   showPageNumbers?: boolean
+  showBranding?: boolean
   pageIndex?: number
   totalPages?: number
   showAnswerKey?: boolean
@@ -236,7 +237,7 @@ function WorksheetTaskPreview({ worksheet, shuffleSeed, variantIndex = 0, showAn
 }
 
 /** Podgląd strony A4 z jednym lub wieloma niezależnymi zadaniami. */
-export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, pageIndex, totalPages }: WorksheetPreviewProps) {
+export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, showBranding = true, pageIndex, totalPages }: WorksheetPreviewProps) {
   usePrintOrientation(page.orientation)
 
   const pageStyle: CSSProperties = {
@@ -259,9 +260,10 @@ export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnsw
           </section>
         ))}
       </div>
-      {showPageNumbers && pageIndex !== undefined && totalPages !== undefined && (
-        <div className="absolute bottom-[15mm] left-0 right-0 text-center text-xs text-gray-400 font-medium z-10 print:block">
-          {pageIndex + 1} / {totalPages}
+      {(showBranding || (showPageNumbers && pageIndex !== undefined && totalPages !== undefined)) && (
+        <div className="worksheet-page-meta">
+          {showBranding && <span>Wygenerowano w KartoLab</span>}
+          {showPageNumbers && pageIndex !== undefined && totalPages !== undefined && <span>{pageIndex + 1} / {totalPages}</span>}
         </div>
       )}
     </div>

@@ -316,7 +316,7 @@ export function parseProjectJson(text: string): ProjectState | null {
   if (typeof data.template === 'string') {
     const single = parseWorksheetJson(text)
     if (!single) return null
-    return { pages: ensureUniquePageIds([pageFromLegacyWorksheet(single)]), activePageIndex: 0, activeTaskIndex: 0 }
+    return { pages: ensureUniquePageIds([pageFromLegacyWorksheet(single)]), activePageIndex: 0, activeTaskIndex: 0, showBranding: true }
   }
 
   // Jeśli JSON to nowy ProjectState:
@@ -336,7 +336,8 @@ export function parseProjectJson(text: string): ProjectState | null {
       pages,
       activePageIndex,
       activeTaskIndex,
-      showPageNumbers: typeof data.showPageNumbers === 'boolean' ? data.showPageNumbers : false
+      showPageNumbers: typeof data.showPageNumbers === 'boolean' ? data.showPageNumbers : false,
+      showBranding: typeof data.showBranding === 'boolean' ? data.showBranding : true,
     }
   }
 

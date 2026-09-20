@@ -138,6 +138,82 @@ body {
   margin-bottom: 2rem;
 }
 
+.app-footer {
+  width: min(100% - 4rem, 794px);
+  margin: 1rem 2rem 2rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.75rem;
+  background: #f8fbff;
+}
+
+.support-link,
+.support-details > summary {
+  color: #1d4ed8;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.support-link {
+  margin-left: auto;
+}
+
+.support-details {
+  position: relative;
+}
+
+.support-details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.support-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.support-options {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.75rem);
+  z-index: 30;
+  width: 19rem;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(30 64 175 / 0.16);
+  color: #475569;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.support-option-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.support-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.5rem;
+  color: #1e3a8a;
+  text-align: center;
+}
+
+.support-option:hover {
+  background: #eff6ff;
+}
+
 @media (max-width: 900px) {
   .app-layout {
     flex-direction: column;
@@ -201,6 +277,17 @@ body {
     height: auto;
     overflow: visible;
   }
+
+  .app-footer {
+    width: calc(100% - 2rem);
+    margin: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .support-link {
+    margin-left: 0;
+  }
 }
 
 /* Kartka A4: wymiary sterowane zmiennymi CSS, żeby JS mógł przełączać orientację. */
@@ -242,6 +329,17 @@ body {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+.worksheet-page-meta {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-top: 3mm;
+  color: #94a3b8;
+  font-size: 8pt;
+  line-height: 1;
+  text-align: center;
 }
 
 @media screen {

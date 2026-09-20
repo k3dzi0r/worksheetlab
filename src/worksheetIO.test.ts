@@ -15,6 +15,18 @@ describe('parseProjectJson', () => {
     expect(imported?.id).toEqual(expect.any(String))
   })
 
+  it('domyślnie dodaje podpis KartoLabu do starszych projektów', () => {
+    const project = parseProjectJson(JSON.stringify({ pages: [worksheet] }))
+
+    expect(project?.showBranding).toBe(true)
+  })
+
+  it('zachowuje decyzję o wyłączeniu podpisu KartoLabu', () => {
+    const project = parseProjectJson(JSON.stringify({ pages: [worksheet], showBranding: false }))
+
+    expect(project?.showBranding).toBe(false)
+  })
+
   it('zachowuje unikalne identyfikatory stron z eksportu', () => {
     const project = parseProjectJson(
       JSON.stringify({

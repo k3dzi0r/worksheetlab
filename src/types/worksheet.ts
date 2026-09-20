@@ -364,4 +364,6 @@ export interface ProjectState {
   activePageIndex: number
   activeTaskIndex: number
   showPageNumbers?: boolean
+  /** Czy drukować dyskretny podpis KartoLabu na każdej stronie. */
+  showBranding?: boolean
 }
