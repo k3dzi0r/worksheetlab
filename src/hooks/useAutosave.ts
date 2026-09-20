@@ -18,12 +18,14 @@ export function useAutosave(
 
   // Sprawdzanie draftu na starcie
   useEffect(() => {
-    get<string>(AUTOSAVE_KEY).then((data) => {
-      if (data) {
-        setHasDraft(true)
-      }
-      setIsReady(true)
-    })
+    get<string>(AUTOSAVE_KEY)
+      .then((data) => {
+        if (data) setHasDraft(true)
+      })
+      .catch(() => {
+        // Brak dostępu do IndexedDB nie może blokować pracy w edytorze.
+      })
+      .finally(() => setIsReady(true))
   }, [])
 
   // Autosave z debouncem (1 sekunda)
@@ -34,23 +36,42 @@ export function useAutosave(
     if (isFirstRender.current) {
       isFirstRender.current = false
       lastSavedState.current = JSON.stringify(project)
+      setSaveStatus('idle')
       return
     }
 
     const currentSerialized = JSON.stringify(project)
-    if (currentSerialized === lastSavedState.current) return
+    // Zmiana mogła zostać cofnięta przed końcem debounca. Wtedy poprzedni timer
+    // jest anulowany przez cleanup, więc nie wolno zostawić statusu „zapisywanie…”.
+    if (currentSerialized === lastSavedState.current) {
+      setSaveStatus('idle')
+      return
+    }
 
     setSaveStatus('saving')
-    
-    const handler = setTimeout(() => {
-      set(AUTOSAVE_KEY, currentSerialized).then(() => {
-        lastSavedState.current = currentSerialized
-        setSaveStatus('saved')
-        setTimeout(() => setSaveStatus('idle'), 2000)
-      })
+
+    let isCurrentSave = true
+    let clearSavedStatus: number | undefined
+    const handler = window.setTimeout(() => {
+      set(AUTOSAVE_KEY, currentSerialized)
+        .then(() => {
+          if (!isCurrentSave) return
+          lastSavedState.current = currentSerialized
+          setSaveStatus('saved')
+          clearSavedStatus = window.setTimeout(() => {
+            if (isCurrentSave) setSaveStatus('idle')
+          }, 2000)
+        })
+        .catch(() => {
+          if (isCurrentSave) setSaveStatus('idle')
+        })
     }, 1000)
 
-    return () => clearTimeout(handler)
+    return () => {
+      isCurrentSave = false
+      window.clearTimeout(handler)
+      if (clearSavedStatus !== undefined) window.clearTimeout(clearSavedStatus)
+    }
   }, [project, isReady, hasDraft])
 
   const loadDraft = async () => {

@@ -119,6 +119,7 @@ function App() {
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [showAnswerKey, setShowAnswerKey] = useState(false)
   const [isSupportThankYouOpen, setIsSupportThankYouOpen] = useState(false)
+  const [isMobileEditorOpen, setIsMobileEditorOpen] = useState(false)
   const finishPrintRef = useRef<(() => void) | null>(null)
   /** null oznacza „dopasuj całą stronę do viewportu podglądu". */
   const [previewZoom, setPreviewZoom] = useState<number | null>(null)
@@ -721,8 +722,21 @@ function App() {
   return (
     <div className="app-shell">
       <div className="app-layout">
-        <div className="editor-panel">
-          <Editor
+        <div className={`editor-panel ${isMobileEditorOpen ? 'mobile-editor-open' : 'mobile-editor-closed'}`}>
+          <button
+            type="button"
+            className="mobile-editor-toggle print:hidden"
+            onClick={() => setIsMobileEditorOpen((isOpen) => !isOpen)}
+            aria-expanded={isMobileEditorOpen}
+            aria-controls="mobile-editor-content"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {isMobileEditorOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
+            <span>{isMobileEditorOpen ? 'Zamknij ustawienia' : 'Ustawienia'}</span>
+          </button>
+          <div id="mobile-editor-content" className="mobile-editor-content">
+            <Editor
             worksheet={worksheet}
             tasks={activePage.tasks}
             activeTaskIndex={activeTaskIndex}
@@ -776,7 +790,8 @@ function App() {
             onToggleCaption={handleToggleCaption}
             onReorderItems={handleReorderItems}
             onToggleCorrectAnswer={handleToggleCorrectAnswer}
-          />
+            />
+          </div>
         </div>
         <div className="preview-panel print:overflow-visible">
           <TopBar

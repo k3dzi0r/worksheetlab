@@ -49,6 +49,17 @@ body {
   overflow: hidden;
 }
 
+.mobile-editor-toggle {
+  display: none;
+}
+
+.mobile-editor-content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Panel edycji to dwie kolumny: nawigacja po krokach i treść aktywnego kroku.
    Dzięki temu ustawienia jednego kroku mają wygodną szerokość, a nie stos zwiniętych sekcji. */
 .editor-shell {
@@ -417,10 +428,40 @@ body {
 
   .editor-panel {
     width: 100%;
-    flex: 0 0 clamp(16rem, 52%, 34rem);
     min-height: 0;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
+  }
+
+  .editor-panel.mobile-editor-closed {
+    flex: 0 0 3.5rem;
+  }
+
+  .editor-panel.mobile-editor-open {
+    flex: 0 0 min(68%, 38rem);
+  }
+
+  .mobile-editor-toggle {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    height: 3.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+    color: #1d4ed8;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .mobile-editor-closed .mobile-editor-content {
+    display: none;
+  }
+
+  .mobile-editor-open .mobile-editor-content {
+    overflow: hidden;
   }
 
   .editor-shell {
@@ -530,11 +571,24 @@ body {
   }
 
   .editor-panel {
-    width: 55%;
+    width: 3.5rem;
     height: 100%;
-    flex: 0 0 55%;
+    flex: 0 0 3.5rem;
     border-right: 1px solid #e5e7eb;
     border-bottom: none;
+  }
+
+  .editor-panel.mobile-editor-open {
+    width: min(62%, 34rem);
+    flex-basis: min(62%, 34rem);
+  }
+
+  .mobile-editor-toggle {
+    height: 3.5rem;
+  }
+
+  .mobile-editor-closed .mobile-editor-toggle span {
+    display: none;
   }
 
   .editor-shell {
