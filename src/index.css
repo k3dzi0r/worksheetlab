@@ -750,8 +750,7 @@ body {
 
 @font-face {
   font-family: 'Andika';
-  /* Publiczne pliki muszą uwzględniać `base` z vite.config.ts. */
-  src: url('/worksheetlab/fonts/Andika-Regular.woff2') format('woff2');
+  src: url('/fonts/Andika-Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -759,7 +758,7 @@ body {
 
 @font-face {
   font-family: 'ABeeZee';
-  src: url('/worksheetlab/fonts/ABeeZee-Regular.woff2') format('woff2');
+  src: url('/fonts/ABeeZee-Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -767,7 +766,7 @@ body {
 
 @font-face {
   font-family: 'Playwrite PL';
-  src: url('/worksheetlab/fonts/PlaywritePL-Regular.woff2') format('woff2');
+  src: url('/fonts/PlaywritePL-Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -775,7 +774,7 @@ body {
 
 @font-face {
   font-family: 'Elementarz';
-  src: url('/worksheetlab/fonts/Elementarz.ttf') format('truetype');
+  src: url('/fonts/Elementarz.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }

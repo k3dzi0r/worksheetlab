@@ -1,19 +1,19 @@
-const CACHE_NAME = 'worksheetlab-v4';
+const CACHE_NAME = 'worksheetlab-v5';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll([
-        '/worksheetlab/',
-        '/worksheetlab/index.html',
-        '/worksheetlab/favicon.svg',
-        '/worksheetlab/icons.svg',
-        '/worksheetlab/manifest.json',
-        '/worksheetlab/fonts/Andika-Regular.woff2',
-        '/worksheetlab/fonts/ABeeZee-Regular.woff2',
-        '/worksheetlab/fonts/PlaywritePL-Regular.woff2',
-        '/worksheetlab/fonts/Elementarz.ttf',
-        '/worksheetlab/illustrations/books.webp'
+        '/',
+        '/index.html',
+        '/favicon.svg',
+        '/icons.svg',
+        '/manifest.json',
+        '/fonts/Andika-Regular.woff2',
+        '/fonts/ABeeZee-Regular.woff2',
+        '/fonts/PlaywritePL-Regular.woff2',
+        '/fonts/Elementarz.ttf',
+        '/illustrations/books.webp'
       ]);
     })
   );

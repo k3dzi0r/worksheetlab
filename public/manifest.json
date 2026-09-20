@@ -2,7 +2,7 @@
   "name": "KartoLab",
   "short_name": "KartoLab",
   "description": "Twórz karty pracy w przeglądarce",
-  "start_url": "/worksheetlab/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",

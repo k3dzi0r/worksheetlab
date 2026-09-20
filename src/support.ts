@@ -1,8 +1,8 @@
 export const BUY_COFFEE = {
   profileUrl: 'https://buycoffee.to/a.kedzior',
   creator: 'Adrian Kędzior',
-  appUrl: 'https://k3dzi0r.github.io/worksheetlab/',
-  appDisplayUrl: 'k3dzi0r.github.io/worksheetlab',
+  appUrl: 'https://kartolab.torobie.pl/',
+  appDisplayUrl: 'kartolab.torobie.pl',
   options: [
     { label: 'Espresso', amount: '5 zł', url: 'https://buycoffee.to/a.kedzior?coffeeSize=small', iconUrl: 'https://buycoffee.to/static/img/icons/coffee-small.svg' },
     { label: 'Cappuccino', amount: '10 zł', url: 'https://buycoffee.to/a.kedzior?coffeeSize=medium', iconUrl: 'https://buycoffee.to/static/img/icons/coffee-medium.svg' },
