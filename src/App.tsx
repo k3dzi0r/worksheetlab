@@ -304,7 +304,12 @@ function App() {
   }
 
   function handleOrientationChange(orientation: PageOrientation) {
-    setWorksheet((prev) => ({ ...prev, orientation }))
+    // Przeglądarka stosuje jedną regułę @page na jeden dialog drukowania.
+    // Dlatego orientacja jest świadomie wspólna dla wszystkich stron projektu.
+    setProject((prev) => ({
+      ...prev,
+      pages: prev.pages.map((page) => ({ ...page, orientation })),
+    }))
   }
 
 

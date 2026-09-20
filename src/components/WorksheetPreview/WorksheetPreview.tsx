@@ -37,7 +37,9 @@ const PRINT_STYLE_ELEMENT_ID = 'worksheetlab-print-orientation'
 
 /**
  * `@page` nie obsługuje selektorów klas, więc orientację wydruku ustawiamy,
- * wstrzykując/aktualizując dedykowany element <style> w <head>.
+ * wstrzykując/aktualizując dedykowany element <style> w <head>. Orientacja
+ * jest wspólna dla całego projektu (wymuszane w App), dlatego każdy podgląd
+ * zapisuje identyczną regułę.
  */
 function usePrintOrientation(orientation: WorksheetState['orientation']) {
   useEffect(() => {

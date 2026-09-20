@@ -1,17 +1,16 @@
 # WorksheetLab
 
 **WorksheetLab** to prosty kreator kart pracy A4 dla nauczycieli. Aplikacja działa
-w całości w przeglądarce — bez backendu, bez logowania, bez zapisywania
-czegokolwiek na serwerze. Wszystko, co robi użytkownik (obrazy, tekst,
-wybory), pozostaje wyłącznie w pamięci przeglądarki i znika po odświeżeniu
-strony.
+w całości w przeglądarce — bez backendu i bez logowania. Projekt jest
+automatycznie zapisywany lokalnie w przeglądarce; obrazy, tekst i ustawienia
+nie są wysyłane na serwer.
 
 Projekt powstał jako narzędzie edukacyjne — do nauki Reacta, TypeScriptu i
 GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 
 ## Funkcje
 
-- Wybór jednego z 8 szablonów karty pracy:
+- Wybór jednego z 17 szablonów karty pracy, m.in.:
   - **Wybierz** — polecenie + od 2 do 12 obrazów/emoji do wyboru (6 w trybie
     prostym), w układzie „Rząd” (równa linia) lub „Rozrzucone” (elementy
     porozrzucane po kartce, rozmieszczane automatycznie niezależnie od liczby
@@ -28,7 +27,11 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
   - **Taki sam / inny** — jeden element wzorcowy (wizualnie odseparowany
     ramką) i do 12 odpowiedzi do porównania (6 w trybie prostym); tasowanie
     dotyczy tylko odpowiedzi, wzorzec zawsze zostaje na miejscu.
-- Orientacja kartki A4: pionowa lub pozioma (dotyczy wszystkich szablonów).
+  - **Nauka pisania**, **Szlaczki**, **Wykreślanka**, **Krzyżówka**, **Labirynt**,
+    **Kolorowanka**, **Działania**, **Połącz kropki** i **Zegar**.
+- Orientacja kartki A4: pionowa lub pozioma, wspólna dla wszystkich stron
+  projektu. To ograniczenie zapewnia poprawny zapis wielostronicowego projektu
+  przez systemowy dialog drukowania/PDF.
 - **Tryb prosty** — globalny przełącznik powiększający polecenie, elementy i
   odstępy (przydatny dla młodszych uczniów); w tym trybie limit liczby
   elementów jest niższy, żeby karta była czytelna.
@@ -50,7 +53,8 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 - Zmiana kolejności elementów (przesuwanie w górę/w dół), usuwanie elementów.
 - Losowanie kolejności elementów (dla szablonów, gdzie ma to sens).
 - **Eksport i import projektu do pliku `.json`** — pozwala zapisać kartę na
-  dysku i wczytać ją ponownie później, bez backendu i bez `localStorage`.
+  dysku i wczytać ją ponownie później; import zachowuje identyfikatory stron,
+  a brakujące lub zdublowane zastępuje nowymi.
 - Drukowanie / zapis do PDF przez systemowy mechanizm drukowania przeglądarki
   (`window.print()`), z osobnymi stylami `@media print`, które ukrywają
   interfejs edytora i zostawiają tylko kartkę A4 w wybranej orientacji.
@@ -81,6 +85,8 @@ Aplikacja wystartuje pod adresem podanym w konsoli (domyślnie
 
 ```bash
 npm run build
+npm run lint
+npm run test
 ```
 
 Zbudowana wersja statyczna trafia do katalogu `dist/`. Podgląd builda lokalnie:
@@ -98,14 +104,16 @@ https://USERNAME.github.io/worksheetlab/
 ```
 
 W `vite.config.ts` ustawiona jest opcja `base: '/worksheetlab/'`, dopasowana do
-nazwy repozytorium. Jeśli repozytorium nazywa się inaczej, zmień tę wartość.
+nazwy repozytorium. Jeśli repozytorium nazywa się inaczej, zmień tę wartość
+oraz ścieżki fontów w `src/index.css`.
 
 Wdrożenie odbywa się automatycznie: workflow
 `.github/workflows/deploy.yml` przy każdym pushu do gałęzi `main`:
 
 1. instaluje zależności (`npm ci`),
 2. buduje projekt (`npm run build`),
-3. publikuje katalog `dist` na GitHub Pages.
+3. uruchamia lint i testy,
+4. publikuje katalog `dist` na GitHub Pages.
 
 W ustawieniach repozytorium (Settings → Pages) należy ustawić źródło jako
 **GitHub Actions**.
@@ -120,18 +128,15 @@ src/
     EmojiPicker/       picker emoji z wyszukiwarką
     ImageUploader/      wczytywanie własnych obrazów
   templates/
-    ChoiceTemplate.tsx
-    MatchPairsTemplate.tsx
-    CountTemplate.tsx
-    YesNoTemplate.tsx
-    OddOneOutTemplate.tsx
-    SequenceTemplate.tsx
+    *Template.tsx      implementacje wszystkich generatorów
   data/
     emojis.ts          biblioteka ~130 emoji z polskimi nazwami
   types/
     worksheet.ts        wspólny model danych (WorksheetItem, WorksheetState)
-  worksheetIO.ts          eksport/import projektu do/z pliku .json
+  worksheetIO.ts          eksport/import i migracje projektu .json
+  worksheetIO.test.ts     testy importu projektu
   utils.ts               drobne funkcje pomocnicze (id, tasowanie)
+scripts/legacy/           zachowane jednorazowe skrypty migracyjne
 ```
 
 ## Eksport i import projektu
@@ -140,15 +145,11 @@ Przycisk **„Eksportuj projekt”** pobiera cały bieżący stan karty (szablon
 polecenie, elementy, obrazy jako Data URL, ustawienia) jako plik `.json`.
 Przycisk **„Importuj projekt”** wczytuje taki plik z powrotem. Import
 sprawdza podstawową strukturę pliku — błędny lub obcy JSON pokazuje czytelny
-komunikat zamiast wywalać aplikację. To wciąż nie jest trwały zapis
-(np. w chmurze) — to zwykły plik na dysku użytkownika.
+komunikat zamiast wywalać aplikację. Identyfikatory potrzebne do przeciągania
+stron są zachowywane, a brakujące albo zduplikowane są naprawiane.
 
 ## Świadomie pozostawione poza MVP
 
-- Trwałe zapisywanie projektów w `localStorage`/IndexedDB albo w chmurze —
-  eksport/import do pliku `.json` już działa, ale karta w przeglądarce
-  wciąż znika po odświeżeniu strony, jeśli nie zostanie wyeksportowana.
-- Drag and drop przy zmianie kolejności elementów.
 - Generowanie PDF bibliotekami typu `jsPDF`/`html2canvas` — na razie
   wystarcza systemowy druk przeglądarki.
 - Pełna biblioteka emoji Unicode (obecnie ok. 130 najpopularniejszych).

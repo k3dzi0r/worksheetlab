@@ -12,6 +12,8 @@ export interface HandwritingFontOption {
   description: string
   /** Światło między literami wyrażone w jednostkach śródlinii. 0 = litery się łączą. */
   letterSpacing: number
+  /** Korekta optyczna położenia pisma względem linii podstawowej, w jednostkach śródlinii. */
+  baselineOffset?: number
 }
 
 export const HANDWRITING_FONTS: HandwritingFontOption[] = [
@@ -40,6 +42,8 @@ export const HANDWRITING_FONTS: HandwritingFontOption[] = [
     label: 'Pisana (Elementarz)',
     description: 'Starszy, cieńszy krój pisma szkolnego - zostawiony dla kart zrobionych wcześniej.',
     letterSpacing: 0,
+    // Krój ma dodatkowy oddech wewnątrz glifu, przez który wizualnie unosi się nad czerwoną linią.
+    baselineOffset: 0.14,
   },
 ]
 

@@ -33,6 +33,12 @@ jobs:
       - name: Budowanie projektu
         run: npm run build
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Testy
+        run: npm run test
+
       - name: Konfiguracja GitHub Pages
         uses: actions/configure-pages@v5
 

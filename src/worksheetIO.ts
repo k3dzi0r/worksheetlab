@@ -23,6 +23,7 @@ import type {
 import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
 import type { WorksheetHeader } from './types/worksheet'
 import { clamp } from './utils'
+import { createId } from './utils'
 
 const VALID_TEMPLATES: TemplateType[] = [
   'choice',
@@ -119,6 +120,9 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
       : []
 
   return {
+    // Identyfikator strony jest potrzebny PageManagerowi jako stabilny klucz DnD.
+    // Stare eksporty go nie zawierały, więc w takim przypadku tworzymy nowy.
+    id: typeof state.id === 'string' && state.id.trim().length > 0 ? state.id : createId(),
     template: state.template as TemplateType,
     instruction: state.instruction,
     items: state.items as WorksheetItem[],
@@ -224,6 +228,28 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
   }
 }
 
+/** Nadaje identyfikatory stronom z importu, zachowując poprawne i unikalne wartości. */
+function ensureUniquePageIds(pages: WorksheetState[]): WorksheetState[] {
+  const usedIds = new Set<string>()
+
+  return pages.map((page) => {
+    let id = page.id
+    if (!id || usedIds.has(id)) {
+      do {
+        id = createId()
+      } while (usedIds.has(id))
+    }
+    usedIds.add(id)
+    return page.id === id ? page : { ...page, id }
+  })
+}
+
+/** Orientacja jest wspólna dla całego projektu, aby systemowy druk zachował format A4. */
+function normalizeProjectOrientation(pages: WorksheetState[]): WorksheetState[] {
+  const orientation = pages[0]?.orientation ?? 'portrait'
+  return pages.map((page) => (page.orientation === orientation ? page : { ...page, orientation }))
+}
+
 /** Pobiera bieżący stan karty jako plik `.json` (nazwa zawiera datę). */
 export function downloadWorksheetJson(worksheet: WorksheetState) {
   const dateStr = new Date().toISOString().slice(0, 10)
@@ -253,16 +279,20 @@ export function parseProjectJson(text: string): ProjectState | null {
   if (typeof data.template === 'string') {
     const single = parseWorksheetJson(text)
     if (!single) return null
-    return { pages: [single], activePageIndex: 0 }
+    return { pages: ensureUniquePageIds([single]), activePageIndex: 0 }
   }
 
   // Jeśli JSON to nowy ProjectState:
   if (Array.isArray(data.pages)) {
-    const pages = data.pages.map((p: any) => parseWorksheetJson(JSON.stringify(p))).filter(Boolean) as WorksheetState[]
+    const parsedPages = data.pages.map((p: any) => parseWorksheetJson(JSON.stringify(p))).filter(Boolean) as WorksheetState[]
+    const pages = normalizeProjectOrientation(ensureUniquePageIds(parsedPages))
     if (pages.length === 0) return null
     return {
       pages,
-      activePageIndex: typeof data.activePageIndex === 'number' && data.activePageIndex < pages.length ? data.activePageIndex : 0,
+      activePageIndex:
+        typeof data.activePageIndex === 'number' && data.activePageIndex >= 0 && data.activePageIndex < pages.length
+          ? Math.floor(data.activePageIndex)
+          : 0,
       showPageNumbers: typeof data.showPageNumbers === 'boolean' ? data.showPageNumbers : false
     }
   }

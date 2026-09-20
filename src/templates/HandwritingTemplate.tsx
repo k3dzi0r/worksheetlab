@@ -165,7 +165,8 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
   }
 
   // Światło międzyliterowe zależy od kroju: pismo łączone musi mieć 0, inaczej pęka łączenie liter.
-  const letterSpacingPerUnit = getHandwritingFont(handwritingFont).letterSpacing
+  const selectedFont = getHandwritingFont(handwritingFont)
+  const letterSpacingPerUnit = selectedFont.letterSpacing
 
   const textLines = handwritingText ? handwritingText.split('\n') : []
   const metrics = useFontMetrics(handwritingFont, handwritingRepeat ? textLines.slice(0, 1) : textLines)
@@ -191,9 +192,12 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
   const fontSize = unit / metrics.xRatio
   const ascent = fontSize * metrics.ascentRatio
   const descent = fontSize * metrics.descentRatio
+  // Elementarz ma wewnętrzny zapas pod obrysem glifów. Bez tej korekty napis
+  // wygląda, jakby nie dochodził do czerwonej linii mimo poprawnego baseline SVG.
+  const visualBaselineOffset = unit * (selectedFont.baselineOffset ?? 0)
   // Odstęp między wierszami, żeby ogonki jednego nie dotykały wydłużeń następnego.
   const rowGap = unit * 0.4
-  const rowHeight = ascent + descent + rowGap
+  const rowHeight = ascent + descent + visualBaselineOffset + rowGap
   // Zapas nad pierwszym wierszem na polskie diakrytyki (Ó, Ż, Ł), które w zeszycie
   // też wychodzą ponad górną linię.
   const topPadding = fontSize * (metrics.diacriticRatio - metrics.ascentRatio)
@@ -267,10 +271,10 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
               <circle cx={sidePadding * 0.5} cy={ascent} r={Math.max(2, unit * 0.11)} fill="#16a34a" />
             )}
 
-            {/* Tekst osadzony na linii podstawowej - dzięki temu litery realnie stoją w liniaturze. */}
+            {/* Tekst osadzony na linii podstawowej; część krojów ma korektę optyczną. */}
             <text
               x={sidePadding}
-              y={ascent}
+              y={ascent + visualBaselineOffset}
               xmlSpace="preserve"
               dominantBaseline="alphabetic"
               fontFamily={handwritingFont}

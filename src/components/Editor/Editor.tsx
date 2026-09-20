@@ -484,7 +484,7 @@ export function Editor({
         </div>
 
         {/* Box Wskazówka */}
-        <div className={`mt-6 px-4 shrink-0 bg-blue-50 border border-blue-200 rounded-xl p-3 relative overflow-hidden transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+        <div className={`editor-sidebar-tip mt-6 px-4 shrink-0 bg-blue-50 border border-blue-200 rounded-xl p-3 relative overflow-hidden transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
           <div className="flex gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 shrink-0 mt-0.5">
               <path d="M9 18h6" />
@@ -501,7 +501,7 @@ export function Editor({
           </div>
         </div>
 
-        <div className={`mt-auto px-4 pt-4 shrink-0 flex flex-col justify-end transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+        <div className={`editor-sidebar-footer mt-auto px-4 pt-4 shrink-0 flex flex-col justify-end transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
           <img
             src={`${import.meta.env.BASE_URL}illustrations/school-supplies.png`}
             alt=""
