@@ -1,4 +1,4 @@
-import { useState, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { useState, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import type {
   WorksheetItem,
   WorksheetState,
@@ -19,7 +19,8 @@ import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 import { PageManager } from './components/PageManager'
 import { TopBar } from './components/TopBar'
-import { AppFooter } from './components/AppFooter'
+import { SupportThankYouModal } from './components/SupportThankYouModal'
+import { canShowSupportReminder, disableSupportReminder, postponeSupportReminder } from './support'
 
 /** Wymiary kartki A4 w pikselach przy 96 dpi - potrzebne do dopasowania podglądu do panelu. */
 const PAGE_SIZE_PX = {
@@ -117,7 +118,9 @@ function App() {
   } = useUndoRedo<ProjectState>(INITIAL_PROJECT)
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [showAnswerKey, setShowAnswerKey] = useState(false)
-  /** null oznacza „dopasuj do szerokości panelu". */
+  const [isSupportThankYouOpen, setIsSupportThankYouOpen] = useState(false)
+  const finishPrintRef = useRef<(() => void) | null>(null)
+  /** null oznacza „dopasuj całą stronę do viewportu podglądu". */
   const [previewZoom, setPreviewZoom] = useState<number | null>(null)
 
   const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(project, (state) => {
@@ -587,9 +590,45 @@ function App() {
     setShuffleSeed((seed) => seed + 1)
   }
 
-  function handlePrint() {
-    window.print()
-  }
+  const showSupportThankYou = useCallback(() => {
+    if (canShowSupportReminder()) setIsSupportThankYouOpen(true)
+  }, [])
+
+  const closeSupportThankYou = useCallback(() => {
+    postponeSupportReminder()
+    setIsSupportThankYouOpen(false)
+  }, [])
+
+  const disableSupportThankYou = useCallback(() => {
+    disableSupportReminder()
+    setIsSupportThankYouOpen(false)
+  }, [])
+
+  useEffect(() => () => finishPrintRef.current?.(), [])
+
+  const handlePrint = useCallback(() => {
+    if (finishPrintRef.current) return
+
+    const finish = () => {
+      if (!finishPrintRef.current) return
+      window.removeEventListener('afterprint', finish)
+      window.removeEventListener('focus', finishOnFocus)
+      finishPrintRef.current = null
+      window.setTimeout(showSupportThankYou, 0)
+    }
+    const finishOnFocus = () => window.setTimeout(finish, 0)
+
+    finishPrintRef.current = finish
+    window.addEventListener('afterprint', finish, { once: true })
+    window.addEventListener('focus', finishOnFocus, { once: true })
+    try {
+      window.print()
+    } catch {
+      finishPrintRef.current = null
+      window.removeEventListener('afterprint', finish)
+      window.removeEventListener('focus', finishOnFocus)
+    }
+  }, [showSupportThankYou])
 
   function handleExport() {
     downloadProjectJson(project)
@@ -613,44 +652,35 @@ function App() {
 
   // Dopasowanie podglądu: domyślnie chcemy widzieć CAŁĄ kartkę, więc skalujemy ją
   // do szerokości i wysokości wolnego miejsca. Ręcznie ustawiony zoom ma pierwszeństwo.
-  const previewPanelRef = useRef<HTMLDivElement>(null)
-  const previewStackRef = useRef<HTMLDivElement>(null)
+  const previewViewportRef = useRef<HTMLDivElement>(null)
   const [panelSize, setPanelSize] = useState({ width: 0, height: 0 })
 
   // Zależność od `isReady` i `hasDraft` jest konieczna: przy pierwszym renderze na ekranie
   // stoi okno „wykryto zapis roboczy", panelu podglądu jeszcze nie ma i ref jest pusty.
   useLayoutEffect(() => {
-    const element = previewPanelRef.current
+    const element = previewViewportRef.current
     if (!element) return
     const measure = () => {
-      const stack = previewStackRef.current
-      // Wysokość paska akcji i listy stron liczymy z pozycji stosu kartek względem panelu.
-      // Nie przez `offsetTop`: stos ma własność `zoom`, więc `offsetTop` zwraca wartość
-      // w jego przeskalowanym układzie i powstaje pętla - mniejszy zoom dawał większy
-      // odczyt, przez co zoom schodził jeszcze niżej.
-      const chrome = stack
-        ? stack.getBoundingClientRect().top - element.getBoundingClientRect().top + element.scrollTop
-        : 0
-      setPanelSize({ width: element.clientWidth, height: element.clientHeight - chrome })
+      const style = getComputedStyle(element)
+      const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+      const verticalPadding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+      setPanelSize({
+        width: Math.max(0, element.clientWidth - horizontalPadding),
+        height: Math.max(0, element.clientHeight - verticalPadding),
+      })
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(element)
-    // Obserwujemy też pasek akcji i listę stron: pasek potrafi zawinąć się do dwóch rzędów,
-    // a wtedy miejsca na kartkę ubywa, mimo że sam panel nie zmienia rozmiaru.
-    for (const child of Array.from(element.children)) {
-      if (child !== previewStackRef.current) observer.observe(child)
-    }
     return () => observer.disconnect()
   }, [isReady, hasDraft])
 
   const fitZoom = useMemo(() => {
     const page = PAGE_SIZE_PX[activePage.orientation]
     if (panelSize.width === 0 || panelSize.height === 0) return 1
-    // 4rem zapasu po bokach i 2rem pod spodem, żeby kartka nie dotykała krawędzi panelu.
-    const byWidth = (panelSize.width - 64) / page.width
-    const byHeight = (panelSize.height - 32) / page.height
-    return Math.min(1, Math.max(0.3, Math.min(byWidth, byHeight)))
+    const byWidth = panelSize.width / page.width
+    const byHeight = panelSize.height / page.height
+    return Math.min(1, Math.max(0.05, Math.min(byWidth, byHeight)))
   }, [panelSize, activePage.orientation])
 
   const effectiveZoom = previewZoom === null ? fitZoom : previewZoom / 100
@@ -689,121 +719,126 @@ function App() {
   }
 
   return (
-    <div className="app-layout">
-      <div className="editor-panel">
-        <Editor
-          worksheet={worksheet}
-          tasks={activePage.tasks}
-          activeTaskIndex={activeTaskIndex}
-          onSelectTask={setActiveTask}
-          onAddTask={addTask}
-          onRemoveTask={removeTask}
-          showAnswerKey={showAnswerKey}
-          onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
-          showPageNumbers={project.showPageNumbers ?? false}
-          onTogglePageNumbers={handleTogglePageNumbers}
-          showBranding={project.showBranding ?? true}
-          onToggleBranding={handleToggleBranding}
-          onExport={handleExport}
-          onImport={handleImport}
-          onClear={handleClear}
-          onTemplateChange={handleTemplateChange}
-          onHandwritingTextChange={handleHandwritingTextChange}
-          onHandwritingModeChange={handleHandwritingModeChange}
-          onHandwritingRepeatChange={handleHandwritingRepeatChange}
-          onHandwritingFontChange={handleHandwritingFontChange}
-          onWordSearchOptionsChange={handleWordSearchOptionsChange}
-          onMazeLevelChange={handleMazeLevelChange}
-          onMazeOptionsChange={handleMazeOptionsChange}
-          onColoringOptionsChange={handleColoringOptionsChange}
-          onMathOptionsChange={handleMathOptionsChange}
-          onPatternOptionsChange={handlePatternOptionsChange}
-          onHandwritingOptionsChange={handleHandwritingOptionsChange}
-          onCrosswordOptionsChange={handleCrosswordOptionsChange}
-          onDotOptionsChange={handleDotOptionsChange}
-          onClockOptionsChange={handleClockOptionsChange}
-          onInstructionChange={handleInstructionChange}
-          onUpdateOptions={handleUpdateOptions}
-          onCountRepetitionsChange={handleCountRepetitionsChange}
-          onLayoutChange={handleLayoutChange}
-          onItemScaleChange={handleItemScaleChange}
-          onUpdateItemScale={handleUpdateItemScale}
-          onResetItemScale={handleResetItemScale}
-          onResetAllItemScales={handleResetAllItemScales}
-          onOrientationChange={handleOrientationChange}
-          
-          onHeaderChange={handleHeaderChange}
-          onCutCardsShowBorderChange={handleCutCardsShowBorderChange}
-          onSequenceRepetitionsChange={handleSequenceRepetitionsChange}
-          onSequenceBlanksChange={handleSequenceBlanksChange}
-          onCategoriesChange={handleCategoriesChange}
-          onVariantCountChange={handleVariantCountChange}
-          onAddItem={handleAddItem}
-          onRemoveItem={handleRemoveItem}
-          onDuplicateItem={handleDuplicateItem}
-          onMoveItem={handleMoveItem}
-          onUpdateCaption={handleUpdateCaption}
-          onToggleCaption={handleToggleCaption}
-          onReorderItems={handleReorderItems}
+    <div className="app-shell">
+      <div className="app-layout">
+        <div className="editor-panel">
+          <Editor
+            worksheet={worksheet}
+            tasks={activePage.tasks}
+            activeTaskIndex={activeTaskIndex}
+            onSelectTask={setActiveTask}
+            onAddTask={addTask}
+            onRemoveTask={removeTask}
+            showAnswerKey={showAnswerKey}
+            onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
+            showPageNumbers={project.showPageNumbers ?? false}
+            onTogglePageNumbers={handleTogglePageNumbers}
+            showBranding={project.showBranding ?? true}
+            onToggleBranding={handleToggleBranding}
+            onExport={handleExport}
+            onImport={handleImport}
+            onClear={handleClear}
+            onTemplateChange={handleTemplateChange}
+            onHandwritingTextChange={handleHandwritingTextChange}
+            onHandwritingModeChange={handleHandwritingModeChange}
+            onHandwritingRepeatChange={handleHandwritingRepeatChange}
+            onHandwritingFontChange={handleHandwritingFontChange}
+            onWordSearchOptionsChange={handleWordSearchOptionsChange}
+            onMazeLevelChange={handleMazeLevelChange}
+            onMazeOptionsChange={handleMazeOptionsChange}
+            onColoringOptionsChange={handleColoringOptionsChange}
+            onMathOptionsChange={handleMathOptionsChange}
+            onPatternOptionsChange={handlePatternOptionsChange}
+            onHandwritingOptionsChange={handleHandwritingOptionsChange}
+            onCrosswordOptionsChange={handleCrosswordOptionsChange}
+            onDotOptionsChange={handleDotOptionsChange}
+            onClockOptionsChange={handleClockOptionsChange}
+            onInstructionChange={handleInstructionChange}
+            onUpdateOptions={handleUpdateOptions}
+            onCountRepetitionsChange={handleCountRepetitionsChange}
+            onLayoutChange={handleLayoutChange}
+            onItemScaleChange={handleItemScaleChange}
+            onUpdateItemScale={handleUpdateItemScale}
+            onResetItemScale={handleResetItemScale}
+            onResetAllItemScales={handleResetAllItemScales}
+            onOrientationChange={handleOrientationChange}
+            onHeaderChange={handleHeaderChange}
+            onCutCardsShowBorderChange={handleCutCardsShowBorderChange}
+            onSequenceRepetitionsChange={handleSequenceRepetitionsChange}
+            onSequenceBlanksChange={handleSequenceBlanksChange}
+            onCategoriesChange={handleCategoriesChange}
+            onVariantCountChange={handleVariantCountChange}
+            onAddItem={handleAddItem}
+            onRemoveItem={handleRemoveItem}
+            onDuplicateItem={handleDuplicateItem}
+            onMoveItem={handleMoveItem}
+            onUpdateCaption={handleUpdateCaption}
+            onToggleCaption={handleToggleCaption}
+            onReorderItems={handleReorderItems}
             onToggleCorrectAnswer={handleToggleCorrectAnswer}
-        />
-      </div>
-      <div className="preview-panel print:overflow-visible" ref={previewPanelRef}>
-        <TopBar
-          canUndo={canUndo}
-          canRedo={canRedo}
-          onUndo={undo}
-          onRedo={redo}
-          onPrint={handlePrint}
-          
-          showShuffle={SHUFFLEABLE_TEMPLATES.includes(worksheet.template)}
-          onShuffle={handleShuffle}
-          saveStatus={saveStatus}
-          zoom={previewZoom}
-          effectiveZoom={effectiveZoom}
-          onZoomChange={setPreviewZoom}
-        />
-        <div className="print:hidden w-full max-w-[21cm] mb-4">
-          <PageManager
-            project={project}
-            onAdd={addPage}
-            onRemove={removePage}
-            onDuplicate={duplicatePage}
-            onSelect={setActivePage}
-            onReorder={reorderPages}
           />
         </div>
-        {/* `zoom` zamiast `transform: scale`, bo przelicza też wysokość - kartki nie zostawiają
-            pustego pasa pod spodem ani nie wychodzą poza panel. Na wydruku wracamy do skali 1. */}
-        <div
-          ref={previewStackRef}
-          className="flex flex-col items-center w-full gap-8 print:gap-0 preview-stack"
-          style={{ zoom: effectiveZoom }}
-        >
-          {project.pages.map((page, idx) => (
+        <div className="preview-panel print:overflow-visible">
+          <TopBar
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={undo}
+            onRedo={redo}
+            onPrint={handlePrint}
+            showShuffle={SHUFFLEABLE_TEMPLATES.includes(worksheet.template)}
+            onShuffle={handleShuffle}
+            saveStatus={saveStatus}
+            zoom={previewZoom}
+            effectiveZoom={effectiveZoom}
+            onZoomChange={setPreviewZoom}
+          />
+          <div className="page-manager-bar print:hidden w-full max-w-[21cm]">
+            <PageManager
+              project={project}
+              onAdd={addPage}
+              onRemove={removePage}
+              onDuplicate={duplicatePage}
+              onSelect={setActivePage}
+              onReorder={reorderPages}
+            />
+          </div>
+          <div className="preview-viewport" ref={previewViewportRef}>
+            {/* `zoom` zamiast `transform: scale`, bo przelicza też wysokość - kartki nie zostawiają
+              pustego pasa pod spodem ani nie wychodzą poza panel. Na wydruku wracamy do skali 1. */}
             <div
-              key={page.id}
-              className={`w-full flex flex-col items-center gap-8 ${idx === project.activePageIndex ? 'flex' : 'hidden print:flex'}`}
-              style={{ pageBreakAfter: 'always' }}
+              className="flex flex-col items-center w-full gap-8 print:gap-0 preview-stack"
+              style={{ zoom: effectiveZoom }}
             >
-              {Array.from({ length: page.variantCount }).map((_, variantIndex) => (
-                <WorksheetPreview
-                  key={`${page.id}-${variantIndex}`}
-                  page={page}
-                  shuffleSeed={shuffleSeed}
-                  variantIndex={variantIndex}
-                  showAnswerKey={showAnswerKey}
-                  showPageNumbers={project.showPageNumbers ?? false}
-                  showBranding={project.showBranding ?? true}
-                  pageIndex={idx}
-                  totalPages={project.pages.length}
-                />
+              {project.pages.map((page, idx) => (
+                <div
+                  key={page.id}
+                  className={`w-full flex flex-col items-center gap-8 ${idx === project.activePageIndex ? 'flex' : 'hidden print:flex'}`}
+                  style={{ pageBreakAfter: 'always' }}
+                >
+                  {Array.from({ length: page.variantCount }).map((_, variantIndex) => (
+                    <WorksheetPreview
+                      key={`${page.id}-${variantIndex}`}
+                      page={page}
+                      shuffleSeed={shuffleSeed}
+                      variantIndex={variantIndex}
+                      showAnswerKey={showAnswerKey}
+                      showPageNumbers={project.showPageNumbers ?? false}
+                      showBranding={project.showBranding ?? true}
+                      pageIndex={idx}
+                      totalPages={project.pages.length}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          </div>
         </div>
-        <AppFooter />
       </div>
+      <SupportThankYouModal
+        isOpen={isSupportThankYouOpen}
+        onPostpone={closeSupportThankYou}
+        onDisable={disableSupportThankYou}
+      />
     </div>
   )
 }

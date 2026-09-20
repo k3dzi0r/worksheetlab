@@ -20,6 +20,7 @@ import { CrosswordTemplate } from '../../templates/CrosswordTemplate'
 import { DotToDotTemplate } from '../../templates/DotToDotTemplate'
 import { ClockTemplate } from '../../templates/ClockTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
+import { BUY_COFFEE } from '../../support'
 
 interface WorksheetTaskPreviewProps {
   showAnswerKey?: boolean
@@ -262,7 +263,7 @@ export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnsw
       </div>
       {(showBranding || (showPageNumbers && pageIndex !== undefined && totalPages !== undefined)) && (
         <div className="worksheet-page-meta">
-          {showBranding && <span>Wygenerowano w KartoLab</span>}
+          {showBranding && <span>Wygenerowano w KartoLab · {BUY_COFFEE.appDisplayUrl}</span>}
           {showPageNumbers && pageIndex !== undefined && totalPages !== undefined && <span>{pageIndex + 1} / {totalPages}</span>}
         </div>
       )}

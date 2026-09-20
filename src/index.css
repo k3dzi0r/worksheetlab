@@ -7,25 +7,46 @@
 
 html,
 body {
+  width: 100%;
+  height: 100%;
   margin: 0;
+  overflow: hidden;
   background-color: #f3f4f6;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.app-shell {
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Layout: panel edycji po lewej, podgląd A4 po prawej. Na małych ekranach - jeden pod drugim. */
 .app-layout {
   display: flex;
   flex-direction: row;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .editor-panel {
   flex-shrink: 0;
   border-right: 1px solid #e5e7eb;
   background: #ffffff;
-  height: 100vh;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Panel edycji to dwie kolumny: nawigacja po krokach i treść aktywnego kroku.
@@ -88,11 +109,11 @@ body {
     height: 56px;
   }
 
-  .editor-sidebar-tip {
+  .editor-sidebar-support {
     padding: 0.5rem;
   }
 
-  .editor-sidebar-tip p {
+  .editor-sidebar-support-copy p {
     display: none;
   }
 }
@@ -105,90 +126,160 @@ body {
 
 .preview-panel {
   flex: 1;
-  /* Kontekst pozycjonowania: stos kartek liczy swój `offsetTop` względem panelu,
-     a z tego wychodzi wysokość paska akcji i listy stron. */
-  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
-  height: 100vh;
-  overflow: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* Pasek akcji przykleja się do górnej krawędzi, żeby „Drukuj" był pod ręką
-   także po przewinięciu do ostatniej strony projektu. */
-.preview-panel > :first-child {
-  position: sticky;
-  top: 0;
+.top-bar,
+.page-manager-bar {
+  flex: none;
+}
+
+.top-bar {
   z-index: 20;
+  flex-wrap: wrap;
 }
 
-/* Odstępy przeniesione z panelu na zawartość pod paskiem. */
-.preview-panel > :not(:first-child) {
-  margin-left: 2rem;
-  margin-right: 2rem;
+.page-manager-bar {
+  padding: 0.5rem 2rem 0;
 }
 
-.preview-panel > :nth-child(2) {
-  margin-top: 1.5rem;
+.preview-viewport {
+  width: 100%;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 1.5rem 2rem 2rem;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
-.preview-panel > :last-child {
-  margin-bottom: 2rem;
+.preview-stack {
+  min-width: max-content;
 }
 
 .app-footer {
-  width: min(100% - 4rem, 794px);
-  margin: 1rem 2rem 2rem;
-  padding: 1rem 1.25rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 1.25rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  border: 1px solid #dbeafe;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.support-popover-root {
+  position: relative;
+}
+
+.editor-sidebar-support {
+  padding: 0.75rem;
+  border: 1px solid #bfdbfe;
   border-radius: 0.75rem;
   background: #f8fbff;
 }
 
-.support-link,
-.support-details > summary {
-  color: #1d4ed8;
-  font-size: 0.875rem;
+.editor-sidebar-support-copy {
+  display: flex;
+  gap: 0.625rem;
+  color: #475569;
+}
+
+.editor-sidebar-support-copy > span {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.editor-sidebar-support-copy h3 {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.editor-sidebar-support-copy p {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+.editor-sidebar-support .support-popover-root {
+  margin-top: 0.625rem;
+}
+
+.editor-sidebar-support .support-trigger {
+  width: 100%;
+  border-color: #2563eb;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+}
+
+.editor-sidebar-support .support-trigger:hover,
+.editor-sidebar-support .support-trigger[aria-expanded='true'] {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+}
+
+.editor-sidebar-support .support-popover {
+  top: auto;
+  right: auto;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  width: 100%;
+}
+
+.support-trigger {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid #fed7aa;
+  border-radius: 0.5rem;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
-.support-link {
-  margin-left: auto;
+.support-trigger:hover,
+.support-trigger[aria-expanded='true'] {
+  border-color: #fdba74;
+  background: #ffedd5;
 }
 
-.support-details {
-  position: relative;
-}
-
-.support-details > summary {
-  cursor: pointer;
-  list-style: none;
-}
-
-.support-details > summary::-webkit-details-marker {
-  display: none;
-}
-
-.support-options {
+.support-popover {
   position: absolute;
+  top: calc(100% + 0.5rem);
   right: 0;
-  bottom: calc(100% + 0.75rem);
-  z-index: 30;
-  width: 19rem;
+  z-index: 40;
+  width: min(20rem, calc(100vw - 2rem));
   padding: 1rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   background: #fff;
-  box-shadow: 0 12px 28px rgb(30 64 175 / 0.16);
+  box-shadow: 0 16px 36px rgb(15 23 42 / 0.16);
   color: #475569;
-  font-size: 0.75rem;
-  line-height: 1.4;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.support-popover h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.support-popover p {
+  margin: 0.5rem 0 0;
 }
 
 .support-option-list {
@@ -204,37 +295,145 @@ body {
   align-items: center;
   gap: 0.125rem;
   padding: 0.5rem 0.25rem;
-  border: 1px solid #dbeafe;
+  border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
-  color: #1e3a8a;
+  color: #334155;
   text-align: center;
 }
 
 .support-option:hover {
-  background: #eff6ff;
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.support-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.35);
+}
+
+.support-modal {
+  position: relative;
+  width: min(100%, 27rem);
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 24px 60px rgb(15 23 42 / 0.26);
+  color: #475569;
+}
+
+.support-modal h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.support-modal > p {
+  margin: 0.75rem 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.support-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: #64748b;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.support-modal-close:hover {
+  background: #f1f5f9;
+}
+
+.support-modal-options {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.support-modal-options a {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
+  color: #334155;
+  font-size: 0.875rem;
+}
+
+.support-modal-options a:hover {
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.support-modal-options strong {
+  margin-left: auto;
+  color: #9a3412;
+}
+
+.support-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.support-modal-actions button:first-child {
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.5rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.support-modal-actions button:first-child:hover {
+  background: #1d4ed8;
+}
+
+.support-modal-actions button:last-child {
+  color: #64748b;
+  font-size: 0.75rem;
 }
 
 @media (max-width: 900px) {
   .app-layout {
     flex-direction: column;
-    height: auto;
+    height: 100%;
+    min-height: 0;
   }
+
   .editor-panel {
     width: 100%;
-    height: auto;
+    flex: 0 0 clamp(16rem, 52%, 34rem);
+    min-height: 0;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
   }
 
   .editor-shell {
     flex-direction: column;
+    min-height: 0;
   }
 
   .step-nav {
     width: 100% !important;
-    max-height: 140px;
+    max-height: clamp(7.5rem, 34%, 13rem);
     border-bottom: 1px solid #f1f5f9;
   }
+
   .step-nav-inner {
     overflow-y: auto !important;
     padding: 0.5rem;
@@ -247,10 +446,16 @@ body {
     display: none;
   }
   .step-nav-inner > ol {
+    flex: none;
     flex-direction: row;
     overflow-x: auto;
     gap: 0.5rem;
     padding-bottom: 0.5rem;
+  }
+
+  .step-nav-inner > div.mt-6,
+  .editor-sidebar-support {
+    flex: none;
   }
   
   .step-nav-inner > ol > li > button {
@@ -266,7 +471,9 @@ body {
 
   .step-content {
     width: 100% !important;
-    height: 60vh;
+    height: auto;
+    flex: 1;
+    min-height: 0;
   }
   
   .step-content > div:last-child {
@@ -274,19 +481,95 @@ body {
   }
 
   .preview-panel {
-    height: auto;
-    overflow: visible;
+    flex: 1;
+    min-height: 12rem;
+    overflow: hidden;
   }
 
-  .app-footer {
-    width: calc(100% - 2rem);
-    margin: 1rem;
-    align-items: flex-start;
+  .top-bar {
     flex-wrap: wrap;
   }
 
-  .support-link {
-    margin-left: 0;
+  .top-bar-history,
+  .top-bar-zoom,
+  .top-bar-actions {
+    flex: none;
+  }
+
+  .top-bar-save-status {
+    display: none;
+  }
+
+  .page-manager-bar {
+    padding: 0.25rem 1rem 0;
+  }
+
+  .preview-viewport {
+    padding: 1rem;
+  }
+
+  .app-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .support-popover {
+    right: 0;
+  }
+
+  .support-modal-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .app-layout {
+    flex-direction: row;
+  }
+
+  .editor-panel {
+    width: 55%;
+    height: 100%;
+    flex: 0 0 55%;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: none;
+  }
+
+  .editor-shell {
+    flex-direction: row;
+  }
+
+  .step-nav {
+    width: 4.5rem !important;
+    max-height: none;
+    border-right: 1px solid #f1f5f9;
+    border-bottom: none;
+  }
+
+  .step-nav-inner > ol {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .step-nav-inner > ol > li > button {
+    width: 100%;
+  }
+
+  .step-nav-inner > div.mt-6,
+  .editor-sidebar-support,
+  .editor-sidebar-footer {
+    display: none;
+  }
+
+  .step-nav > button {
+    display: none;
+  }
+
+  .step-content {
+    width: auto !important;
+    height: 100%;
   }
 }
 
@@ -335,10 +618,10 @@ body {
   display: flex;
   justify-content: center;
   gap: 0.75rem;
-  padding-top: 3mm;
-  color: #94a3b8;
-  font-size: 8pt;
-  line-height: 1;
+  padding-top: 4mm;
+  color: #64748b;
+  font-size: 9pt;
+  line-height: 1.2;
   text-align: center;
 }
 
@@ -359,9 +642,20 @@ body {
 
   html,
   body {
+    width: auto;
+    height: auto;
     margin: 0;
     padding: 0;
+    overflow: visible;
     background: white;
+  }
+
+  #root,
+  .app-shell,
+  .app-layout {
+    width: auto;
+    height: auto;
+    overflow: visible;
   }
 
   /* Ukrywamy wszystko poza kartką A4. */
@@ -377,10 +671,11 @@ body {
     overflow: visible;
   }
 
-  /* Na wydruku nie ma paska ani marginesów panelu. */
-  .preview-panel > * {
-    margin: 0 !important;
-    position: static !important;
+  .preview-viewport {
+    width: auto;
+    height: auto;
+    padding: 0;
+    overflow: visible;
   }
 
   /* Podgląd może być pomniejszony na ekranie, ale drukujemy zawsze w skali 1:1. */

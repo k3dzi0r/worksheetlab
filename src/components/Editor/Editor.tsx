@@ -72,6 +72,7 @@ import { PATTERNS } from '../../patterns'
 import { PATTERN_LENGTH_MAX, PATTERN_LENGTH_MIN } from '../../templates/PatternTemplate'
 import { GUIDE_LEVELS, TRACE_LEVELS } from '../../templates/HandwritingTemplate'
 import type { MathOperation } from '../../mathTasks'
+import { SupportPopover } from '../SupportPopover'
 
 /** Przełącza rodzaj działania, ale nie pozwala odznaczyć ostatniego - karta nie może być pusta. */
 function toggleMathOperation(current: MathOperation[] | undefined, operation: MathOperation): MathOperation[] {
@@ -104,15 +105,6 @@ function parseCrosswordEditorRows(text: string): CrosswordEditorRow[] {
 
 function serializeCrosswordEditorRows(rows: CrosswordEditorRow[]): string {
   return rows.map((row) => (row.clue ? `${row.word} - ${row.clue}` : row.word)).join('\n')
-}
-
-/** Kroki kreatora - nawigacja po lewej, treść aktywnego kroku w środkowej kolumnie. */
-const TIPS: Record<number, string> = {
-  1: "Nie wiesz, co wybrać? Filtry nad kafelkami zawężają listę do jednego przedmiotu.",
-  2: "Zmieniając orientację lub tryb prosty dostosowujesz zadanie do potrzeb uczniów.",
-  3: "Ustaw parametry zadania. Wiele z nich pozwala precyzyjnie dostosować poziom trudności.",
-  4: "Każdy wariant to inna wersja tej samej karty — świetne na sprawdzian.",
-  5: "Nagłówek pojawia się tylko na pierwszej stronie wydruku, aby oszczędzić miejsce."
 }
 
 const STEPS = [
@@ -509,22 +501,15 @@ export function Editor({
           </div>
         </div>
 
-        {/* Box Wskazówka */}
-        <div className={`editor-sidebar-tip mt-6 px-4 shrink-0 bg-blue-50 border border-blue-200 rounded-xl p-3 relative overflow-hidden transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
-          <div className="flex gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 shrink-0 mt-0.5">
-              <path d="M9 18h6" />
-              <path d="M10 22h4" />
-              <path d="M12 2v1" />
-              <path d="M12 7a5 5 0 0 0-5 5c0 2 1.5 3 2 4v2h6v-2c.5-1 2-2 2-4a5 5 0 0 0-5-5z" />
-            </svg>
+        <div className={`editor-sidebar-support mt-6 mx-3 shrink-0 transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+          <div className="editor-sidebar-support-copy">
+            <span aria-hidden="true">☕</span>
             <div>
-              <h3 className="text-sm font-bold text-blue-900 leading-tight">Wskazówka</h3>
-              <p className="text-xs text-blue-800 mt-1 leading-snug">
-                {TIPS[activeStep as keyof typeof TIPS]}
-              </p>
+              <h3>Wspieraj rozwój KartoLabu</h3>
+              <p>KartoLab powstaje dzięki wsparciu użytkowników. Jeśli lubisz to narzędzie, postaw mi wirtualną kawę!</p>
             </div>
           </div>
+          <SupportPopover />
         </div>
 
         <div className={`editor-sidebar-footer mt-auto px-4 pt-4 shrink-0 flex flex-col justify-end transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
