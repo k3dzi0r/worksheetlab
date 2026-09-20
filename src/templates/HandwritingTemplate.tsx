@@ -110,8 +110,9 @@ function useFontMetrics(fontFamily: string, lines: string[]): FontMetrics {
     }
 
     measure()
-    // Czcionka z @font-face (Elementarz) może nie być gotowa przy pierwszym pomiarze.
-    document.fonts?.ready.then(() => {
+    // `document.fonts.ready` może być już rozwiązane, gdy użytkownik dopiero wybierze
+    // Elementarz. Ładujemy więc dokładnie wybrany krój i dopiero wtedy mierzymy go ponownie.
+    document.fonts?.load(`100px ${fontFamily}`).then(() => {
       if (!cancelled) measure()
     })
 

@@ -55,6 +55,9 @@ export const INITIAL_WORKSHEET: WorksheetState = {
   cutCardsPerRow: 3,
   sameOrDifferentReferenceStyle: 'box',
   categorizeLayout: 'columns',
+  patternLength: 50,
+  wordSearchAllowHorizontal: true,
+  wordSearchAllowVertical: true,
 }
 
 export const INITIAL_PROJECT: ProjectState = {

@@ -26,6 +26,9 @@ export const PATTERN_HELP_LEVELS = [
 
 export type PatternHelp = (typeof PATTERN_HELP_LEVELS)[number]['value']
 
+export const PATTERN_LENGTH_MIN = 15
+export const PATTERN_LENGTH_MAX = 100
+
 function getHelpLevel(value: string | undefined) {
   return PATTERN_HELP_LEVELS.find((level) => level.value === value) ?? PATTERN_HELP_LEVELS[1]
 }
@@ -34,6 +37,7 @@ export function PatternTemplate({ worksheet, seed }: PatternTemplateProps) {
   const {
     patternId = 'waves',
     patternHelp = 'medium',
+    patternLength,
     patternGuides = true,
     patternStartDot = true,
     instruction,
@@ -44,6 +48,7 @@ export function PatternTemplate({ worksheet, seed }: PatternTemplateProps) {
   const { containerRef, width, height } = usePageSpace([
     patternId,
     patternHelp,
+    patternLength,
     patternGuides,
     patternStartDot,
     itemScale,
@@ -76,11 +81,16 @@ export function PatternTemplate({ worksheet, seed }: PatternTemplateProps) {
   }, [patternId, rows, seed])
 
   const help = getHelpLevel(patternHelp)
+  // Starsze projekty nie mają suwaka długości, więc zachowują dawny poziom podpowiedzi.
+  const lengthRatio = Math.min(
+    PATTERN_LENGTH_MAX,
+    Math.max(PATTERN_LENGTH_MIN, patternLength ?? help.trace * 100),
+  ) / 100
   const viewWidth = Math.max(width, 1)
   const startX = sidePadding
   const endX = viewWidth - sidePadding
-  const solidEnd = startX + (endX - startX) * help.solid
-  const traceEnd = startX + (endX - startX) * help.trace
+  const solidEnd = startX + (endX - startX) * Math.min(help.solid, lengthRatio)
+  const traceEnd = startX + (endX - startX) * lengthRatio
   const stroke = Math.max(1.6, unit * 0.09)
 
   return (

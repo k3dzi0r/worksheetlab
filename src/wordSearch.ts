@@ -22,6 +22,8 @@ export interface WordSearchResult {
 export interface WordSearchOptions {
   cols: number
   rows: number
+  allowHorizontal: boolean
+  allowVertical: boolean
   allowDiagonals: boolean
   allowReverse: boolean
   /**
@@ -59,14 +61,18 @@ export function parseWords(text: string): string[] {
 }
 
 export function generateWordSearch(words: string[], options: WordSearchOptions): WordSearchResult {
-  const { cols, rows, allowDiagonals, allowReverse, filler, seed } = options
+  const { cols, rows, allowHorizontal, allowVertical, allowDiagonals, allowReverse, filler, seed } = options
   const random = createSeededRandom(seed)
 
   const grid: (string | null)[][] = Array.from({ length: rows }, () => Array<string | null>(cols).fill(null))
   const placed: PlacedWord[] = []
   const skipped: string[] = []
 
-  const directions: [number, number][] = [...STRAIGHT, ...(allowDiagonals ? DIAGONAL : [])]
+  const directions: [number, number][] = [
+    ...(allowHorizontal ? [STRAIGHT[0]] : []),
+    ...(allowVertical ? [STRAIGHT[1]] : []),
+    ...(allowDiagonals ? DIAGONAL : []),
+  ]
 
   // Najdłuższe słowa układamy pierwsze - mają najmniej możliwych pozycji.
   // Słowa tej samej długości tasujemy, żeby kolejność wpisania nie decydowała o miejscu w siatce.

@@ -17,6 +17,8 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
   const {
     wordSearchWords = '',
     wordSearchGridSize = 10,
+    wordSearchAllowHorizontal = true,
+    wordSearchAllowVertical = true,
     wordSearchAllowDiagonals = false,
     wordSearchAllowReverse = false,
     wordSearchUppercase = true,
@@ -57,12 +59,24 @@ export function WordSearchTemplate({ worksheet, seed, showAnswerKey = false }: W
       generateWordSearch(words, {
         cols,
         rows,
+        allowHorizontal: wordSearchAllowHorizontal,
+        allowVertical: wordSearchAllowVertical,
         allowDiagonals: wordSearchAllowDiagonals,
         allowReverse: wordSearchAllowReverse,
         filler: wordSearchFiller === 'fromWords' ? 'fromWords' : 'random',
         seed,
       }),
-    [words, cols, rows, wordSearchAllowDiagonals, wordSearchAllowReverse, wordSearchFiller, seed],
+    [
+      words,
+      cols,
+      rows,
+      wordSearchAllowHorizontal,
+      wordSearchAllowVertical,
+      wordSearchAllowDiagonals,
+      wordSearchAllowReverse,
+      wordSearchFiller,
+      seed,
+    ],
   )
 
   // Komórki należące do ukrytych słów - podświetlamy je tylko w kluczu odpowiedzi.

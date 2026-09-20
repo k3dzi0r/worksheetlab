@@ -268,6 +268,8 @@ export interface WorksheetState {
   patternId?: string
   /** Ile wiersza zajmuje gotowy wzór i ślad do obrysowania. */
   patternHelp?: string
+  /** Płynna długość wzoru i śladu w wierszu, w procentach. */
+  patternLength?: number
   /** Czy rysować linie pomocnicze nad i pod szlaczkiem. */
   patternGuides?: boolean
   /** Czy zaznaczyć kropką miejsce startu. */
@@ -304,6 +306,8 @@ export interface WorksheetState {
   /** Słowa do ukrycia - jedno w wierszu (dopuszczalne też przecinki/średniki). */
   wordSearchWords?: string
   wordSearchGridSize?: number
+  wordSearchAllowHorizontal?: boolean
+  wordSearchAllowVertical?: boolean
   wordSearchAllowDiagonals?: boolean
   wordSearchAllowReverse?: boolean
   wordSearchUppercase?: boolean

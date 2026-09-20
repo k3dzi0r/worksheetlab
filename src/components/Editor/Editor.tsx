@@ -69,7 +69,7 @@ const COLORING_CROWNS: { value: CrownStyle; label: string }[] = [
 ]
 import { MATH_OPERATION_LABELS, MATH_OPERATION_SIGNS } from '../../mathTasks'
 import { PATTERNS } from '../../patterns'
-import { PATTERN_HELP_LEVELS } from '../../templates/PatternTemplate'
+import { PATTERN_LENGTH_MAX, PATTERN_LENGTH_MIN } from '../../templates/PatternTemplate'
 import { GUIDE_LEVELS, TRACE_LEVELS } from '../../templates/HandwritingTemplate'
 import type { MathOperation } from '../../mathTasks'
 
@@ -84,6 +84,26 @@ function toggleMathOperation(current: MathOperation[] | undefined, operation: Ma
 /** Usuwa rozszerzenie pliku (np. ".png"), żeby zaproponować czytelną nazwę jako podpis. */
 function stripFileExtension(fileName: string): string {
   return fileName.replace(/\.[a-z0-9]+$/i, '')
+}
+
+interface CrosswordEditorRow {
+  word: string
+  clue: string
+}
+
+/** Rozdziela zapis tekstowy projektu na dwa jawne pola edytora. */
+function parseCrosswordEditorRows(text: string): CrosswordEditorRow[] {
+  if (text.length === 0) return [{ word: '', clue: '' }]
+  return text.split('\n').map((line) => {
+    const separator = line.match(/\s[-–—]\s|;|\t/)
+    if (!separator || separator.index === undefined) return { word: line, clue: '' }
+    const clueStart = separator.index + separator[0].length
+    return { word: line.slice(0, separator.index), clue: line.slice(clueStart) }
+  })
+}
+
+function serializeCrosswordEditorRows(rows: CrosswordEditorRow[]): string {
+  return rows.map((row) => (row.clue ? `${row.word} - ${row.clue}` : row.word)).join('\n')
 }
 
 /** Kroki kreatora - nawigacja po lewej, treść aktywnego kroku w środkowej kolumnie. */
@@ -233,6 +253,11 @@ export function Editor({
     }).missingLetters
   }, [worksheet.template, worksheet.crosswordWords, worksheet.crosswordKeyword])
 
+  const crosswordEditorRows = useMemo(
+    () => parseCrosswordEditorRows(worksheet.crosswordWords || ''),
+    [worksheet.crosswordWords],
+  )
+
   // Ostrzeżenie w edytorze: które słowa nie zmieściły się w siatce wykreślanki.
   const wordSearchSkipped = useMemo(() => {
     if (worksheet.template !== 'wordSearch') return []
@@ -240,6 +265,8 @@ export function Editor({
     return generateWordSearch(parseWords(worksheet.wordSearchWords || ''), {
       cols: size,
       rows: size,
+      allowHorizontal: worksheet.wordSearchAllowHorizontal ?? true,
+      allowVertical: worksheet.wordSearchAllowVertical ?? true,
       allowDiagonals: worksheet.wordSearchAllowDiagonals ?? false,
       allowReverse: worksheet.wordSearchAllowReverse ?? false,
       filler: 'random',
@@ -249,6 +276,8 @@ export function Editor({
     worksheet.template,
     worksheet.wordSearchWords,
     worksheet.wordSearchGridSize,
+    worksheet.wordSearchAllowHorizontal,
+    worksheet.wordSearchAllowVertical,
     worksheet.wordSearchAllowDiagonals,
     worksheet.wordSearchAllowReverse,
   ])
@@ -276,6 +305,38 @@ export function Editor({
     onAddItem({ id: createId(), source: 'image', imageDataUrl: dataUrl, label: fileName, caption, showCaption: false })
   }
 
+  function updateCrosswordRow(index: number, field: keyof CrosswordEditorRow, value: string) {
+    const rows = crosswordEditorRows.map((row, rowIndex) =>
+      rowIndex === index ? { ...row, [field]: value } : row,
+    )
+    onCrosswordOptionsChange({ crosswordWords: serializeCrosswordEditorRows(rows) })
+  }
+
+  function addCrosswordRow() {
+    onCrosswordOptionsChange({
+      crosswordWords: serializeCrosswordEditorRows([...crosswordEditorRows, { word: '', clue: '' }]),
+    })
+  }
+
+  function removeCrosswordRow(index: number) {
+    const rows = crosswordEditorRows.filter((_, rowIndex) => rowIndex !== index)
+    onCrosswordOptionsChange({ crosswordWords: serializeCrosswordEditorRows(rows) })
+  }
+
+  function updateWordSearchDirection(
+    field: 'wordSearchAllowHorizontal' | 'wordSearchAllowVertical' | 'wordSearchAllowDiagonals',
+    checked: boolean,
+  ) {
+    const next = {
+      wordSearchAllowHorizontal: worksheet.wordSearchAllowHorizontal ?? true,
+      wordSearchAllowVertical: worksheet.wordSearchAllowVertical ?? true,
+      wordSearchAllowDiagonals: worksheet.wordSearchAllowDiagonals ?? false,
+      [field]: checked,
+    }
+    if (!next.wordSearchAllowHorizontal && !next.wordSearchAllowVertical && !next.wordSearchAllowDiagonals) return
+    onWordSearchOptionsChange({ [field]: checked })
+  }
+
   function handleEmojiSelected(entry: EmojiEntry) {
     // Podpis jest od razu proponowany na podstawie polskiej nazwy emoji - można go zmienić.
     onAddItem({ id: createId(), source: 'emoji', emoji: entry.emoji, label: entry.name, caption: entry.name, showCaption: false })
@@ -284,18 +345,29 @@ export function Editor({
   return (
     <div className="editor-shell">
       <nav className={`step-nav relative transition-all duration-300 ease-in-out ${isNavCollapsed ? '!w-16 !px-0 border-r-0' : ''}`}>
-        <button 
+        <button
+          type="button"
           onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-          className="absolute -right-3 top-6 bg-white border border-gray-200 rounded-full p-1 shadow-sm z-50 text-gray-500 hover:text-gray-700 hidden md:block"
+          aria-label={isNavCollapsed ? 'Rozwiń nawigację' : 'Zwiń nawigację'}
+          title={isNavCollapsed ? 'Rozwiń nawigację' : 'Zwiń nawigację'}
+          className={`absolute top-3 bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm z-50 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hidden md:block ${isNavCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-3'}`}
         >
           <svg className={`w-4 h-4 transform transition-transform ${isNavCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <div className="step-nav-inner custom-scrollbar h-full flex flex-col">
-        <header className="mb-5 px-4">
-          <h1 className={`text-xl font-bold text-gray-900 transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>KartoLab</h1>
-          <p className={`text-gray-500 text-xs transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>Kreator kart pracy A4</p>
+        <header className="mb-5 px-4 pr-12 flex items-center gap-2">
+          <img
+            src={`${import.meta.env.BASE_URL}illustrations/worksheet-icon.png`}
+            alt=""
+            aria-hidden="true"
+            className={`w-10 h-10 object-contain shrink-0 transition-opacity ${isNavCollapsed ? 'opacity-0' : 'opacity-100'}`}
+          />
+          <div>
+            <h1 className={`text-xl font-bold text-gray-900 transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>KartoLab</h1>
+            <p className={`text-gray-500 text-xs transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>Kreator kart pracy A4</p>
+          </div>
         </header>
 
         <ol className="flex flex-col gap-2 px-2">
@@ -369,7 +441,7 @@ export function Editor({
         </div>
 
         {/* Sekcja "Dodatkowe działania" */}
-        <div className="mt-6">
+        <div className={`mt-6 px-2 transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Dodatkowe działania</h2>
           <div className="grid grid-cols-3 gap-2">
             <label className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl bg-indigo-50 text-indigo-700 cursor-pointer hover:bg-indigo-100 transition-colors text-center h-[72px]">
@@ -429,7 +501,13 @@ export function Editor({
           </div>
         </div>
 
-        <div className={`mt-auto px-4 pt-6 shrink-0 flex flex-col justify-end min-h-[160px] transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+        <div className={`mt-auto px-4 pt-4 shrink-0 flex flex-col justify-end transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+          <img
+            src={`${import.meta.env.BASE_URL}illustrations/school-supplies.png`}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-20 object-contain mb-2 select-none"
+          />
           <p className="text-xs font-medium text-gray-700 text-center mb-1">
             ❤️ Tworzone z myślą o nauczycielach
           </p>
@@ -440,16 +518,19 @@ export function Editor({
         </div>
       </nav>
 
-      <div className={`step-content relative transition-all duration-300 ease-in-out bg-white ${isContentCollapsed ? '!w-0 border-none' : ''}`}>
-        <button 
+      <div className={`step-content relative transition-all duration-300 ease-in-out bg-white ${isContentCollapsed ? '!w-11 border-none' : ''}`}>
+        <button
+          type="button"
           onClick={() => setIsContentCollapsed(!isContentCollapsed)}
-          className={`absolute top-6 bg-white border border-gray-200 rounded-full p-1 shadow-sm z-50 text-gray-500 hover:text-gray-700 hidden md:block transition-all ${isContentCollapsed ? '-right-11' : '-right-3'}`}
+          aria-label={isContentCollapsed ? 'Rozwiń ustawienia' : 'Zwiń ustawienia'}
+          title={isContentCollapsed ? 'Rozwiń ustawienia' : 'Zwiń ustawienia'}
+          className="absolute top-3 right-2 bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm z-50 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hidden md:block"
         >
           <svg className={`w-4 h-4 transform transition-transform ${isContentCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <div className={`w-[392px] max-w-[100vw] h-full overflow-y-auto p-6 transition-opacity duration-200 ${isContentCollapsed ? 'opacity-0 invisible' : 'opacity-100'}`}>
+        <div className={`w-[392px] max-w-[100vw] h-full overflow-y-auto px-6 pb-6 pt-14 transition-opacity duration-200 ${isContentCollapsed ? 'opacity-0 invisible' : 'opacity-100'}`}>
 
       <Step step={1} active={activeStep}>
 {/* Wybór szablonu */}
@@ -1101,18 +1182,55 @@ export function Editor({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Słowa i definicje (jedno w wierszu)
-          </label>
-          <textarea
-            value={worksheet.crosswordWords || ''}
-            onChange={(event) => onCrosswordOptionsChange({ crosswordWords: event.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={7}
-            placeholder={'kwiat - rośnie na łące\nptak - ma skrzydła'}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Format: słowo - definicja. Samo słowo też zadziała, definicję dopiszesz później.
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">Słowa i definicje</label>
+            <button
+              type="button"
+              onClick={addCrosswordRow}
+              className="text-xs font-semibold text-blue-700 hover:text-blue-800"
+            >
+              + Dodaj wiersz
+            </button>
+          </div>
+          <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)_28px] gap-2 px-1 mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+            <span>Słowo</span>
+            <span>Definicja</span>
+            <span />
+          </div>
+          <div className="flex flex-col gap-2">
+            {crosswordEditorRows.map((row, index) => (
+              <div key={index} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)_28px] gap-2 items-center">
+                <input
+                  type="text"
+                  value={row.word}
+                  onChange={(event) => updateCrosswordRow(index, 'word', event.target.value)}
+                  aria-label={`Słowo ${index + 1}`}
+                  className="min-w-0 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={index === 0 ? 'kwiat' : 'słowo'}
+                />
+                <input
+                  type="text"
+                  value={row.clue}
+                  onChange={(event) => updateCrosswordRow(index, 'clue', event.target.value)}
+                  aria-label={`Definicja ${index + 1}`}
+                  className="min-w-0 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder={index === 0 ? 'rośnie na łące' : 'definicja'}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeCrosswordRow(index)}
+                  disabled={crosswordEditorRows.length === 1 && !row.word && !row.clue}
+                  aria-label={`Usuń wiersz ${index + 1}`}
+                  title="Usuń wiersz"
+                  className="w-7 h-9 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:hover:text-gray-400 disabled:hover:bg-transparent"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Każde hasło ma osobne pole na definicję, więc nic nie zlewa się w jeden tekst.
           </p>
           {crosswordSkipped.length > 0 && (
             <p className="text-xs text-amber-600 mt-1">
@@ -1180,22 +1298,22 @@ export function Editor({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Ile podpowiedzi</label>
-          <div className="grid grid-cols-4 gap-2">
-            {PATTERN_HELP_LEVELS.map((level) => (
-              <button
-                key={level.value}
-                type="button"
-                onClick={() => onPatternOptionsChange({ patternHelp: level.value })}
-                className={`py-2 px-1 text-sm rounded-lg border ${(worksheet.patternHelp ?? 'medium') === level.value ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium' : 'bg-white border-gray-300 text-gray-700'}`}
-              >
-                {level.label}
-              </button>
-            ))}
-          </div>
+          <label className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+            <span>Długość szlaczka</span>
+            <span className="tabular-nums text-blue-700">{Math.round(worksheet.patternLength ?? 50)}%</span>
+          </label>
+          <input
+            type="range"
+            min={PATTERN_LENGTH_MIN}
+            max={PATTERN_LENGTH_MAX}
+            step={1}
+            value={worksheet.patternLength ?? 50}
+            onChange={(event) => onPatternOptionsChange({ patternLength: Number(event.target.value) })}
+            className="w-full"
+          />
           <p className="text-xs text-gray-500 mt-1">
-            Wiersz zaczyna się gotowym wzorem, dalej idzie ślad do obrysowania, a resztę dziecko
-            rysuje samo. Im mniej podpowiedzi, tym wcześniej zaczyna się samodzielna część.
+            Przesuń płynnie: wiersz zaczyna się gotowym wzorem, dalej idzie ślad do obrysowania,
+            a pozostała część zostaje na samodzielne rysowanie.
           </p>
         </div>
 
@@ -1533,31 +1651,38 @@ export function Editor({
           </span>
         </label>
 
-        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
-          <input
-            type="checkbox"
-            checked={worksheet.wordSearchAllowDiagonals ?? false}
-            onChange={(event) => onWordSearchOptionsChange({ wordSearchAllowDiagonals: event.target.checked })}
-            className="w-5 h-5"
-          />
-          <span>
-            <span className="font-semibold text-gray-900 block text-sm">Ukośne</span>
-            <span className="block text-xs text-gray-500">Słowa mogą biec na skos - trudniejsze.</span>
-          </span>
-        </label>
-
-        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
-          <input
-            type="checkbox"
-            checked={worksheet.wordSearchAllowReverse ?? false}
-            onChange={(event) => onWordSearchOptionsChange({ wordSearchAllowReverse: event.target.checked })}
-            className="w-5 h-5"
-          />
-          <span>
-            <span className="font-semibold text-gray-900 block text-sm">Wspak</span>
-            <span className="block text-xs text-gray-500">Słowa mogą być zapisane od tyłu.</span>
-          </span>
-        </label>
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">Kierunki ukrywania słów</p>
+          <div className="grid grid-cols-2 gap-2">
+            {([
+              ['wordSearchAllowHorizontal', 'Poziom', worksheet.wordSearchAllowHorizontal ?? true],
+              ['wordSearchAllowVertical', 'Pion', worksheet.wordSearchAllowVertical ?? true],
+              ['wordSearchAllowDiagonals', 'Ukos', worksheet.wordSearchAllowDiagonals ?? false],
+            ] as const).map(([field, label, checked]) => (
+              <label key={field} className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(event) => updateWordSearchDirection(field, event.target.checked)}
+                  className="w-5 h-5"
+                />
+                <span className="font-semibold text-gray-900 text-sm">{label}</span>
+              </label>
+            ))}
+            <label className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={worksheet.wordSearchAllowReverse ?? false}
+                onChange={(event) => onWordSearchOptionsChange({ wordSearchAllowReverse: event.target.checked })}
+                className="w-5 h-5"
+              />
+              <span className="font-semibold text-gray-900 text-sm">Wspak</span>
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Zostaw co najmniej jeden kierunek. „Wspak” działa z każdym zaznaczonym kierunkiem.
+          </p>
+        </div>
 
         <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
           <input
@@ -1599,14 +1724,6 @@ export function Editor({
               >
                 Ślad
               </button>
-              <button
-                type="button"
-                onClick={() => insertHandwritingTag('p')}
-                className="text-xs px-2 py-1 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200"
-                title="Pusto (zaznacz tekst i kliknij)"
-              >
-                Puste
-              </button>
             </div>
           </div>
           <textarea
@@ -1617,7 +1734,7 @@ export function Editor({
             rows={3}
             placeholder="np. Ala ma kota."
           />
-          <p className="text-xs text-gray-500 mt-1">Zaznacz fragment i kliknij przycisk, aby zmienić jego styl.</p>
+          <p className="text-xs text-gray-500 mt-1">Zaznacz fragment i wybierz: czarny tekst albo ślad do obrysowania.</p>
         </div>
         
         <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">

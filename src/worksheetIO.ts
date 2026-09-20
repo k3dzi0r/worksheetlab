@@ -180,6 +180,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     crosswordNumbers: typeof state.crosswordNumbers === 'boolean' ? state.crosswordNumbers : true,
     patternId: typeof state.patternId === 'string' ? state.patternId : 'waves',
     patternHelp: typeof state.patternHelp === 'string' ? state.patternHelp : 'medium',
+    patternLength: typeof state.patternLength === 'number' ? Math.min(100, Math.max(15, state.patternLength)) : undefined,
     patternGuides: typeof state.patternGuides === 'boolean' ? state.patternGuides : true,
     patternStartDot: typeof state.patternStartDot === 'boolean' ? state.patternStartDot : true,
     mathOperations: normalizeMathOperations(state.mathOperations),
@@ -210,6 +211,10 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
       : 'random',
     wordSearchWords: typeof state.wordSearchWords === 'string' ? state.wordSearchWords : '',
     wordSearchGridSize: typeof state.wordSearchGridSize === 'number' ? state.wordSearchGridSize : 10,
+    wordSearchAllowHorizontal:
+      typeof state.wordSearchAllowHorizontal === 'boolean' ? state.wordSearchAllowHorizontal : true,
+    wordSearchAllowVertical:
+      typeof state.wordSearchAllowVertical === 'boolean' ? state.wordSearchAllowVertical : true,
     wordSearchAllowDiagonals: typeof state.wordSearchAllowDiagonals === 'boolean' ? state.wordSearchAllowDiagonals : false,
     wordSearchAllowReverse: typeof state.wordSearchAllowReverse === 'boolean' ? state.wordSearchAllowReverse : false,
     wordSearchUppercase: typeof state.wordSearchUppercase === 'boolean' ? state.wordSearchUppercase : true,
