@@ -5,7 +5,7 @@
   "start_url": "/worksheetlab/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#2563eb",
   "icons": [
     {
       "src": "favicon.svg",
