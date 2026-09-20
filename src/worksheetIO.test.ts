@@ -56,4 +56,26 @@ describe('parseProjectJson', () => {
 
     expect(project?.pages.map((page) => page.orientation)).toEqual(['portrait', 'portrait'])
   })
+
+  it('wczytuje wiele niezależnych zadań na jednej stronie A4', () => {
+    const project = parseProjectJson(
+      JSON.stringify({
+        pages: [
+          {
+            id: 'strona-z-zadaniami',
+            orientation: 'portrait',
+            tasks: [
+              { ...worksheet, id: 'zadanie-obrazkowe' },
+              { ...worksheet, id: 'zadanie-pisanie', template: 'handwriting' },
+            ],
+          },
+        ],
+        activeTaskIndex: 1,
+      }),
+    )
+
+    expect(project?.pages[0].id).toBe('strona-z-zadaniami')
+    expect(project?.pages[0].tasks.map((task) => task.id)).toEqual(['zadanie-obrazkowe', 'zadanie-pisanie'])
+    expect(project?.activeTaskIndex).toBe(1)
+  })
 })

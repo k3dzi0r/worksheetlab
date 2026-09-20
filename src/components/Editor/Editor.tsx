@@ -139,6 +139,11 @@ interface EditorProps {
   onClear: () => void
   onToggleCorrectAnswer?: (answerId: string) => void
   worksheet: WorksheetState
+  tasks: WorksheetState[]
+  activeTaskIndex: number
+  onSelectTask: (index: number) => void
+  onAddTask: () => void
+  onRemoveTask: (index: number) => void
   onTemplateChange: (template: TemplateType) => void
   onHandwritingTextChange: (text: string) => void
   onHandwritingModeChange: (mode: 'solid' | 'tracing' | 'empty') => void
@@ -188,6 +193,11 @@ export function Editor({
   onExport,
   onClear,
   worksheet,
+  tasks,
+  activeTaskIndex,
+  onSelectTask,
+  onAddTask,
+  onRemoveTask,
   onTemplateChange,
   onHandwritingTextChange,
   onHandwritingModeChange,
@@ -588,6 +598,49 @@ export function Editor({
 
 <Step step={2} active={activeStep}>
 
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h2 className="text-lg font-semibold">Zadania na stronie</h2>
+            <p className="text-xs text-gray-500">Dodaj do czterech niezależnych zadań na jednej A4.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onAddTask}
+            disabled={tasks.length >= 4}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400"
+          >
+            + Dodaj
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {tasks.map((task, index) => (
+            <div
+              key={task.id ?? index}
+              className={`flex items-center gap-1 rounded-lg border p-1 ${index === activeTaskIndex ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'}`}
+            >
+              <button
+                type="button"
+                onClick={() => onSelectTask(index)}
+                className={`min-w-0 flex-1 px-2 py-1.5 text-left text-xs font-medium truncate ${index === activeTaskIndex ? 'text-blue-800' : 'text-gray-700'}`}
+              >
+                Zadanie {index + 1}: {TEMPLATE_OPTIONS.find((option) => option.value === task.template)?.label}
+              </button>
+              {tasks.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveTask(index)}
+                  aria-label={`Usuń zadanie ${index + 1}`}
+                  title="Usuń zadanie"
+                  className="p-1 text-gray-400 hover:text-red-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Orientacja strony - wspólna dla wszystkich szablonów */}
       <section>

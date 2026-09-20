@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import type { CSSProperties } from 'react'
-import type { WorksheetState } from '../../types/worksheet'
+import type { WorksheetPage, WorksheetState } from '../../types/worksheet'
 import { shuffleArraySeeded } from '../../utils'
 import { ChoiceTemplate } from '../../templates/ChoiceTemplate'
 import { MatchPairsTemplate } from '../../templates/MatchPairsTemplate'
@@ -21,15 +21,22 @@ import { DotToDotTemplate } from '../../templates/DotToDotTemplate'
 import { ClockTemplate } from '../../templates/ClockTemplate'
 import { WorksheetHeaderView } from './WorksheetHeaderView'
 
-interface WorksheetPreviewProps {
-  showPageNumbers?: boolean
-  pageIndex?: number
-  totalPages?: number
+interface WorksheetTaskPreviewProps {
   showAnswerKey?: boolean
   worksheet: WorksheetState
   /** Wartość zmieniana przy każdym „Losuj kolejność”, wymusza nowe tasowanie prawej kolumny. */
   shuffleSeed: number
   /** Indeks wariantu (0 to oryginał użytkownika, >0 to losowy na bazie seeda). */
+  variantIndex?: number
+}
+
+interface WorksheetPreviewProps {
+  showPageNumbers?: boolean
+  pageIndex?: number
+  totalPages?: number
+  showAnswerKey?: boolean
+  page: WorksheetPage
+  shuffleSeed: number
   variantIndex?: number
 }
 
@@ -53,9 +60,8 @@ function usePrintOrientation(orientation: WorksheetState['orientation']) {
   }, [orientation])
 }
 
-/** Podgląd kartki A4 – to jedyny fragment strony widoczny podczas drukowania. */
-export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, pageIndex, totalPages }: WorksheetPreviewProps) {
-  usePrintOrientation(worksheet.orientation)
+/** Renderuje jedno zadanie; zewnętrzny komponent układa zadania na kartce. */
+function WorksheetTaskPreview({ worksheet, shuffleSeed, variantIndex = 0, showAnswerKey = false }: WorksheetTaskPreviewProps) {
 
   const items = useMemo(() => {
     if (variantIndex === 0) return worksheet.items
@@ -89,14 +95,8 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
     [pairs, shuffleSeed, variantIndex],
   )
 
-  const pageStyle: CSSProperties = {
-    '--page-width': worksheet.orientation === 'landscape' ? '297mm' : '210mm',
-    '--page-height': worksheet.orientation === 'landscape' ? '210mm' : '297mm',
-  } as CSSProperties
-
   return (
-    <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto relative" style={pageStyle}>
-      <WorksheetHeaderView header={worksheet.header} instructionScale={worksheet.instructionScale} />
+    <>
       {worksheet.template === 'choice' && (
         <ChoiceTemplate
           instruction={worksheet.instruction}
@@ -231,6 +231,34 @@ export function WorksheetPreview({ worksheet, shuffleSeed, variantIndex = 0, sho
           showAnswerKey={showAnswerKey}
         />
       )}
+    </>
+  )
+}
+
+/** Podgląd strony A4 z jednym lub wieloma niezależnymi zadaniami. */
+export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, pageIndex, totalPages }: WorksheetPreviewProps) {
+  usePrintOrientation(page.orientation)
+
+  const pageStyle: CSSProperties = {
+    '--page-width': page.orientation === 'landscape' ? '297mm' : '210mm',
+    '--page-height': page.orientation === 'landscape' ? '210mm' : '297mm',
+  } as CSSProperties
+
+  return (
+    <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto relative" style={pageStyle}>
+      <WorksheetHeaderView header={page.header} instructionScale={page.tasks[0]?.instructionScale ?? 1} />
+      <div className={`worksheet-task-grid task-count-${page.tasks.length}`}>
+        {page.tasks.map((task, index) => (
+          <section key={task.id ?? index} data-task-zone className="worksheet-task-zone">
+            <WorksheetTaskPreview
+              worksheet={{ ...task, orientation: page.orientation, header: page.header, variantCount: page.variantCount }}
+              shuffleSeed={shuffleSeed + index * 1_000}
+              variantIndex={variantIndex}
+              showAnswerKey={showAnswerKey}
+            />
+          </section>
+        ))}
+      </div>
       {showPageNumbers && pageIndex !== undefined && totalPages !== undefined && (
         <div className="absolute bottom-[15mm] left-0 right-0 text-center text-xs text-gray-400 font-medium z-10 print:block">
           {pageIndex + 1} / {totalPages}

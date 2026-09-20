@@ -209,6 +209,46 @@ body {
   height: var(--page-height, 297mm);
   padding: 15mm;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.worksheet-task-grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  gap: 5mm;
+}
+
+.worksheet-task-grid.task-count-1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.worksheet-task-grid.task-count-2 {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.worksheet-task-grid.task-count-3,
+.worksheet-task-grid.task-count-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.worksheet-task-grid.task-count-3 > :last-child {
+  grid-column: 1 / -1;
+}
+
+.worksheet-task-zone {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media screen {
+  .worksheet-task-grid:not(.task-count-1) > .worksheet-task-zone {
+    outline: 1px dashed #dbe4f0;
+    outline-offset: 2mm;
+  }
 }
 
 @media print {
@@ -254,6 +294,10 @@ body {
     box-shadow: none !important;
     margin: 0;
     page-break-after: always;
+  }
+
+  .worksheet-task-zone {
+    outline: none !important;
   }
 }
 

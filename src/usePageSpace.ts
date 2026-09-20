@@ -14,6 +14,7 @@ export function usePageSpace(deps: unknown[]) {
     const el = containerRef.current
     if (!el) return
     const page = el.closest('.worksheet-a4') as HTMLElement | null
+    const taskZone = el.closest('[data-task-zone]') as HTMLElement | null
 
     const measure = () => {
       const width = el.clientWidth
@@ -22,8 +23,10 @@ export function usePageSpace(deps: unknown[]) {
         const pageRect = page.getBoundingClientRect()
         const elRect = el.getBoundingClientRect()
         const scale = pageRect.height / page.offsetHeight || 1
-        const paddingBottom = parseFloat(getComputedStyle(page).paddingBottom) || 0
-        height = (pageRect.bottom - elRect.top) / scale - paddingBottom
+        const boundary = taskZone ?? page
+        const boundaryRect = boundary.getBoundingClientRect()
+        const paddingBottom = parseFloat(getComputedStyle(boundary).paddingBottom) || 0
+        height = (boundaryRect.bottom - elRect.top) / scale - paddingBottom
       }
       setSpace((prev) =>
         Math.abs(prev.width - width) < 0.5 && Math.abs(prev.height - height) < 0.5 ? prev : { width, height },
@@ -34,6 +37,7 @@ export function usePageSpace(deps: unknown[]) {
     const observer = new ResizeObserver(measure)
     observer.observe(el)
     if (page) observer.observe(page)
+    if (taskZone) observer.observe(taskZone)
     return () => observer.disconnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)

@@ -7,6 +7,7 @@ import type {
   ChoiceLayout,
   PageOrientation,
   MatchPair,
+  WorksheetPage,
 } from './types/worksheet'
 import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
 import type { WorksheetHeader } from './types/worksheet'
@@ -61,9 +62,34 @@ export const INITIAL_WORKSHEET: WorksheetState = {
 }
 
 export const INITIAL_PROJECT: ProjectState = {
-  pages: [INITIAL_WORKSHEET],
+  pages: [createPage()],
   activePageIndex: 0,
+  activeTaskIndex: 0,
   showPageNumbers: false,
+}
+
+function createWorksheet(overrides: Partial<WorksheetState> = {}): WorksheetState {
+  return {
+    ...INITIAL_WORKSHEET,
+    id: createId(),
+    header: { ...DEFAULT_WORKSHEET_HEADER },
+    items: [],
+    pairs: [],
+    sequenceItems: [],
+    categories: ['Kategoria 1', 'Kategoria 2'],
+    correctAnswers: [],
+    ...overrides,
+  }
+}
+
+function createPage(orientation: PageOrientation = 'portrait', task?: WorksheetState): WorksheetPage {
+  return {
+    id: createId(),
+    orientation,
+    header: { ...DEFAULT_WORKSHEET_HEADER },
+    variantCount: 1,
+    tasks: [task ?? createWorksheet({ orientation })],
+  }
 }
 
 /**
@@ -100,13 +126,26 @@ function App() {
 
 
   
-  const worksheet = project.pages[project.activePageIndex] || INITIAL_WORKSHEET
+  const activePage = project.pages[project.activePageIndex] || INITIAL_PROJECT.pages[0]
+  const activeTaskIndex = Math.min(project.activeTaskIndex, activePage.tasks.length - 1)
+  const activeTask = activePage.tasks[activeTaskIndex] || INITIAL_WORKSHEET
+  // Edytor używa jednego WorksheetState, ale te trzy ustawienia należą do całej strony A4.
+  const worksheet: WorksheetState = {
+    ...activeTask,
+    orientation: activePage.orientation,
+    header: activePage.header,
+    variantCount: activePage.variantCount,
+  }
 
   const setWorksheet = useCallback((updater: (prev: WorksheetState) => WorksheetState) => {
     setProject((prevProj) => {
       const newPages = [...prevProj.pages]
       const activeIdx = prevProj.activePageIndex
-      newPages[activeIdx] = updater(newPages[activeIdx] || INITIAL_WORKSHEET)
+      const page = newPages[activeIdx] || createPage()
+      const taskIndex = Math.min(prevProj.activeTaskIndex, page.tasks.length - 1)
+      const tasks = [...page.tasks]
+      tasks[taskIndex] = updater(tasks[taskIndex] || createWorksheet({ orientation: page.orientation, header: page.header }))
+      newPages[activeIdx] = { ...page, tasks }
       return { ...prevProj, pages: newPages }
     })
   }, [setProject])
@@ -131,11 +170,12 @@ function App() {
 
   const addPage = useCallback(() => {
     setProject((prev) => {
-      const newPage = { ...INITIAL_WORKSHEET, id: createId(), orientation: prev.pages[0]?.orientation || 'portrait' }
+      const newPage = createPage(prev.pages[0]?.orientation || 'portrait')
       return {
         ...prev,
         pages: [...prev.pages, newPage],
         activePageIndex: prev.pages.length,
+        activeTaskIndex: 0,
       }
     })
   }, [setProject])
@@ -145,7 +185,7 @@ function App() {
       if (prev.pages.length <= 1) return prev
       const newPages = prev.pages.filter((_, i) => i !== index)
       const newActiveIndex = Math.min(prev.activePageIndex, newPages.length - 1)
-      return { ...prev, pages: newPages, activePageIndex: newActiveIndex }
+      return { ...prev, pages: newPages, activePageIndex: newActiveIndex, activeTaskIndex: 0 }
     })
   }, [setProject])
 
@@ -153,15 +193,46 @@ function App() {
     setProject((prev) => {
       const pageToCopy = prev.pages[index]
       if (!pageToCopy) return prev
-      const newPage = { ...pageToCopy, id: createId() }
+      const newPage = { ...pageToCopy, id: createId(), tasks: pageToCopy.tasks.map((task) => ({ ...task, id: createId() })) }
       const newPages = [...prev.pages]
       newPages.splice(index + 1, 0, newPage)
-      return { ...prev, pages: newPages, activePageIndex: index + 1 }
+      return { ...prev, pages: newPages, activePageIndex: index + 1, activeTaskIndex: 0 }
     })
   }, [setProject])
 
   const setActivePage = useCallback((index: number) => {
-    setProject((prev) => ({ ...prev, activePageIndex: index }))
+    setProject((prev) => ({ ...prev, activePageIndex: index, activeTaskIndex: 0 }))
+  }, [setProject])
+
+  const setActiveTask = useCallback((index: number) => {
+    setProject((prev) => {
+      const page = prev.pages[prev.activePageIndex]
+      if (!page || index < 0 || index >= page.tasks.length) return prev
+      return { ...prev, activeTaskIndex: index }
+    })
+  }, [setProject])
+
+  const addTask = useCallback(() => {
+    setProject((prev) => {
+      const pageIndex = prev.activePageIndex
+      const page = prev.pages[pageIndex]
+      if (!page || page.tasks.length >= 4) return prev
+      const newTask = createWorksheet({ orientation: page.orientation, header: page.header })
+      const pages = [...prev.pages]
+      pages[pageIndex] = { ...page, tasks: [...page.tasks, newTask] }
+      return { ...prev, pages, activeTaskIndex: page.tasks.length }
+    })
+  }, [setProject])
+
+  const removeTask = useCallback((index: number) => {
+    setProject((prev) => {
+      const pageIndex = prev.activePageIndex
+      const page = prev.pages[pageIndex]
+      if (!page || page.tasks.length <= 1 || index < 0 || index >= page.tasks.length) return prev
+      const pages = [...prev.pages]
+      pages[pageIndex] = { ...page, tasks: page.tasks.filter((_, taskIndex) => taskIndex !== index) }
+      return { ...prev, pages, activeTaskIndex: Math.min(index, page.tasks.length - 2) }
+    })
   }, [setProject])
 
   const reorderPages = useCallback((oldIndex: number, newIndex: number) => {
@@ -188,7 +259,7 @@ function App() {
     // Każdy szablon ma inny kształt danych, więc przy zmianie czyścimy zawartość,
     // żeby uniknąć niespójnych stanów (np. par bez odpowiednika w innym szablonie).
     // Orientacja strony to ustawienie globalne, więc ją zachowujemy.
-    setWorksheet((prev) => ({ ...INITIAL_WORKSHEET, template, orientation: prev.orientation, instructionScale: prev.instructionScale }))
+    setWorksheet((prev) => createWorksheet({ ...prev, template, items: [], pairs: [], sequenceItems: [], correctAnswers: [] }))
   }
 
   function handleHandwritingTextChange(text: string) {
@@ -315,7 +386,13 @@ function App() {
 
 
   function handleHeaderChange(header: Partial<WorksheetHeader>) {
-    setWorksheet((prev) => ({ ...prev, header: { ...prev.header, ...header } }))
+    setProject((prev) => {
+      const pages = [...prev.pages]
+      const page = pages[prev.activePageIndex]
+      if (!page) return prev
+      pages[prev.activePageIndex] = { ...page, header: { ...page.header, ...header } }
+      return { ...prev, pages }
+    })
   }
 
   function handleCutCardsShowBorderChange(cutCardsShowBorder: boolean) {
@@ -335,7 +412,13 @@ function App() {
   }
 
   function handleVariantCountChange(variantCount: number) {
-    setWorksheet((prev) => ({ ...prev, variantCount }))
+    setProject((prev) => {
+      const pages = [...prev.pages]
+      const page = pages[prev.activePageIndex]
+      if (!page) return prev
+      pages[prev.activePageIndex] = { ...page, variantCount }
+      return { ...prev, pages }
+    })
   }
 
   function handleAddItem(newItem: WorksheetItem) {
@@ -516,18 +599,10 @@ function App() {
   }
 
   function handleClear() {
-    resetProject({
-      ...INITIAL_PROJECT,
-      pages: [
-        {
-          ...INITIAL_WORKSHEET,
-          template: worksheet.template,
-          orientation: worksheet.orientation,
-          instructionScale: worksheet.instructionScale,
-          header: worksheet.header,
-        },
-      ],
-    })
+    const task = createWorksheet({ template: worksheet.template, instructionScale: worksheet.instructionScale })
+    const page = createPage(worksheet.orientation, task)
+    page.header = { ...worksheet.header }
+    resetProject({ pages: [page], activePageIndex: 0, activeTaskIndex: 0, showPageNumbers: false })
   }
 
   // Dopasowanie podglądu: domyślnie chcemy widzieć CAŁĄ kartkę, więc skalujemy ją
@@ -564,13 +639,13 @@ function App() {
   }, [isReady, hasDraft])
 
   const fitZoom = useMemo(() => {
-    const page = PAGE_SIZE_PX[worksheet.orientation]
+    const page = PAGE_SIZE_PX[activePage.orientation]
     if (panelSize.width === 0 || panelSize.height === 0) return 1
     // 4rem zapasu po bokach i 2rem pod spodem, żeby kartka nie dotykała krawędzi panelu.
     const byWidth = (panelSize.width - 64) / page.width
     const byHeight = (panelSize.height - 32) / page.height
     return Math.min(1, Math.max(0.3, Math.min(byWidth, byHeight)))
-  }, [panelSize, worksheet.orientation])
+  }, [panelSize, activePage.orientation])
 
   const effectiveZoom = previewZoom === null ? fitZoom : previewZoom / 100
 
@@ -612,6 +687,11 @@ function App() {
       <div className="editor-panel">
         <Editor
           worksheet={worksheet}
+          tasks={activePage.tasks}
+          activeTaskIndex={activeTaskIndex}
+          onSelectTask={setActiveTask}
+          onAddTask={addTask}
+          onRemoveTask={removeTask}
           showAnswerKey={showAnswerKey}
           onToggleAnswerKey={() => setShowAnswerKey(!showAnswerKey)}
           showPageNumbers={project.showPageNumbers ?? false}
@@ -698,10 +778,10 @@ function App() {
               className={`w-full flex flex-col items-center gap-8 ${idx === project.activePageIndex ? 'flex' : 'hidden print:flex'}`}
               style={{ pageBreakAfter: 'always' }}
             >
-              {Array.from({ length: page.variantCount ?? 1 }).map((_, variantIndex) => (
+              {Array.from({ length: page.variantCount }).map((_, variantIndex) => (
                 <WorksheetPreview
                   key={`${page.id}-${variantIndex}`}
-                  worksheet={page}
+                  page={page}
                   shuffleSeed={shuffleSeed}
                   variantIndex={variantIndex}
                   showAnswerKey={showAnswerKey}

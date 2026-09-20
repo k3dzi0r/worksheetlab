@@ -174,7 +174,7 @@ export interface MatchPair {
 
 /** Pełny stan karty pracy edytowanej przez użytkownika. */
 export interface WorksheetState {
-  /** Unikalny identyfikator strony w projekcie */
+  /** Unikalny identyfikator zadania w obrębie strony projektu. */
   id?: string
   template: TemplateType
   instruction: string
@@ -347,9 +347,21 @@ export const DEFAULT_WORKSHEET_HEADER: WorksheetHeader = {
   classLabel: 'Klasa',
 }
 
-/** Model reprezentujący cały projekt (wiele stron). */
+/** Jedna fizyczna strona A4, zawierająca od jednego do czterech niezależnych zadań. */
+export interface WorksheetPage {
+  /** Stabilny identyfikator strony wykorzystywany przez PageManager. */
+  id: string
+  /** Ustawienia wspólne dla wszystkich zadań na tej stronie. */
+  orientation: PageOrientation
+  header: WorksheetHeader
+  variantCount: number
+  tasks: WorksheetState[]
+}
+
+/** Model reprezentujący cały projekt (wiele stron A4). */
 export interface ProjectState {
-  pages: WorksheetState[]
+  pages: WorksheetPage[]
   activePageIndex: number
+  activeTaskIndex: number
   showPageNumbers?: boolean
 }

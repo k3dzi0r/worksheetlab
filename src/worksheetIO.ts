@@ -19,6 +19,7 @@ import type {
   TemplateType,
   ChoiceLayout,
   PageOrientation,
+  WorksheetPage,
 } from './types/worksheet'
 import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
 import type { WorksheetHeader } from './types/worksheet'
@@ -228,8 +229,44 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
   }
 }
 
+/** Tworzy nowy model strony z eksportu sprzed obsługi wielu zadań na A4. */
+function pageFromLegacyWorksheet(task: WorksheetState): WorksheetPage {
+  return {
+    id: task.id || createId(),
+    orientation: task.orientation,
+    header: task.header,
+    variantCount: task.variantCount ?? 1,
+    tasks: [task],
+  }
+}
+
+/** Normalizuje stronę w nowym formacie albo migruje stronę w starym formacie. */
+function parsePage(value: unknown): WorksheetPage | null {
+  if (!value || typeof value !== 'object') return null
+  const raw = value as Record<string, unknown>
+  if (!Array.isArray(raw.tasks)) {
+    const legacyTask = parseWorksheetJson(JSON.stringify(value))
+    return legacyTask ? pageFromLegacyWorksheet(legacyTask) : null
+  }
+
+  const tasks = raw.tasks
+    .map((task) => parseWorksheetJson(JSON.stringify(task)))
+    .filter(Boolean) as WorksheetState[]
+  if (tasks.length === 0) return null
+
+  return {
+    id: typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id : createId(),
+    orientation: VALID_ORIENTATIONS.includes(raw.orientation as PageOrientation)
+      ? (raw.orientation as PageOrientation)
+      : tasks[0].orientation,
+    header: normalizeHeader(raw.header ?? tasks[0].header),
+    variantCount: typeof raw.variantCount === 'number' && raw.variantCount > 0 ? Math.floor(raw.variantCount) : tasks[0].variantCount ?? 1,
+    tasks: tasks.slice(0, 4),
+  }
+}
+
 /** Nadaje identyfikatory stronom z importu, zachowując poprawne i unikalne wartości. */
-function ensureUniquePageIds(pages: WorksheetState[]): WorksheetState[] {
+function ensureUniquePageIds(pages: WorksheetPage[]): WorksheetPage[] {
   const usedIds = new Set<string>()
 
   return pages.map((page) => {
@@ -245,7 +282,7 @@ function ensureUniquePageIds(pages: WorksheetState[]): WorksheetState[] {
 }
 
 /** Orientacja jest wspólna dla całego projektu, aby systemowy druk zachował format A4. */
-function normalizeProjectOrientation(pages: WorksheetState[]): WorksheetState[] {
+function normalizeProjectOrientation(pages: WorksheetPage[]): WorksheetPage[] {
   const orientation = pages[0]?.orientation ?? 'portrait'
   return pages.map((page) => (page.orientation === orientation ? page : { ...page, orientation }))
 }
@@ -279,20 +316,26 @@ export function parseProjectJson(text: string): ProjectState | null {
   if (typeof data.template === 'string') {
     const single = parseWorksheetJson(text)
     if (!single) return null
-    return { pages: ensureUniquePageIds([single]), activePageIndex: 0 }
+    return { pages: ensureUniquePageIds([pageFromLegacyWorksheet(single)]), activePageIndex: 0, activeTaskIndex: 0 }
   }
 
   // Jeśli JSON to nowy ProjectState:
   if (Array.isArray(data.pages)) {
-    const parsedPages = data.pages.map((p: any) => parseWorksheetJson(JSON.stringify(p))).filter(Boolean) as WorksheetState[]
+    const parsedPages = data.pages.map(parsePage).filter(Boolean) as WorksheetPage[]
     const pages = normalizeProjectOrientation(ensureUniquePageIds(parsedPages))
     if (pages.length === 0) return null
+    const activePageIndex =
+      typeof data.activePageIndex === 'number' && data.activePageIndex >= 0 && data.activePageIndex < pages.length
+        ? Math.floor(data.activePageIndex)
+        : 0
+    const activeTaskIndex =
+      typeof data.activeTaskIndex === 'number' && data.activeTaskIndex >= 0 && data.activeTaskIndex < pages[activePageIndex].tasks.length
+        ? Math.floor(data.activeTaskIndex)
+        : 0
     return {
       pages,
-      activePageIndex:
-        typeof data.activePageIndex === 'number' && data.activePageIndex >= 0 && data.activePageIndex < pages.length
-          ? Math.floor(data.activePageIndex)
-          : 0,
+      activePageIndex,
+      activeTaskIndex,
       showPageNumbers: typeof data.showPageNumbers === 'boolean' ? data.showPageNumbers : false
     }
   }

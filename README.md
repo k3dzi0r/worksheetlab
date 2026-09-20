@@ -32,6 +32,8 @@ GitHub Actions, dlatego kod jest celowo prosty i czytelny.
 - Orientacja kartki A4: pionowa lub pozioma, wspólna dla wszystkich stron
   projektu. To ograniczenie zapewnia poprawny zapis wielostronicowego projektu
   przez systemowy dialog drukowania/PDF.
+- **1–4 niezależne zadania na jednej stronie A4** — każde z własnym szablonem,
+  treścią i ustawieniami; układ pól jest dobierany automatycznie.
 - **Tryb prosty** — globalny przełącznik powiększający polecenie, elementy i
   odstępy (przydatny dla młodszych uczniów); w tym trybie limit liczby
   elementów jest niższy, żeby karta była czytelna.
