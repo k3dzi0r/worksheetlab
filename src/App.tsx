@@ -33,7 +33,7 @@ const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'sameOrDi
 
 export const INITIAL_WORKSHEET: WorksheetState = {
   id: createId(),
-  template: 'choice',
+  template: null,
   instruction: '',
   items: [],
   pairs: [],
@@ -120,6 +120,11 @@ function App() {
   const [showAnswerKey, setShowAnswerKey] = useState(false)
   const [isSupportThankYouOpen, setIsSupportThankYouOpen] = useState(false)
   const [isMobileEditorOpen, setIsMobileEditorOpen] = useState(false)
+  // Nieaktywne strony są normalnie `display:none`, więc ich liniatura (mierzona przez
+  // ResizeObserver na realnej szerokości kontenera) nigdy się nie przelicza - w PDF-ie
+  // wychodziły puste. Przed drukiem pokazujemy wszystkie strony i czekamy klatkę, żeby
+  // layout i ResizeObserver zdążyły się przeliczyć zanim window.print() zrobi zrzut.
+  const [isPrintingAllPages, setIsPrintingAllPages] = useState(false)
   const finishPrintRef = useRef<(() => void) | null>(null)
   /** null oznacza „dopasuj całą stronę do viewportu podglądu". */
   const [previewZoom, setPreviewZoom] = useState<number | null>(null)
@@ -615,6 +620,7 @@ function App() {
       window.removeEventListener('afterprint', finish)
       window.removeEventListener('focus', finishOnFocus)
       finishPrintRef.current = null
+      setIsPrintingAllPages(false)
       window.setTimeout(showSupportThankYou, 0)
     }
     const finishOnFocus = () => window.setTimeout(finish, 0)
@@ -622,13 +628,22 @@ function App() {
     finishPrintRef.current = finish
     window.addEventListener('afterprint', finish, { once: true })
     window.addEventListener('focus', finishOnFocus, { once: true })
-    try {
-      window.print()
-    } catch {
-      finishPrintRef.current = null
-      window.removeEventListener('afterprint', finish)
-      window.removeEventListener('focus', finishOnFocus)
-    }
+
+    setIsPrintingAllPages(true)
+    // Dwie klatki: pierwsza żeby React domontował ukryte strony, druga żeby przeglądarka
+    // zdążyła je zmierzyć (ResizeObserver) zanim window.print() zrobi zrzut do PDF-a.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          window.print()
+        } catch {
+          finishPrintRef.current = null
+          setIsPrintingAllPages(false)
+          window.removeEventListener('afterprint', finish)
+          window.removeEventListener('focus', finishOnFocus)
+        }
+      })
+    })
   }, [showSupportThankYou])
 
   function handleExport() {
@@ -827,7 +842,9 @@ function App() {
               {project.pages.map((page, idx) => (
                 <div
                   key={page.id}
-                  className={`w-full flex flex-col items-center gap-8 ${idx === project.activePageIndex ? 'flex' : 'hidden print:flex'}`}
+                  className={`w-full flex flex-col items-center gap-8 ${
+                    idx === project.activePageIndex || isPrintingAllPages ? 'flex' : 'hidden print:flex'
+                  }`}
                   style={{ pageBreakAfter: 'always' }}
                 >
                   {Array.from({ length: page.variantCount }).map((_, variantIndex) => (

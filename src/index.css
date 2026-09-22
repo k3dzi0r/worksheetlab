@@ -770,8 +770,8 @@ body {
 }
 
 @font-face {
-  font-family: 'Elementarz';
-  src: url('/fonts/Elementarz.ttf') format('truetype');
+  font-family: 'ElementarzDwa';
+  src: url('/fonts/Elementarz2.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }

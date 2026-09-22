@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type {
   WorksheetItem,
   WorksheetState,
@@ -107,13 +107,19 @@ function serializeCrosswordEditorRows(rows: CrosswordEditorRow[]): string {
   return rows.map((row) => (row.clue ? `${row.word} - ${row.clue}` : row.word)).join('\n')
 }
 
+// Kolejność w tabach - id odpowiada konkretnemu blokowi <Step step={id}> niżej w pliku,
+// więc kolejność wyświetlania i numer id celowo się rozjeżdżają (Edycja jest druga, ale
+// zostaje przy id=3, żeby nie ruszać całego bloku JSX pod nią).
 const STEPS = [
   { id: 1, title: 'Szablon', hint: 'Wybierz typ karty' },
-  { id: 2, title: 'Układ', hint: 'Rozmiar, orientacja, tryb' },
   { id: 3, title: 'Edycja', hint: 'Treść i elementy karty' },
+  { id: 2, title: 'Układ', hint: 'Rozmiar, orientacja, tryb' },
   { id: 4, title: 'Warianty', hint: 'Kilka wersji tej samej karty' },
   { id: 5, title: 'Nagłówek', hint: 'Tytuł, polecenie, dane ucznia' },
 ] as const
+
+/** Krok "Edycja" - id zdefiniowane wyżej w STEPS, nazwane żeby nie rozjechać się przy zmianach kolejności. */
+const EDIT_STEP_ID = 3
 
 /** Treść jednego kroku; niewidoczne kroki nie są renderowane. */
 function Step({ step, active, children }: { step: number; active: number; children: React.ReactNode }) {
@@ -234,6 +240,11 @@ export function Editor({
   onToggleCorrectAnswer,
 }: EditorProps) {
   const [activeStep, setActiveStep] = useState(1)
+  // Nowa strona/zadanie zawsze zaczyna bez szablonu - wraca na krok wyboru zamiast zostawiać
+  // otwarty krok z poprzedniego zadania.
+  useEffect(() => {
+    if (worksheet.template === null) setActiveStep(1)
+  }, [worksheet.id, worksheet.template])
   const [isNavCollapsed, setIsNavCollapsed] = useState(false)
   const [isContentCollapsed, setIsContentCollapsed] = useState(false)
   const [templateCategory, setTemplateCategory] = useState<TemplateCategory>('all')
@@ -572,7 +583,10 @@ export function Editor({
               <button
                 key={option.value}
                 type="button"
-                onClick={() => onTemplateChange(option.value)}
+                onClick={() => {
+                  onTemplateChange(option.value)
+                  setActiveStep(EDIT_STEP_ID)
+                }}
                 title={option.description}
                 className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-colors ${
                   active ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
@@ -1884,6 +1898,21 @@ export function Editor({
           <span>
             <span className="font-semibold text-gray-900 block text-sm">Kropka startowa</span>
             <span className="block text-xs text-gray-500">Zielona kropka na początku każdego wiersza.</span>
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={worksheet.handwritingWideRowGap ?? false}
+            onChange={(event) => onHandwritingOptionsChange({ handwritingWideRowGap: event.target.checked })}
+            className="w-5 h-5"
+          />
+          <span>
+            <span className="font-semibold text-gray-900 block text-sm">Większy odstęp między wierszami</span>
+            <span className="block text-xs text-gray-500">
+              Ułatwienie dla dzieci, którym trudno trzymać się swojego wiersza.
+            </span>
           </span>
         </label>
 

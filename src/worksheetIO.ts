@@ -110,7 +110,9 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     state.layout = 'row';
   }
 
-  if (typeof state.template !== 'string' || !VALID_TEMPLATES.includes(state.template as TemplateType)) return null
+  const templateIsValid =
+    state.template === null || (typeof state.template === 'string' && VALID_TEMPLATES.includes(state.template as TemplateType))
+  if (!templateIsValid) return null
   if (typeof state.instruction !== 'string') return null
   if (!Array.isArray(state.items) || !state.items.every(isWorksheetItem)) return null
   if (!Array.isArray(state.pairs) || !state.pairs.every(isMatchPair)) return null
@@ -124,7 +126,7 @@ export function parseWorksheetJson(text: string): WorksheetState | null {
     // Identyfikator strony jest potrzebny PageManagerowi jako stabilny klucz DnD.
     // Stare eksporty go nie zawierały, więc w takim przypadku tworzymy nowy.
     id: typeof state.id === 'string' && state.id.trim().length > 0 ? state.id : createId(),
-    template: state.template as TemplateType,
+    template: state.template as TemplateType | null,
     instruction: state.instruction,
     items: state.items as WorksheetItem[],
     pairs: state.pairs as MatchPair[],

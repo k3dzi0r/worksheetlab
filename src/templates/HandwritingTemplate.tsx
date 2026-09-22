@@ -155,6 +155,7 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
     handwritingGuides = 'full',
     handwritingEveryOther = false,
     handwritingStartDot = false,
+    handwritingWideRowGap = false,
     itemScale = 1,
   } = worksheet
 
@@ -176,6 +177,7 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
     handwritingGuides,
     handwritingEveryOther,
     handwritingStartDot,
+    handwritingWideRowGap,
     itemScale,
     worksheet.header,
     worksheet.orientation,
@@ -187,7 +189,7 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
   const usableWidth = Math.max(0, width - 2 * sidePadding)
 
   // Liniatura jest rysowana pod konkretny krój: górna linia dokładnie na wysokości jego
-  // wydłużeń górnych, przerywana na x-height, dno interlinii na głębokości wydłużeń dolnych.
+  // wydłużeń górnych, dno interlinii na głębokości wydłużeń dolnych.
   // Dzięki temu każda czcionka - nie tylko Playwrite PL - sięga od dolnej linii do górnej.
   const fontSize = unit / metrics.xRatio
   const ascent = fontSize * metrics.ascentRatio
@@ -195,8 +197,10 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
   // Elementarz ma wewnętrzny zapas pod obrysem glifów. Bez tej korekty napis
   // wygląda, jakby nie dochodził do czerwonej linii mimo poprawnego baseline SVG.
   const visualBaselineOffset = unit * (selectedFont.baselineOffset ?? 0)
-  // Odstęp między wierszami, żeby ogonki jednego nie dotykały wydłużeń następnego.
-  const rowGap = unit * 0.4
+  // Domyślnie bez dodatkowego odstępu: ogonek (np. „j") kończy się dokładnie na górnej
+  // linii kolejnego wiersza, tak jak w zeszycie w trzy linie.
+  // Ułatwienie: większy odstęp dla dzieci, którym trudno trzymać się swojego wiersza.
+  const rowGap = handwritingWideRowGap ? unit * 0.6 : 0
   const rowHeight = ascent + descent + visualBaselineOffset + rowGap
   // Zapas nad pierwszym wierszem na polskie diakrytyki (Ó, Ż, Ł), które w zeszycie
   // też wychodzą ponad górną linię.
@@ -252,11 +256,16 @@ export function HandwritingTemplate({ worksheet }: HandwritingTemplateProps) {
             {handwritingGuides === 'full' && (
               <>
                 <line x1="0" y1={1} x2={viewWidth} y2={1} stroke="#60a5fa" strokeWidth="2" />
+                {/* Równe trzecie tylko dla kroju z equalThirds (Playwrite - proporcja wydłużenie/x-height
+                    bliska 2). Pozostałe kroje (sprawdzone - realny zakres proporcji to 1,3-1,7) dostają
+                    linię przerywaną na faktycznym x-height, inaczej naturalnej wielkości litery by ją mijały.
+                    Doliczamy visualBaselineOffset - bez tego linia wisiała nad literami o krojach
+                    (jak Elementarz) przesuniętych w dół tą korektą względem SVG baseline. */}
                 <line
                   x1="0"
-                  y1={ascent - unit}
+                  y1={selectedFont.equalThirds ? (1 + ascent) / 2 : ascent - unit + visualBaselineOffset}
                   x2={viewWidth}
-                  y2={ascent - unit}
+                  y2={selectedFont.equalThirds ? (1 + ascent) / 2 : ascent - unit + visualBaselineOffset}
                   stroke="#9ca3af"
                   strokeWidth="1"
                   strokeDasharray="6 6"

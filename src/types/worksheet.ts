@@ -176,7 +176,8 @@ export interface MatchPair {
 export interface WorksheetState {
   /** Unikalny identyfikator zadania w obrębie strony projektu. */
   id?: string
-  template: TemplateType
+  /** null = jeszcze nie wybrano szablonu (nowa strona/zadanie czeka na wybór w kroku 1). */
+  template: TemplateType | null
   instruction: string
   /** Elementy używane przez szablony „Wybierz” i „Policz”. */
   items: WorksheetItem[]
@@ -238,6 +239,8 @@ export interface WorksheetState {
   handwritingEveryOther?: boolean
   /** Czy zaznaczyć kropką miejsce startu wiersza. */
   handwritingStartDot?: boolean
+  /** Czy zwiększyć odstęp między wierszami (ułatwienie). */
+  handwritingWideRowGap?: boolean
   /** Rodzaj ćwiczenia z zegarem. */
   clockMode?: 'read' | 'draw' | 'mixed'
   /** Z jaką dokładnością losowane są godziny. */
