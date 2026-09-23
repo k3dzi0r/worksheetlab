@@ -23,14 +23,16 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { TEMPLATE_OPTIONS, TEMPLATE_CATEGORIES, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP } from '../../types/worksheet'
-import type { TemplateCategory } from '../../types/worksheet'
+import { TEMPLATE_OPTIONS, TEMPLATE_CATEGORIES, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP, ANSWER_KEY_TEMPLATES, SHUFFLEABLE_TEMPLATES } from '../../types/worksheet'
+import type { TemplateCategory, StepRequest } from '../../types/worksheet'
 import { TemplateThumbnail } from './TemplateThumbnail'
 import { ImageUploader } from '../ImageUploader/ImageUploader'
 import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
 import { MyLibrary } from '../MyLibrary/MyLibrary'
 import type { EmojiEntry } from '../../data/emojis'
 import { createId } from '../../utils'
+import { WORKSHEET_EXAMPLES } from '../../examples'
+import type { WorksheetExample } from '../../examples'
 import { generateWordSearch, parseWords } from '../../wordSearch'
 import { buildCrossword, parseCrosswordLines } from '../../crossword'
 import { DOT_NUMBERING, DOT_SHAPES } from '../../dotToDot'
@@ -114,9 +116,8 @@ function serializeCrosswordEditorRows(rows: CrosswordEditorRow[]): string {
 const STEPS = [
   { id: 1, title: 'Szablon', hint: 'Wybierz typ karty', icon: ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z'] },
   { id: 3, title: 'Edycja', hint: 'Treść i elementy karty', icon: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'] },
-  { id: 2, title: 'Układ', hint: 'Rozmiar, orientacja, tryb', icon: ['M4 3h16v18H4z', 'M4 9h16', 'M12 9v12'] },
-  { id: 4, title: 'Warianty', hint: 'Kilka wersji tej samej karty', icon: ['M8 3h12v14H8z', 'M4 7v14h12'] },
-  { id: 5, title: 'Nagłówek', hint: 'Tytuł, polecenie, dane ucznia', icon: ['M4 6h16', 'M4 11h10', 'M4 16h7'] },
+  { id: 2, title: 'Układ', hint: 'Orientacja, rozmiar, warianty', icon: ['M4 3h16v18H4z', 'M4 9h16', 'M12 9v12'] },
+  { id: 5, title: 'Nagłówek', hint: 'Tytuł i dane ucznia', icon: ['M4 6h16', 'M4 11h10', 'M4 16h7'] },
 ] as const
 
 /** Krok "Więcej" - tylko na telefonie; zbiera to, co na komputerze siedzi w panelu kroków. */
@@ -131,7 +132,11 @@ function Step({ step, active, children }: { step: number; active: number; childr
   return <div className="flex flex-col gap-4">{children}</div>
 }
 
+
 interface EditorProps {
+  stepRequest?: StepRequest | null
+  onShuffle: () => void
+  onApplyExample: (example: WorksheetExample) => void
   showAnswerKey: boolean
   onToggleAnswerKey: () => void
   showPageNumbers: boolean
@@ -242,6 +247,9 @@ export function Editor({
   onToggleCaption,
   onReorderItems,
   onToggleCorrectAnswer,
+  stepRequest,
+  onShuffle,
+  onApplyExample,
 }: EditorProps) {
   const [activeStep, setActiveStep] = useState(1)
   // Na telefonie treść kroku to arkusz nad dolnym paskiem - na komputerze te flagi nic nie zmieniają.
@@ -255,6 +263,15 @@ export function Editor({
       setIsSheetOpen(true)
     }
   }, [worksheet.id, worksheet.template])
+
+  useEffect(() => {
+    if (!stepRequest) return
+    setActiveStep(stepRequest.step === 'template' ? 1 : EDIT_STEP_ID)
+    setIsSheetOpen(true)
+  }, [stepRequest])
+
+  const hasAnswerKey = worksheet.template !== null && ANSWER_KEY_TEMPLATES.includes(worksheet.template)
+  const canShuffle = worksheet.template !== null && SHUFFLEABLE_TEMPLATES.includes(worksheet.template)
 
   function selectStep(stepId: number) {
     // Ponowne kliknięcie aktywnego kroku chowa arkusz, żeby obejrzeć całą kartę.
@@ -383,46 +400,8 @@ export function Editor({
         <div className="mt-6 px-4">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Szybkie opcje</h2>
           <div className="flex flex-col gap-2">
-            <label className="flex items-center justify-between cursor-pointer group">
-              <span className="text-sm font-medium text-gray-700">Pokaż klucz odpowiedzi</span>
-              <div className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2" style={{ backgroundColor: showAnswerKey ? '#2563eb' : '#d1d5db' }}>
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={showAnswerKey}
-                  onChange={onToggleAnswerKey}
-                />
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showAnswerKey ? 'translate-x-4' : 'translate-x-0.5'}`}
-                />
-              </div>
-            </label>
-            <label className="flex items-center justify-between cursor-pointer group">
-              <span className="text-sm font-medium text-gray-700">Numery stron</span>
-              <div className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2" style={{ backgroundColor: showPageNumbers ? '#2563eb' : '#d1d5db' }}>
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={showPageNumbers}
-                  onChange={onTogglePageNumbers}
-                />
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showPageNumbers ? 'translate-x-4' : 'translate-x-0.5'}`}
-                />
-              </div>
-            </label>
-            <label className="flex items-center justify-between cursor-pointer group">
-              <span className="text-sm font-medium text-gray-700">Dodaj podpis KartoLabu</span>
-              <div className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2" style={{ backgroundColor: showBranding ? '#2563eb' : '#d1d5db' }}>
-                <input
-                  type="checkbox"
-                  className="sr-only peer"
-                  checked={showBranding}
-                  onChange={onToggleBranding}
-                />
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showBranding ? 'translate-x-4' : 'translate-x-0.5'}`} />
-              </div>
-            </label>
+            <Toggle label="Numery stron" checked={showPageNumbers} onChange={onTogglePageNumbers} />
+            <Toggle label="Dodaj podpis KartoLabu" checked={showBranding} onChange={onToggleBranding} />
           </div>
         </div>
 
@@ -605,9 +584,48 @@ export function Editor({
         <div className={`step-sheet-body w-[392px] max-w-[100vw] h-full overflow-y-auto px-6 pb-6 pt-14 transition-opacity duration-200 ${isContentCollapsed ? 'opacity-0 invisible' : 'opacity-100'}`}>
 
       <Step step={1} active={activeStep}>
+      {tasks.length > 1 && (
+        <TaskStrip
+          tasks={tasks}
+          activeTaskIndex={activeTaskIndex}
+          onSelectTask={onSelectTask}
+          onAddTask={onAddTask}
+          onRemoveTask={onRemoveTask}
+        />
+      )}
+
+      {/* Gotowe przykłady - pełna karta jednym kliknięciem, do przerobienia po swojemu */}
+      {worksheet.template === null && (
+        <section>
+          <h2 className="text-lg font-semibold">Zacznij od przykładu</h2>
+          <p className="text-xs text-gray-500 mb-2">Gotowa karta, którą potem zmienisz po swojemu.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {WORKSHEET_EXAMPLES.map((example) => (
+              <button
+                key={example.id}
+                type="button"
+                onClick={() => {
+                  onApplyExample(example)
+                  setActiveStep(EDIT_STEP_ID)
+                }}
+                className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white text-left hover:border-blue-400 hover:bg-blue-50"
+              >
+                <span className="text-2xl leading-none" aria-hidden="true">{example.emoji}</span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-gray-900 leading-tight">{example.title}</span>
+                  <span className="block text-[11px] text-gray-500 truncate">
+                    {TEMPLATE_OPTIONS.find((option) => option.value === example.template)?.label}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
 {/* Wybór szablonu */}
       <section>
-        <h2 className="text-lg font-semibold mb-2">Wybierz typ karty</h2>
+        <h2 className="text-lg font-semibold mb-2">{worksheet.template === null ? 'Albo wybierz pustą kartę' : 'Wybierz typ karty'}</h2>
 
         <div className="flex flex-wrap gap-1.5 mb-3">
           {TEMPLATE_CATEGORIES.map((category) => (
@@ -634,10 +652,17 @@ export function Editor({
                 key={option.value}
                 type="button"
                 onClick={() => {
-                  onTemplateChange(option.value)
+                  // Zmiana szablonu czyści treść zadania - przy wypełnionym pytamy, żeby nie zniknęła przypadkiem.
+                  if (
+                    worksheet.template !== null &&
+                    worksheet.template !== option.value &&
+                    !window.confirm('Zmiana typu karty usunie treść tego zadania. Kontynuować? (Można to cofnąć)')
+                  ) {
+                    return
+                  }
+                  if (worksheet.template !== option.value) onTemplateChange(option.value)
                   setActiveStep(EDIT_STEP_ID)
                 }}
-                title={option.description}
                 className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border-2 transition-colors ${
                   active ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
@@ -646,66 +671,19 @@ export function Editor({
                   <TemplateThumbnail template={option.value} />
                 </span>
                 <span
-                  className={`text-xs text-center leading-tight ${active ? 'text-blue-700 font-semibold' : 'text-gray-700'}`}
+                  className={`text-sm text-center leading-tight ${active ? 'text-blue-700 font-semibold' : 'text-gray-800 font-medium'}`}
                 >
                   {option.label}
                 </span>
+                <span className="text-[11px] text-center leading-snug text-gray-500 line-clamp-2">{option.description}</span>
               </button>
             )
           })}
         </div>
-
-        <p className="text-xs text-gray-500 mt-2">
-          {TEMPLATE_OPTIONS.find((option) => option.value === worksheet.template)?.description}
-        </p>
       </section>
 </Step>
 
 <Step step={2} active={activeStep}>
-
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h2 className="text-lg font-semibold">Zadania na stronie</h2>
-            <p className="text-xs text-gray-500">Dodaj do czterech niezależnych zadań na jednej A4.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onAddTask}
-            disabled={tasks.length >= 4}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400"
-          >
-            + Dodaj
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {tasks.map((task, index) => (
-            <div
-              key={task.id ?? index}
-              className={`flex items-center gap-1 rounded-lg border p-1 ${index === activeTaskIndex ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'}`}
-            >
-              <button
-                type="button"
-                onClick={() => onSelectTask(index)}
-                className={`min-w-0 flex-1 px-2 py-1.5 text-left text-xs font-medium truncate ${index === activeTaskIndex ? 'text-blue-800' : 'text-gray-700'}`}
-              >
-                Zadanie {index + 1}: {TEMPLATE_OPTIONS.find((option) => option.value === task.template)?.label}
-              </button>
-              {tasks.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => onRemoveTask(index)}
-                  aria-label={`Usuń zadanie ${index + 1}`}
-                  title="Usuń zadanie"
-                  className="p-1 text-gray-400 hover:text-red-600"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* Orientacja strony - wspólna dla wszystkich szablonów */}
       <section>
@@ -736,28 +714,6 @@ export function Editor({
         </div>
       </section>
 
-      {/* Wielkość polecenia */}
-      <section>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-gray-700">Wielkość polecenia</label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="0.5"
-              max="2.5"
-              step="0.1"
-              value={worksheet.instructionScale ?? 1}
-              onChange={(e) => onUpdateOptions({ instructionScale: parseFloat(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-sm font-medium w-12 text-right">
-              {Math.round((worksheet.instructionScale ?? 1) * 100)}%
-            </span>
-          </div>
-        </div>
-      </section>
-
-      
 {/* Kategorie - tylko dla szablonu "Podziel na kategorie" */}
       {worksheet.template === 'categorize' && (
         <section>
@@ -922,9 +878,81 @@ export function Editor({
       </section>
 
       
+      {/* Warianty - kilka wersji strony naraz */}
+      <section>
+        <h2 className="text-lg font-semibold mb-2">Warianty</h2>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700">Liczba generowanych wariantów (stron)</label>
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={worksheet.variantCount ?? 1}
+            onChange={(e) => onVariantCountChange(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
+          />
+          <p className="text-sm text-gray-500">
+            Kolejne warianty mają inną kolejność elementów. Wydrukuj je wszystkie naraz jednym kliknięciem.
+          </p>
+        </div>
+      </section>
 </Step>
 
 <Step step={3} active={activeStep}>
+  <TaskStrip
+    tasks={tasks}
+    activeTaskIndex={activeTaskIndex}
+    onSelectTask={onSelectTask}
+    onAddTask={onAddTask}
+    onRemoveTask={onRemoveTask}
+  />
+
+  {worksheet.template !== null && worksheet.template !== 'handwriting' && (
+    <section>
+      <label htmlFor="task-instruction" className="text-lg font-semibold mb-2 block">Polecenie</label>
+      <input
+        id="task-instruction"
+        type="text"
+        value={worksheet.instruction}
+        onChange={(event) => onInstructionChange(event.target.value)}
+        placeholder='np. "Wskaż zwierzę."'
+        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
+      />
+      <div className="flex items-center gap-3 mt-2">
+        <span className="text-sm text-gray-600 shrink-0">Wielkość</span>
+        <input
+          type="range"
+          min="0.5"
+          max="2.5"
+          step="0.1"
+          value={worksheet.instructionScale ?? 1}
+          onChange={(e) => onUpdateOptions({ instructionScale: parseFloat(e.target.value) })}
+          className="flex-1"
+          aria-label="Wielkość polecenia"
+        />
+        <span className="text-sm font-medium w-12 text-right">
+          {Math.round((worksheet.instructionScale ?? 1) * 100)}%
+        </span>
+      </div>
+    </section>
+  )}
+
+  {(hasAnswerKey || canShuffle) && (
+    <section className="flex flex-col gap-2">
+      {hasAnswerKey && (
+        <Toggle label="Pokaż klucz odpowiedzi" hint="Tylko do sprawdzania - wyłącz przed wydrukiem dla uczniów." checked={showAnswerKey} onChange={onToggleAnswerKey} />
+      )}
+      {canShuffle && (
+        <button
+          type="button"
+          onClick={onShuffle}
+          className="self-start px-3 py-2 rounded-lg text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100"
+        >
+          🔀 Losuj kolejność elementów
+        </button>
+      )}
+    </section>
+  )}
 
   {worksheet.template === 'choice' && (
     <section>
@@ -2072,29 +2100,6 @@ export function Editor({
   )}
 </Step>
 
-<Step step={4} active={activeStep}>
-{/* Warianty */}
-      <section>
-        <h2 className="text-lg font-semibold mb-2">Warianty</h2>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-gray-700">Liczba generowanych wariantów (stron)</label>
-          <input
-            type="number"
-            min={1}
-            max={10}
-            value={worksheet.variantCount ?? 1}
-            onChange={(e) => onVariantCountChange(Math.max(1, parseInt(e.target.value, 10) || 1))}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
-          />
-          <p className="text-sm text-gray-500">
-            Kolejne warianty mają inną kolejność elementów. Wydrukuj je wszystkie naraz jednym kliknięciem.
-          </p>
-        </div>
-      </section>
-
-      
-</Step>
-
 <Step step={5} active={activeStep}>
 {/* Nagłówek karty - opcjonalny tytuł i pola do wypełnienia przez ucznia */}
       <section>
@@ -2142,17 +2147,6 @@ export function Editor({
         </div>
       </section>
 
-      {/* Polecenie */}
-      <section>
-        <h2 className="text-lg font-semibold mb-2">Polecenie</h2>
-        <input
-          type="text"
-          value={worksheet.instruction}
-          onChange={(event) => onInstructionChange(event.target.value)}
-          placeholder='np. "Wskaż zwierzę."'
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base"
-        />
-      </section>
       </Step>
 
 <Step step={MORE_STEP.id} active={activeStep}>
@@ -2360,7 +2354,7 @@ function ElementsList({
                   hidden={worksheet.template === 'cutCards'}
                 />
 
-                {['choice', 'sameOrDifferent', 'categorize'].includes(worksheet.template) && !(worksheet.template === 'sameOrDifferent' && index === 0) && onToggleCorrectAnswer && (
+                {worksheet.template !== null && ['choice', 'sameOrDifferent', 'categorize'].includes(worksheet.template) && !(worksheet.template === 'sameOrDifferent' && index === 0) && onToggleCorrectAnswer && (
                   <label className="flex items-center gap-1 text-sm text-green-700 font-medium mt-1 cursor-pointer">
                     <input type="checkbox" checked={worksheet.correctAnswers?.includes(item.id)} onChange={() => onToggleCorrectAnswer(item.id)} /> Poprawna odpowiedź
                   </label>
@@ -2531,5 +2525,96 @@ function HeaderFieldToggle({ checked, label, defaultLabel, onToggle, onLabelChan
         className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100 disabled:text-gray-400"
       />
     </div>
+  )
+}
+
+/** Przełącznik on/off z etykietą - wspólny dla szybkich opcji i kroku Edycja. */
+function Toggle({ label, hint, checked, onChange }: { label: string; hint?: string; checked: boolean; onChange: () => void }) {
+  return (
+    <label className="flex items-center justify-between gap-3 cursor-pointer">
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-gray-700">{label}</span>
+        {hint && <span className="block text-xs text-gray-500">{hint}</span>}
+      </span>
+      <span
+        className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+        style={{ backgroundColor: checked ? '#2563eb' : '#d1d5db' }}
+      >
+        <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
+        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-4' : 'translate-x-0.5'}`} />
+      </span>
+    </label>
+  )
+}
+
+interface TaskStripProps {
+  tasks: WorksheetState[]
+  activeTaskIndex: number
+  onSelectTask: (index: number) => void
+  onAddTask: () => void
+  onRemoveTask: (index: number) => void
+}
+
+/**
+ * Zadania na bieżącej stronie A4. Przy jednym zadaniu to tylko dyskretny link „dodaj",
+ * przy kilku - przełącznik, żeby było jasne, które zadanie się edytuje.
+ */
+function TaskStrip({ tasks, activeTaskIndex, onSelectTask, onAddTask, onRemoveTask }: TaskStripProps) {
+  const canAdd = tasks.length < 4
+  if (tasks.length === 1) {
+    return canAdd ? (
+      <button type="button" onClick={onAddTask} className="self-start text-sm text-blue-600 hover:underline">
+        + Dodaj drugie zadanie na tej stronie
+      </button>
+    ) : null
+  }
+
+  return (
+    <section className="rounded-xl border border-blue-100 bg-blue-50/50 p-2">
+      <p className="px-1 pb-1.5 text-xs font-medium text-gray-600">
+        Zadania na tej stronie - edytujesz <strong className="text-blue-800">zadanie {activeTaskIndex + 1}</strong>
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {tasks.map((task, index) => {
+          const active = index === activeTaskIndex
+          const label = TEMPLATE_OPTIONS.find((option) => option.value === task.template)?.label ?? 'puste'
+          return (
+            <span
+              key={task.id ?? index}
+              className={`inline-flex items-center rounded-lg border ${active ? 'border-blue-600 bg-white' : 'border-gray-200 bg-white/70'}`}
+            >
+              <button
+                type="button"
+                onClick={() => onSelectTask(index)}
+                aria-pressed={active}
+                className={`px-2.5 py-1.5 text-xs font-medium ${active ? 'text-blue-800' : 'text-gray-700'}`}
+              >
+                {index + 1}. {label}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Usunąć zadanie ${index + 1}?`)) onRemoveTask(index)
+                }}
+                aria-label={`Usuń zadanie ${index + 1}`}
+                title="Usuń zadanie"
+                className="pr-2 pl-0.5 py-1.5 text-gray-400 hover:text-red-600"
+              >
+                ×
+              </button>
+            </span>
+          )
+        })}
+        {canAdd && (
+          <button
+            type="button"
+            onClick={onAddTask}
+            className="px-2.5 py-1.5 rounded-lg border border-dashed border-blue-300 text-xs font-medium text-blue-700 hover:bg-white"
+          >
+            + Zadanie
+          </button>
+        )}
+      </div>
+    </section>
   )
 }

@@ -5,9 +5,6 @@ interface TopBarProps {
   onUndo: () => void
   onRedo: () => void
   onPrint: () => void
-  /** Losowanie kolejności ma sens tylko w części szablonów. */
-  showShuffle: boolean
-  onShuffle: () => void
   saveStatus: 'saved' | 'saving' | 'idle'
   /** Skala podglądu w procentach; null oznacza dopasowanie całej strony. */
   zoom: number | null
@@ -27,8 +24,6 @@ export function TopBar({
   onUndo,
   onRedo,
   onPrint,
-  showShuffle,
-  onShuffle,
   saveStatus,
   zoom,
   effectiveZoom,
@@ -50,16 +45,6 @@ export function TopBar({
 
       <span className="top-bar-divider w-px h-6 bg-gray-200" />
 
-      {showShuffle && (
-        <button
-          type="button"
-          onClick={onShuffle}
-          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 whitespace-nowrap mr-1.5"
-        >
-          Losuj kolejność
-        </button>
-      )}
-
       {/* Zoom podglądu: przy trzech kolumnach kartka A4 nie zawsze mieści się w naturalnej skali. */}
       <div className="top-bar-zoom flex items-center gap-0.5">
         <IconButton
@@ -68,16 +53,9 @@ export function TopBar({
         >
           <line x1="5" y1="12" x2="19" y2="12" />
         </IconButton>
-        <button
-          type="button"
-          onClick={() => onZoomChange(null)}
-          title="Dopasuj całą stronę"
-          className={`px-1.5 py-1 rounded text-xs tabular-nums w-14 ${
-            zoom === null ? 'text-blue-700 font-medium bg-blue-50' : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
+        <span className="top-bar-zoom-value text-xs tabular-nums text-gray-600 w-10 text-center" aria-live="polite">
           {Math.round(effectiveZoom * 100)}%
-        </button>
+        </span>
         <IconButton
           label="Powiększ"
           onClick={() => onZoomChange(Math.min(200, Math.round(effectiveZoom * 100) + 10))}
@@ -85,12 +63,38 @@ export function TopBar({
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </IconButton>
+        {/* Osobny, podpisany przycisk zamiast klikalnych procentów - wcześniej nikt nie wiedział, że tam jest. */}
+        <button
+          type="button"
+          onClick={() => onZoomChange(null)}
+          title="Pokaż całą stronę"
+          aria-pressed={zoom === null}
+          className={`top-bar-fit flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium ${
+            zoom === null ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 9V4h5" />
+            <path d="M20 9V4h-5" />
+            <path d="M4 15v5h5" />
+            <path d="M20 15v5h-5" />
+          </svg>
+          <span className="top-bar-fit-label">Cała strona</span>
+        </button>
       </div>
 
       <div className="top-bar-actions flex items-center gap-1.5 ml-auto">
-        <span className="top-bar-save-status text-xs text-gray-400 whitespace-nowrap">
-          {saveStatus === 'saved' && <span className="text-green-600 font-medium">✔ zapisano</span>}
-          {saveStatus === 'saving' && 'zapisywanie...'}
+        <span className="top-bar-save-status text-xs text-gray-400 whitespace-nowrap" role="status">
+          {saveStatus === 'saved' && (
+            <span className="text-green-600 font-medium" title="Zapisano w tej przeglądarce">
+              ✔<span className="top-bar-save-label"> zapisano</span>
+            </span>
+          )}
+          {saveStatus === 'saving' && (
+            <span title="Zapisywanie...">
+              …<span className="top-bar-save-label"> zapisywanie</span>
+            </span>
+          )}
         </span>
 
         <button

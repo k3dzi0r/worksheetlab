@@ -10,7 +10,8 @@ import type {
   WorksheetPage,
 } from './types/worksheet'
 import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
-import type { WorksheetHeader } from './types/worksheet'
+import type { WorksheetHeader, StepRequest } from './types/worksheet'
+import type { WorksheetExample } from './examples'
 import { createId, shuffleArray, clamp } from './utils'
 import { downloadProjectJson, parseProjectJson } from './worksheetIO'
 import { useUndoRedo } from './hooks/useUndoRedo'
@@ -20,6 +21,7 @@ import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview
 import { PageManager } from './components/PageManager'
 import { TopBar } from './components/TopBar'
 import { SupportThankYouModal } from './components/SupportThankYouModal'
+import { MobilePrintHelp, shouldShowMobilePrintHelp } from './components/MobilePrintHelp'
 import { canShowSupportReminder, disableSupportReminder, postponeSupportReminder } from './support'
 
 /** Wymiary kartki A4 w pikselach przy 96 dpi - potrzebne do dopasowania podglądu do panelu. */
@@ -27,9 +29,6 @@ const PAGE_SIZE_PX = {
   portrait: { width: 794, height: 1123 },
   landscape: { width: 1123, height: 794 },
 }
-
-/** Szablony, w których losowanie kolejności elementów cokolwiek zmienia. */
-const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'sameOrDifferent']
 
 export const INITIAL_WORKSHEET: WorksheetState = {
   id: createId(),
@@ -99,7 +98,7 @@ function createPage(orientation: PageOrientation = 'portrait', task?: WorksheetS
  * Miękki limit liczby elementów w niektórych szablonach, żeby karta czytelnie
  * mieściła się na A4. W trybie prostym limit jest niższy, bo elementy są większe.
  */
-function getMaxItems(template: TemplateType): number | null {
+function getMaxItems(template: TemplateType | null): number | null {
   if (template === 'choice' || template === 'cutCards' || template === 'categorize') return 12;
   if (template === 'sameOrDifferent') return 13;
   if (template === 'matchPairs') return 6;
@@ -127,6 +126,8 @@ function App() {
   const finishPrintRef = useRef<(() => void) | null>(null)
   /** null oznacza „dopasuj całą stronę do viewportu podglądu". */
   const [previewZoom, setPreviewZoom] = useState<number | null>(null)
+  const [stepRequest, setStepRequest] = useState<StepRequest | null>(null)
+  const [isPrintHelpOpen, setIsPrintHelpOpen] = useState(false)
 
   const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(project, (state) => {
     resetProject(state)
@@ -399,6 +400,25 @@ function App() {
 
 
 
+  /** Przykład ustawia zadanie i nagłówek strony naraz - jeden krok cofania. */
+  function handleApplyExample(example: WorksheetExample) {
+    setProject((prev) => {
+      const pages = [...prev.pages]
+      const page = pages[prev.activePageIndex]
+      if (!page) return prev
+      const taskIndex = Math.min(prev.activeTaskIndex, page.tasks.length - 1)
+      const tasks = [...page.tasks]
+      tasks[taskIndex] = createWorksheet({
+        orientation: page.orientation,
+        instructionScale: tasks[taskIndex]?.instructionScale ?? 1,
+        template: example.template,
+        ...example.task,
+      })
+      pages[prev.activePageIndex] = { ...page, tasks, header: { ...page.header, ...example.header } }
+      return { ...prev, pages }
+    })
+  }
+
   function handleHeaderChange(header: Partial<WorksheetHeader>) {
     setProject((prev) => {
       const pages = [...prev.pages]
@@ -580,6 +600,13 @@ function App() {
     )
   }
 
+  // Kliknięcie w zadanie na kartce: wybiera je i otwiera odpowiedni krok edytora.
+  const handlePreviewTaskClick = useCallback((taskIndex: number) => {
+    setActiveTask(taskIndex)
+    const task = activePage.tasks[taskIndex]
+    setStepRequest((prev) => ({ step: task?.template ? 'edit' : 'template', nonce: (prev?.nonce ?? 0) + 1 }))
+  }, [setActiveTask, activePage.tasks])
+
   function handleShuffle() {
     setWorksheet((prev) => {
       if (prev.template === 'choice' || prev.template === 'categorize') {
@@ -644,6 +671,19 @@ function App() {
       })
     })
   }, [showSupportThankYou])
+
+  // Na telefonie najpierw krótka instrukcja, bo systemowe okno druku ukrywa „Zapisz jako PDF".
+  const requestPrint = useCallback(() => {
+    if (shouldShowMobilePrintHelp()) setIsPrintHelpOpen(true)
+    else handlePrint()
+  }, [handlePrint])
+
+  const closePrintHelp = useCallback(() => setIsPrintHelpOpen(false), [])
+
+  const printFromHelp = useCallback(() => {
+    setIsPrintHelpOpen(false)
+    handlePrint()
+  }, [handlePrint])
 
   function handleExport() {
     downloadProjectJson(project)
@@ -793,6 +833,9 @@ function App() {
             onToggleCaption={handleToggleCaption}
             onReorderItems={handleReorderItems}
             onToggleCorrectAnswer={handleToggleCorrectAnswer}
+            stepRequest={stepRequest}
+            onShuffle={handleShuffle}
+            onApplyExample={handleApplyExample}
             />
           </div>
         </div>
@@ -802,9 +845,7 @@ function App() {
             canRedo={canRedo}
             onUndo={undo}
             onRedo={redo}
-            onPrint={handlePrint}
-            showShuffle={SHUFFLEABLE_TEMPLATES.includes(worksheet.template)}
-            onShuffle={handleShuffle}
+            onPrint={requestPrint}
             saveStatus={saveStatus}
             zoom={previewZoom}
             effectiveZoom={effectiveZoom}
@@ -846,6 +887,8 @@ function App() {
                       showBranding={project.showBranding ?? true}
                       pageIndex={idx}
                       totalPages={project.pages.length}
+                      activeTaskIndex={idx === project.activePageIndex ? activeTaskIndex : undefined}
+                      onTaskClick={idx === project.activePageIndex ? handlePreviewTaskClick : undefined}
                     />
                   ))}
                 </div>
@@ -854,6 +897,7 @@ function App() {
           </div>
         </div>
       </div>
+      <MobilePrintHelp isOpen={isPrintHelpOpen} onPrint={printFromHelp} onClose={closePrintHelp} />
       <SupportThankYouModal
         isOpen={isSupportThankYouOpen}
         onPostpone={closeSupportThankYou}

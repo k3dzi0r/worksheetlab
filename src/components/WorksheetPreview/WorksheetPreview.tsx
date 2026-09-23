@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEvent } from 'react'
 import type { WorksheetPage, WorksheetState } from '../../types/worksheet'
 import { shuffleArraySeeded } from '../../utils'
 import { ChoiceTemplate } from '../../templates/ChoiceTemplate'
@@ -40,6 +40,10 @@ interface WorksheetPreviewProps {
   page: WorksheetPage
   shuffleSeed: number
   variantIndex?: number
+  /** Zadanie edytowane w panelu - wyróżnione na ekranie, gdy na stronie jest ich kilka. */
+  activeTaskIndex?: number
+  /** Kliknięcie w zadanie na kartce otwiera jego edycję. */
+  onTaskClick?: (taskIndex: number) => void
 }
 
 const PRINT_STYLE_ELEMENT_ID = 'worksheetlab-print-orientation'
@@ -100,9 +104,11 @@ function WorksheetTaskPreview({ worksheet, shuffleSeed, variantIndex = 0, showAn
   return (
     <>
       {worksheet.template === null && (
-        <div className="flex flex-col items-center justify-center gap-2 py-16 text-gray-400 print:hidden">
-          <span className="text-lg font-medium">Wybierz szablon, żeby rozpocząć</span>
-          <span className="text-sm">Krok „Szablon" w panelu ustawień</span>
+        <div className="flex h-full flex-col items-center justify-center gap-4 py-16 text-gray-500 print:hidden">
+          <span className="text-2xl font-medium">Pusta karta</span>
+          <span className="rounded-full bg-blue-600 px-8 py-4 text-2xl font-semibold text-white shadow-md">
+            Wybierz szablon albo przykład
+          </span>
         </div>
       )}
       {worksheet.template === 'choice' && (
@@ -244,7 +250,7 @@ function WorksheetTaskPreview({ worksheet, shuffleSeed, variantIndex = 0, showAn
 }
 
 /** Podgląd strony A4 z jednym lub wieloma niezależnymi zadaniami. */
-export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, showBranding = true, pageIndex, totalPages }: WorksheetPreviewProps) {
+export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, showBranding = true, pageIndex, totalPages, activeTaskIndex, onTaskClick }: WorksheetPreviewProps) {
   usePrintOrientation(page.orientation)
 
   const pageStyle: CSSProperties = {
@@ -257,7 +263,26 @@ export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnsw
       <WorksheetHeaderView header={page.header} instructionScale={page.tasks[0]?.instructionScale ?? 1} />
       <div className={`worksheet-task-grid task-count-${page.tasks.length}`}>
         {page.tasks.map((task, index) => (
-          <section key={task.id ?? index} data-task-zone className="worksheet-task-zone">
+          <section
+            key={task.id ?? index}
+            data-task-zone
+            className={`worksheet-task-zone ${onTaskClick ? 'is-clickable' : ''} ${
+              page.tasks.length > 1 && index === activeTaskIndex ? 'is-active-task' : ''
+            }`}
+            {...(onTaskClick && {
+              role: 'button',
+              tabIndex: 0,
+              title: task.template ? `Edytuj zadanie ${index + 1}` : 'Wybierz szablon',
+              'aria-label': task.template ? `Edytuj zadanie ${index + 1}` : `Wybierz szablon dla zadania ${index + 1}`,
+              onClick: () => onTaskClick(index),
+              onKeyDown: (event: KeyboardEvent) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onTaskClick(index)
+                }
+              },
+            })}
+          >
             <WorksheetTaskPreview
               worksheet={{ ...task, orientation: page.orientation, header: page.header, variantCount: page.variantCount }}
               shuffleSeed={shuffleSeed + index * 1_000}

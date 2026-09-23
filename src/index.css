@@ -394,6 +394,24 @@ body {
   color: #9a3412;
 }
 
+.print-help-steps {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  list-style: decimal;
+}
+
+.print-help-note {
+  margin: 0.75rem 0 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.625rem;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
 .support-modal-actions {
   display: flex;
   align-items: center;
@@ -636,9 +654,14 @@ body {
   }
 
   .top-bar-divider,
-  .top-bar-save-status,
+  .top-bar-save-label,
+  .top-bar-fit-label,
   .top-bar-print-long {
     display: none;
+  }
+
+  .top-bar-zoom-value {
+    width: 2.25rem;
   }
 
   .top-bar-print-short {
@@ -774,6 +797,28 @@ body {
   .worksheet-task-grid:not(.task-count-1) > .worksheet-task-zone {
     outline: 1px dashed #dbe4f0;
     outline-offset: 2mm;
+  }
+
+  /* Kliknięcie w zadanie na kartce otwiera jego edycję - delikatna podpowiedź przy najechaniu. */
+  .worksheet-task-zone.is-clickable {
+    cursor: pointer;
+    border-radius: 2mm;
+    transition: background-color 150ms ease;
+  }
+
+  @media (hover: hover) {
+    .worksheet-task-zone.is-clickable:hover {
+      background-color: rgb(37 99 235 / 0.04);
+    }
+  }
+
+  .worksheet-task-zone.is-clickable:focus-visible {
+    outline: 2px solid #2563eb;
+  }
+
+  .worksheet-task-grid:not(.task-count-1) > .worksheet-task-zone.is-active-task {
+    /* Grubo, bo podgląd zwykle jest pomniejszony o połowę. */
+    outline: 4px solid #3b82f6;
   }
 }
 

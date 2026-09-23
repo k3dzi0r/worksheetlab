@@ -26,6 +26,18 @@ export interface WorksheetItem {
 
 export type TemplateType = 'choice' | 'matchPairs' | 'count' | 'yesNo' | 'sequence' | 'cutCards' | 'sameOrDifferent' | 'categorize' | 'handwriting' | 'wordSearch' | 'maze' | 'coloring' | 'math' | 'pattern' | 'crossword' | 'dotToDot' | 'clock'
 
+/** Szablony, które rysują klucz odpowiedzi - tylko przy nich przełącznik ma sens. */
+export const ANSWER_KEY_TEMPLATES: TemplateType[] = ['wordSearch', 'maze', 'coloring', 'math', 'crossword', 'dotToDot', 'clock']
+
+/** Szablony, w których losowanie kolejności elementów cokolwiek zmienia. */
+export const SHUFFLEABLE_TEMPLATES: TemplateType[] = ['choice', 'matchPairs', 'sameOrDifferent']
+
+/** Prośba z zewnątrz (np. kliknięcie w podgląd) o pokazanie kroku; `nonce` odróżnia kolejne kliknięcia. */
+export interface StepRequest {
+  step: 'template' | 'edit'
+  nonce: number
+}
+
 /** Układ elementów w szablonie „Wybierz”. */
 export type ChoiceLayout = 'row' | 'scattered'
 
