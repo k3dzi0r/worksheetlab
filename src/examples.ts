@@ -65,12 +65,13 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
     header: titled('Mieszkańcy lasu'),
   },
   {
-    id: 'butterfly-dots',
-    title: 'Ukryty motyl',
-    emoji: '🦋',
+    id: 'fish-dots',
+    title: 'Ukryta rybka',
+    emoji: '🐟',
     theme: 'animals',
     template: 'dotToDot',
-    task: { instruction: 'Połącz kropki po kolei i pokoloruj.', dotShape: 'butterfly', dotCount: 20, dotNumbering: 'numbers' },
+    // Motyl przy 20 kropkach zlewał się w niewyraźny kształt z nachodzącymi numerami - rybka jest czytelna.
+    task: { instruction: 'Połącz kropki po kolei i pokoloruj rybkę.', dotShape: 'fish', dotCount: 20, dotNumbering: 'numbers' },
     header: STUDENT_HEADER,
   },
 
@@ -127,7 +128,7 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
     emoji: '❄️',
     theme: 'seasons',
     template: 'coloring',
-    task: { instruction: 'Pokoloruj mandalę zimowymi kolorami.', coloringLevel: 2, coloringMode: 'blank', coloringSectors: 6 },
+    task: { instruction: 'Pokoloruj mandalę zimowymi kolorami.', coloringLevel: 2, coloringMode: 'blank', coloringSectors: 6, coloringCrown: 'points' },
     header: STUDENT_HEADER,
   },
 
@@ -190,7 +191,7 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
   },
   {
     id: 'half-hours',
-    title: 'Wpół do',
+    title: 'Pełne i wpół do',
     emoji: '🕧',
     theme: 'time',
     template: 'clock',
@@ -243,7 +244,14 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
     emoji: '🧭',
     theme: 'puzzles',
     template: 'maze',
-    task: { instruction: 'Znajdź drogę do wyjścia.', mazeLevel: 1 },
+    task: {
+      instruction: 'Pomóż myszce dojść do sera.',
+      mazeLevel: 1,
+      items: [
+        { id: 'example-maze-mouse', source: 'emoji', emoji: '🐭', label: 'mysz' },
+        { id: 'example-maze-cheese', source: 'emoji', emoji: '🧀', label: 'ser' },
+      ],
+    },
     header: STUDENT_HEADER,
   },
   {
@@ -252,7 +260,14 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
     emoji: '🏰',
     theme: 'puzzles',
     template: 'maze',
-    task: { instruction: 'Znajdź drogę do wyjścia.', mazeLevel: 4 },
+    task: {
+      instruction: 'Doprowadź pszczołę do kwiatka.',
+      mazeLevel: 4,
+      items: [
+        { id: 'example-maze-bee', source: 'emoji', emoji: '🐝', label: 'pszczoła' },
+        { id: 'example-maze-flower', source: 'emoji', emoji: '🌻', label: 'słonecznik' },
+      ],
+    },
     header: STUDENT_HEADER,
   },
   {
