@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildProjectMeta, createProjectMeta, isBlankProject, suggestProjectName, summarizeTemplates, UNTITLED_PROJECT_NAME } from './projectLibrary'
+import { buildProjectMeta, createProjectMeta, isBlankProject, isLibraryBackup, planBackupImport, suggestProjectName, summarizeTemplates, UNTITLED_PROJECT_NAME } from './projectLibrary'
+import type { LibraryBackup, SavedProjectRecord } from './projectLibrary'
 import { applyExample, createBlankProject, createWorksheet } from './projectFactory'
 import { WORKSHEET_EXAMPLES } from './examples'
 import { projectFileName } from './worksheetIO'
@@ -56,5 +57,43 @@ describe('projectFileName', () => {
   it('bez nazwy zostaje sama data', () => {
     expect(projectFileName(undefined, date)).toBe('kartolab-2026-09-23.json')
     expect(projectFileName('!!!', date)).toBe('kartolab-2026-09-23.json')
+  })
+})
+
+describe('kopia wszystkich kart', () => {
+  function record(id: string, project: ProjectState, name = 'Karta'): SavedProjectRecord {
+    return { ...buildProjectMeta(project, { id, name, customName: true, createdAt: 1 }, 2), data: JSON.stringify(project) }
+  }
+  function backupOf(records: SavedProjectRecord[]): LibraryBackup {
+    return { format: 'kartolab-backup', version: 1, exportedAt: '2026-09-23T00:00:00.000Z', projects: records }
+  }
+
+  it('rozpoznaje plik z kopią, ale nie pojedynczą kartę', () => {
+    expect(isLibraryBackup(backupOf([]))).toBe(true)
+    expect(isLibraryBackup(createBlankProject())).toBe(false)
+    expect(isLibraryBackup(null)).toBe(false)
+  })
+
+  it('dodaje nowe karty, pomija identyczne i nie nadpisuje zmienionych', () => {
+    const maze = projectWith(['maze'])
+    const clock = projectWith(['clock'])
+    const existing = [record('same', maze), record('changed', maze, 'Moja wersja')]
+    const backup = backupOf([record('same', maze), record('changed', clock, 'Z kopii'), record('new', clock, 'Nowa')])
+
+    const { toAdd, skipped, invalid } = planBackupImport(backup, existing)
+
+    expect(skipped).toBe(1)
+    expect(invalid).toBe(0)
+    expect(toAdd.map((entry) => entry.name)).toEqual(['Z kopii (z kopii)', 'Nowa'])
+    // Zmieniona karta trafia jako osobna - nowe id, oryginał zostaje nietknięty.
+    expect(toAdd[0].id).not.toBe('changed')
+    expect(toAdd[1].id).toBe('new')
+  })
+
+  it('odrzuca uszkodzone wpisy', () => {
+    const broken = { ...record('x', projectWith(['maze'])), data: '{nie json' }
+    const { toAdd, invalid } = planBackupImport(backupOf([broken]), [])
+    expect(toAdd).toEqual([])
+    expect(invalid).toBe(1)
   })
 })

@@ -79,6 +79,8 @@ describe('MyProjectsDialog', () => {
       onDuplicate: vi.fn(),
       onDelete: vi.fn(),
       onExport: vi.fn(),
+      onExportAll: vi.fn(),
+      onImportFile: vi.fn(),
       ...overrides,
     }
     render(<MyProjectsDialog {...props} />)
@@ -111,6 +113,12 @@ describe('MyProjectsDialog', () => {
     fireEvent.change(input, { target: { value: 'Jesień 2b' } })
     fireEvent.submit(input.closest('form')!)
     expect(props.onRename).toHaveBeenCalledWith('a', 'Jesień 2b')
+  })
+
+  it('pobiera kopię wszystkich kart', () => {
+    const props = renderDialog()
+    fireEvent.click(screen.getByRole('button', { name: 'Pobierz kopię wszystkich' }))
+    expect(props.onExportAll).toHaveBeenCalled()
   })
 
   it('pokazuje zachętę, gdy nie ma żadnych kart', () => {

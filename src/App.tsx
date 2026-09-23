@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import type {
   WorksheetItem,
   WorksheetState,
@@ -15,6 +16,8 @@ import { createId, shuffleArray, clamp } from './utils'
 import { downloadProjectJson, parseProjectJson } from './worksheetIO'
 import { useUndoRedo } from './hooks/useUndoRedo'
 import { useProjectLibrary } from './hooks/useProjectLibrary'
+import { downloadLibraryBackup, isLibraryBackup } from './projectLibrary'
+import type { LibraryBackup } from './projectLibrary'
 import { INITIAL_PROJECT, INITIAL_WORKSHEET, applyExample, createBlankProject, createPage, createWorksheet } from './projectFactory'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
@@ -617,6 +620,37 @@ function App() {
     else handlePrint()
   }, [handlePrint])
 
+  // Ctrl+P / Cmd+P idzie tą samą drogą co przycisk „Drukuj" - inaczej ukryte strony,
+  // liniatura i zegary nie zdążą się przeliczyć i w PDF-ie wychodzą puste.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'p') {
+        event.preventDefault()
+        requestPrint()
+      }
+    }
+    // Druk z menu przeglądarki nie da się przechwycić - pokazujemy przynajmniej wszystkie strony.
+    let printingFromMenu = false
+    const onBeforePrint = () => {
+      if (finishPrintRef.current) return
+      printingFromMenu = true
+      flushSync(() => setIsPrintingAllPages(true))
+    }
+    const onAfterPrint = () => {
+      if (!printingFromMenu) return
+      printingFromMenu = false
+      setIsPrintingAllPages(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('beforeprint', onBeforePrint)
+    window.addEventListener('afterprint', onAfterPrint)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('beforeprint', onBeforePrint)
+      window.removeEventListener('afterprint', onAfterPrint)
+    }
+  }, [requestPrint])
+
   const closePrintHelp = useCallback(() => setIsPrintHelpOpen(false), [])
 
   const printFromHelp = useCallback(() => {
@@ -630,6 +664,16 @@ function App() {
 
   // Plik otwiera się jako nowa karta - bieżąca zostaje na liście „Moje karty".
   function handleImport(text: string) {
+    // Plik z kopią wszystkich kart też da się otworzyć tym przyciskiem.
+    try {
+      const data: unknown = JSON.parse(text)
+      if (isLibraryBackup(data)) {
+        handleImportBackup(data)
+        return
+      }
+    } catch {
+      // Nie JSON - parseProjectJson niżej pokaże komunikat.
+    }
     const imported = parseProjectJson(text)
     if (!imported) {
       alert('Nie udało się wczytać pliku - to nie jest poprawny projekt KartoLabu.')
@@ -641,6 +685,27 @@ function App() {
   function handleNewProject() {
     library.startProject(createBlankProject())
     setIsProjectsOpen(false)
+  }
+
+  async function handleExportAll() {
+    try {
+      downloadLibraryBackup(await library.exportAll())
+    } catch {
+      alert('Nie udało się przygotować kopii kart.')
+    }
+  }
+
+  async function handleImportBackup(backup: LibraryBackup) {
+    try {
+      const { added, skipped, invalid } = await library.importBackup(backup)
+      const parts = [`Dodano kart: ${added}.`]
+      if (skipped > 0) parts.push(`Pominięto ${skipped} - są już na liście.`)
+      if (invalid > 0) parts.push(`Uszkodzonych: ${invalid}.`)
+      alert(parts.join(' '))
+      openProjects()
+    } catch {
+      alert('Nie udało się wczytać kopii kart.')
+    }
   }
 
   async function handleExportSaved(id: string) {
@@ -873,6 +938,8 @@ function App() {
         onDuplicate={library.duplicate}
         onDelete={(id) => library.remove(id, createBlankProject)}
         onExport={handleExportSaved}
+        onExportAll={handleExportAll}
+        onImportFile={handleImport}
       />
       <MobilePrintHelp isOpen={isPrintHelpOpen} onPrint={printFromHelp} onClose={closePrintHelp} />
       <SupportThankYouModal

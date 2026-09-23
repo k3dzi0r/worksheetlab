@@ -22,7 +22,7 @@ export interface SavedProjectMeta {
   templates: TemplateType[]
 }
 
-interface SavedProjectRecord extends SavedProjectMeta {
+export interface SavedProjectRecord extends SavedProjectMeta {
   /** Projekt jako JSON - ten sam format co eksport do pliku. */
   data: string
 }
@@ -139,6 +139,90 @@ export async function migrateLegacyDraft(): Promise<string | undefined> {
   }
   await del(LEGACY_AUTOSAVE_KEY)
   return undefined
+}
+
+const BACKUP_FORMAT = 'kartolab-backup'
+
+/** Kopia wszystkich kart w jednym pliku - jedyna ochrona przed wyczyszczeniem danych przeglądarki. */
+export interface LibraryBackup {
+  format: typeof BACKUP_FORMAT
+  version: 1
+  exportedAt: string
+  projects: SavedProjectRecord[]
+}
+
+export function isLibraryBackup(value: unknown): value is LibraryBackup {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as LibraryBackup).format === BACKUP_FORMAT &&
+    Array.isArray((value as LibraryBackup).projects)
+  )
+}
+
+export async function exportLibrary(now = new Date()): Promise<LibraryBackup> {
+  const records = await getAllProjects<SavedProjectRecord>()
+  return { format: BACKUP_FORMAT, version: 1, exportedAt: now.toISOString(), projects: records }
+}
+
+/**
+ * Wybiera z kopii karty do dodania. Nic nie nadpisuje: karta, która już jest w identycznej
+ * wersji, jest pomijana, a inna wersja tej samej karty trafia na listę jako osobna kopia.
+ * Rekordy z uszkodzoną treścią są odrzucane.
+ */
+export function planBackupImport(
+  backup: LibraryBackup,
+  existing: Pick<SavedProjectRecord, 'id' | 'data'>[],
+): { toAdd: SavedProjectRecord[]; skipped: number; invalid: number } {
+  const byId = new Map(existing.map((record) => [record.id, record.data]))
+  const toAdd: SavedProjectRecord[] = []
+  let skipped = 0
+  let invalid = 0
+  for (const raw of backup.projects) {
+    const project = typeof raw?.data === 'string' ? parseProjectJson(raw.data) : null
+    if (!project || typeof raw.id !== 'string') {
+      invalid++
+      continue
+    }
+    const now = Date.now()
+    const meta = buildProjectMeta(
+      project,
+      {
+        id: raw.id,
+        name: typeof raw.name === 'string' ? raw.name : UNTITLED_PROJECT_NAME,
+        customName: Boolean(raw.customName),
+        createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : now,
+      },
+      typeof raw.updatedAt === 'number' ? raw.updatedAt : now,
+    )
+    const current = byId.get(raw.id)
+    if (current === raw.data) {
+      skipped++
+    } else if (current !== undefined) {
+      toAdd.push({ ...meta, id: createId(), name: `${meta.name} (z kopii)`, customName: true, data: raw.data })
+    } else {
+      toAdd.push({ ...meta, data: raw.data })
+    }
+  }
+  return { toAdd, skipped, invalid }
+}
+
+export async function importLibrary(backup: LibraryBackup): Promise<{ added: number; skipped: number; invalid: number }> {
+  const existing = await getAllProjects<SavedProjectRecord>()
+  const { toAdd, skipped, invalid } = planBackupImport(backup, existing)
+  for (const record of toAdd) await putProject(record)
+  return { added: toAdd.length, skipped, invalid }
+}
+
+/** Plik z kopią - nazwa z datą, żeby kolejne kopie się nie nadpisywały. */
+export function downloadLibraryBackup(backup: LibraryBackup) {
+  const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `kartolab-kopia-${backup.exportedAt.slice(0, 10)}.json`
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
 /**

@@ -15,6 +15,9 @@ interface MyProjectsDialogProps {
   onDuplicate: (id: string) => void
   onDelete: (id: string) => void
   onExport: (id: string) => void
+  onExportAll: () => void
+  /** Plik z jedną kartą albo z kopią wszystkich - App rozpoznaje format. */
+  onImportFile: (text: string) => void
 }
 
 const DATE_FORMAT = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -32,6 +35,8 @@ export function MyProjectsDialog({
   onDuplicate,
   onDelete,
   onExport,
+  onExportAll,
+  onImportFile,
 }: MyProjectsDialogProps) {
   const closeRef = useRef<HTMLButtonElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -66,14 +71,33 @@ export function MyProjectsDialog({
           <strong>⚠️ Karty są zapisane tylko w tej przeglądarce, na tym urządzeniu.</strong>
           <span>
             Znikną po wyczyszczeniu danych przeglądarki, w oknie prywatnym albo gdy przeglądarka zwolni miejsce. Na innym
-            komputerze ich nie zobaczysz. Ważne karty pobierz do pliku - przycisk <b>Pobierz</b> przy karcie.
+            komputerze ich nie zobaczysz. Rób kopię: <b>Pobierz kopię wszystkich</b> zapisze wszystkie karty w jednym pliku, który potem wczytasz tu albo na innym komputerze.
           </span>
           {isPersisted && <span className="projects-warning-ok">Przeglądarka zgodziła się nie usuwać ich sama przy braku miejsca.</span>}
         </div>
 
-        <button type="button" className="projects-new" onClick={onNew}>
-          + Nowa karta
-        </button>
+        <div className="projects-toolbar">
+          <button type="button" className="projects-new" onClick={onNew}>
+            + Nowa karta
+          </button>
+          <button type="button" className="projects-secondary" onClick={onExportAll} disabled={projects.length === 0}>
+            Pobierz kopię wszystkich
+          </button>
+          <label className="projects-secondary">
+            Wczytaj kopię lub plik
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (!file) return
+                file.text().then(onImportFile)
+              }}
+            />
+          </label>
+        </div>
 
         {projects.length === 0 ? (
           <p className="projects-empty">Nie masz jeszcze zapisanych kart. Wybierz szablon albo przykład - karta zapisze się sama.</p>

@@ -4,6 +4,8 @@ import {
   buildProjectMeta,
   createProjectMeta,
   duplicateProject,
+  exportLibrary,
+  importLibrary,
   getCurrentProjectId,
   isBlankProject,
   listProjects,
@@ -15,7 +17,7 @@ import {
   saveProject,
   setCurrentProjectId,
 } from '../projectLibrary'
-import type { SavedProjectMeta } from '../projectLibrary'
+import type { LibraryBackup, SavedProjectMeta } from '../projectLibrary'
 
 const AUTOSAVE_DELAY_MS = 1000
 
@@ -236,7 +238,24 @@ export function useProjectLibrary(project: ProjectState, onLoad: (state: Project
     [],
   )
 
+  /** Kopia wszystkich kart - najpierw zapis bieżącej, żeby w pliku była najnowsza wersja. */
+  const exportAll = useCallback(async () => {
+    await saveNow()
+    return exportLibrary()
+  }, [saveNow])
+
+  const importBackup = useCallback(
+    async (backup: LibraryBackup) => {
+      const result = await importLibrary(backup)
+      await refreshList()
+      return result
+    },
+    [refreshList],
+  )
+
   return {
+    exportAll,
+    importBackup,
     isReady,
     saveStatus,
     currentMeta,

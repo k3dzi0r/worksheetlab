@@ -464,9 +464,39 @@ body {
   color: #166534;
 }
 
-.projects-new {
-  align-self: flex-start;
+.projects-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
   margin-top: 0.875rem;
+}
+
+.projects-secondary {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.projects-secondary:hover {
+  background: #f8fafc;
+}
+
+.projects-secondary:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.projects-secondary:focus-within {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.projects-new {
   padding: 0.5rem 1rem;
   border-radius: 999px;
   background: #2563eb;
