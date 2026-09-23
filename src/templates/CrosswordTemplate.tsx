@@ -12,6 +12,11 @@ interface CrosswordTemplateProps {
 
 /** Największy sensowny bok kratki - większe pola wyglądają jak plansza, nie jak krzyżówka. */
 const MAX_CELL = 46
+/** Definicje czyta dziecko - 15 px było za drobne na wydruku. */
+const CLUE_FONT = 18
+const CLUE_LINE = Math.round(CLUE_FONT * 1.45) + 4
+/** Kratki na hasło pod krzyżówką - trochę mniejsze niż w siatce, żeby nie konkurowały z nią. */
+const KEYWORD_BOX = 34
 
 export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: CrosswordTemplateProps) {
   const {
@@ -43,9 +48,13 @@ export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: Cr
 
   const { entries, keyColumn, cols } = crossword
   const clues = entries.filter((entry) => entry.clue.length > 0)
-  // Definicje stoją pod krzyżówką, więc najpierw rezerwujemy na nie miejsce.
-  const cluesHeight = crosswordShowClues && clues.length > 0 ? 24 + clues.length * 22 : 0
-  const gridHeight = Math.max(0, height - cluesHeight)
+  // Przy haśle podanym przez nauczyciela uczeń wpisuje je jeszcze raz w osobne kratki -
+  // przy losowych literach nie ma czego odczytywać.
+  const showKeywordRow = crosswordKeyword.trim().length > 0 && crossword.keyword.length > 0
+  // Definicje i hasło stoją pod krzyżówką, więc najpierw rezerwujemy na nie miejsce.
+  const cluesHeight = crosswordShowClues && clues.length > 0 ? 24 + clues.length * CLUE_LINE : 0
+  const keywordHeight = showKeywordRow ? KEYWORD_BOX + 24 : 0
+  const gridHeight = Math.max(0, height - cluesHeight - keywordHeight)
 
   // Kratka musi zmieścić się i w szerokość, i w wysokość; numery zajmują dodatkową kolumnę.
   const numberWidth = crosswordNumbers ? 1 : 0
@@ -111,8 +120,29 @@ export function CrosswordTemplate({ worksheet, seed, showAnswerKey = false }: Cr
           ))}
         </div>
 
+        {showKeywordRow && (
+          <div className="flex items-center gap-3" aria-label="Hasło">
+            <span className="font-semibold text-gray-800" style={{ fontSize: CLUE_FONT }}>
+              Hasło:
+            </span>
+            <div className="flex">
+              {[...crossword.keyword].map((letter, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center justify-center border-2 border-gray-900 bg-yellow-100 font-semibold ${
+                    index > 0 ? '-ml-0.5' : ''
+                  } ${showAnswerKey ? 'text-blue-700' : 'text-transparent'}`}
+                  style={{ width: KEYWORD_BOX, height: KEYWORD_BOX, fontSize: KEYWORD_BOX * 0.55 }}
+                >
+                  {letter}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {crosswordShowClues && clues.length > 0 && (
-          <ol className="self-start w-full px-2 text-gray-800" style={{ fontSize: 15 }}>
+          <ol className="self-start w-full px-2 text-gray-800" style={{ fontSize: CLUE_FONT, lineHeight: 1.45 }}>
             {entries.map((entry, index) =>
               entry.clue ? (
                 <li key={index} className="mb-1">

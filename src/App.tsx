@@ -7,15 +7,15 @@ import type {
   ChoiceLayout,
   PageOrientation,
   MatchPair,
-  WorksheetPage,
 } from './types/worksheet'
-import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER, ANSWER_KEY_TEMPLATES } from './types/worksheet'
+import { ITEM_SCALE_MIN, ITEM_SCALE_MAX, ANSWER_KEY_TEMPLATES } from './types/worksheet'
 import type { WorksheetHeader, StepRequest } from './types/worksheet'
 import type { WorksheetExample } from './examples'
 import { createId, shuffleArray, clamp } from './utils'
 import { downloadProjectJson, parseProjectJson } from './worksheetIO'
 import { useUndoRedo } from './hooks/useUndoRedo'
 import { useProjectLibrary } from './hooks/useProjectLibrary'
+import { INITIAL_PROJECT, INITIAL_WORKSHEET, applyExample, createBlankProject, createPage, createWorksheet } from './projectFactory'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 import { PageManager } from './components/PageManager'
@@ -31,75 +31,6 @@ import { canShowSupportReminder, disableSupportReminder, postponeSupportReminder
 const PAGE_SIZE_PX = {
   portrait: { width: 794, height: 1123 },
   landscape: { width: 1123, height: 794 },
-}
-
-export const INITIAL_WORKSHEET: WorksheetState = {
-  id: createId(),
-  template: null,
-  instruction: '',
-  items: [],
-  pairs: [],
-  countRepetitions: 5,
-  layout: 'row',
-  itemScale: ITEM_SCALE_DEFAULT,
-  orientation: 'portrait',
-  instructionScale: 1,
-  sequenceItems: [],
-  sequenceRepetitions: 3,
-  sequenceBlanks: 1,
-  header: DEFAULT_WORKSHEET_HEADER,
-  cutCardsShowBorder: true,
-  categories: ['Kategoria 1', 'Kategoria 2'],
-  variantCount: 1,
-  correctAnswers: [],
-  yesNoUseColors: false,
-  choiceShowCheckboxes: false,
-  matchPairsLineStyle: 'solid',
-  countScattered: false,
-  sequenceBlankStyle: 'underscore',
-  cutCardsPerRow: 3,
-  sameOrDifferentReferenceStyle: 'box',
-  categorizeLayout: 'columns',
-  patternLength: 50,
-  wordSearchAllowHorizontal: true,
-  wordSearchAllowVertical: true,
-}
-
-export const INITIAL_PROJECT: ProjectState = {
-  pages: [createPage()],
-  activePageIndex: 0,
-  activeTaskIndex: 0,
-  showPageNumbers: false,
-  showBranding: true,
-}
-
-function createWorksheet(overrides: Partial<WorksheetState> = {}): WorksheetState {
-  return {
-    ...INITIAL_WORKSHEET,
-    id: createId(),
-    header: { ...DEFAULT_WORKSHEET_HEADER },
-    items: [],
-    pairs: [],
-    sequenceItems: [],
-    categories: ['Kategoria 1', 'Kategoria 2'],
-    correctAnswers: [],
-    ...overrides,
-  }
-}
-
-/** Świeża pusta karta - z nowymi id, w przeciwieństwie do współdzielonego INITIAL_PROJECT. */
-function createBlankProject(): ProjectState {
-  return { pages: [createPage()], activePageIndex: 0, activeTaskIndex: 0, showPageNumbers: false, showBranding: true }
-}
-
-function createPage(orientation: PageOrientation = 'portrait', task?: WorksheetState): WorksheetPage {
-  return {
-    id: createId(),
-    orientation,
-    header: { ...DEFAULT_WORKSHEET_HEADER },
-    variantCount: 1,
-    tasks: [task ?? createWorksheet({ orientation })],
-  }
 }
 
 /**
@@ -424,21 +355,7 @@ function App() {
 
   /** Przykład ustawia zadanie i nagłówek strony naraz - jeden krok cofania. */
   function handleApplyExample(example: WorksheetExample) {
-    setProject((prev) => {
-      const pages = [...prev.pages]
-      const page = pages[prev.activePageIndex]
-      if (!page) return prev
-      const taskIndex = Math.min(prev.activeTaskIndex, page.tasks.length - 1)
-      const tasks = [...page.tasks]
-      tasks[taskIndex] = createWorksheet({
-        orientation: page.orientation,
-        instructionScale: tasks[taskIndex]?.instructionScale ?? 1,
-        template: example.template,
-        ...example.task,
-      })
-      pages[prev.activePageIndex] = { ...page, tasks, header: { ...page.header, ...example.header } }
-      return { ...prev, pages }
-    })
+    setProject((prev) => applyExample(prev, example))
   }
 
   function handleHeaderChange(header: Partial<WorksheetHeader>) {

@@ -42,7 +42,7 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
     template: 'wordSearch',
     task: {
       instruction: 'Znajdź i zakreśl nazwy zwierząt.',
-      wordSearchWords: 'krowa\nkoń\nkaczka\nowca\nkura\nświnia',
+      wordSearchWords: 'krowa\nkoń\nkaczka\nowca\nkura\nświnia\nkoza\nindyk',
       wordSearchGridSize: 10,
       wordSearchShowWords: true,
     },
@@ -55,9 +55,10 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
     theme: 'animals',
     template: 'crossword',
     task: {
-      instruction: 'Rozwiąż krzyżówkę.',
+      instruction: 'Rozwiąż krzyżówkę. Z zaznaczonych kratek odczytaj hasło.',
+      crosswordKeyword: 'borsuk',
       crosswordWords:
-        'lis - Rudy, ma puszysty ogon\njeż - Ma kolce na grzbiecie\nsowa - Poluje nocą, huka\nwiewiórka - Zbiera orzechy na zimę\ndzik - Ryje w ziemi',
+        'bóbr - Buduje tamy na rzece\nsowa - Poluje nocą i pohukuje\nsarna - Płochliwa, jej młode mają cętki\nlis - Rudy, ma puszysty ogon\nkukułka - Podrzuca jaja do cudzych gniazd\ndzik - Ryje ziemię w poszukiwaniu jedzenia',
       crosswordShowClues: true,
       crosswordNumbers: true,
     },
@@ -75,19 +76,36 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
 
   // Pory roku
   {
-    id: 'seasons-crossword',
-    title: 'Pory roku',
+    id: 'autumn-crossword',
+    title: 'Jesień - krzyżówka',
     emoji: '🍂',
     theme: 'seasons',
     template: 'crossword',
     task: {
-      instruction: 'Rozwiąż krzyżówkę.',
+      instruction: 'Rozwiąż krzyżówkę. Z zaznaczonych kratek odczytaj hasło.',
+      crosswordKeyword: 'jesień',
       crosswordWords:
-        'wiosna - Pora roku, gdy kwitną przebiśniegi\nlato - Najcieplejsza pora roku\njesień - Liście zmieniają kolor\nzima - Pada śnieg',
+        'jeż - Kolczasty mieszkaniec lasu, zasypia na zimę\ndeszcz - Pada z chmur w pochmurny dzień\nkasztan - Brązowy owoc w kolczastej łupinie\nliście - Jesienią żółkną i spadają z drzew\nwrzesień - Miesiąc, w którym zaczyna się szkoła\npień - Zostaje z drzewa po jego ścięciu',
       crosswordShowClues: true,
       crosswordNumbers: true,
     },
-    header: titled('Pory roku'),
+    header: titled('Jesień'),
+  },
+  {
+    id: 'winter-crossword',
+    title: 'Zima - krzyżówka',
+    emoji: '⛄',
+    theme: 'seasons',
+    template: 'crossword',
+    task: {
+      instruction: 'Rozwiąż krzyżówkę. Z zaznaczonych kratek odczytaj hasło.',
+      crosswordKeyword: 'zima',
+      crosswordWords:
+        'mróz - Przez niego woda zamienia się w lód\nrękawiczki - Chronią dłonie przed zimnem\nmikołaj - Przynosi prezenty 6 grudnia\nbałwan - Lepimy go ze śniegu',
+      crosswordShowClues: true,
+      crosswordNumbers: true,
+    },
+    header: titled('Zima'),
   },
   {
     id: 'autumn-word-search',
@@ -97,7 +115,7 @@ export const WORKSHEET_EXAMPLES: WorksheetExample[] = [
     template: 'wordSearch',
     task: {
       instruction: 'Znajdź jesienne słowa.',
-      wordSearchWords: 'liść\nkasztan\nżołądź\ngrzyb\ndeszcz\nparasol',
+      wordSearchWords: 'liść\nkasztan\nżołądź\ngrzyb\ndeszcz\nparasol\njeż\ndynia',
       wordSearchGridSize: 10,
       wordSearchShowWords: true,
     },
