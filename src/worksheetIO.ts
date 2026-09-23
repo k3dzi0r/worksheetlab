@@ -347,9 +347,23 @@ export function parseProjectJson(text: string): ProjectState | null {
 }
 
 /** Pobiera cały projekt jako plik .json. */
-export function downloadProjectJson(project: ProjectState) {
-  const dateStr = new Date().toISOString().slice(0, 10)
-  const fileName = `worksheetlab-project-${dateStr}.json`
+/** Nazwa pliku z nazwy karty: bez polskich znaków i spacji, żeby działała w każdym systemie. */
+export function projectFileName(name: string | undefined, date = new Date()): string {
+  const dateStr = date.toISOString().slice(0, 10)
+  const slug = (name ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ł/g, 'l')
+    .replace(/Ł/g, 'L')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40)
+  return slug ? `kartolab-${slug}-${dateStr}.json` : `kartolab-${dateStr}.json`
+}
+
+export function downloadProjectJson(project: ProjectState, name?: string) {
+  const fileName = projectFileName(name)
   const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')

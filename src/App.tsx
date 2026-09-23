@@ -15,13 +15,16 @@ import type { WorksheetExample } from './examples'
 import { createId, shuffleArray, clamp } from './utils'
 import { downloadProjectJson, parseProjectJson } from './worksheetIO'
 import { useUndoRedo } from './hooks/useUndoRedo'
-import { useAutosave } from './hooks/useAutosave'
+import { useProjectLibrary } from './hooks/useProjectLibrary'
 import { Editor } from './components/Editor/Editor'
 import { WorksheetPreview } from './components/WorksheetPreview/WorksheetPreview'
 import { PageManager } from './components/PageManager'
 import { TopBar } from './components/TopBar'
 import { SupportThankYouModal } from './components/SupportThankYouModal'
 import { MobilePrintHelp, shouldShowMobilePrintHelp } from './components/MobilePrintHelp'
+import { UpdateBanner } from './components/UpdateBanner'
+import { MyProjectsDialog } from './components/MyProjectsDialog'
+import { registerServiceWorker } from './serviceWorker'
 import { canShowSupportReminder, disableSupportReminder, postponeSupportReminder } from './support'
 
 /** Wymiary kartki A4 w pikselach przy 96 dpi - potrzebne do dopasowania podglądu do panelu. */
@@ -84,6 +87,11 @@ function createWorksheet(overrides: Partial<WorksheetState> = {}): WorksheetStat
   }
 }
 
+/** Świeża pusta karta - z nowymi id, w przeciwieństwie do współdzielonego INITIAL_PROJECT. */
+function createBlankProject(): ProjectState {
+  return { pages: [createPage()], activePageIndex: 0, activeTaskIndex: 0, showPageNumbers: false, showBranding: true }
+}
+
 function createPage(orientation: PageOrientation = 'portrait', task?: WorksheetState): WorksheetPage {
   return {
     id: createId(),
@@ -128,10 +136,20 @@ function App() {
   const [previewZoom, setPreviewZoom] = useState<number | null>(null)
   const [stepRequest, setStepRequest] = useState<StepRequest | null>(null)
   const [isPrintHelpOpen, setIsPrintHelpOpen] = useState(false)
+  const [applyUpdate, setApplyUpdate] = useState<(() => void) | null>(null)
 
-  const { saveStatus, hasDraft, loadDraft, deleteDraft, isReady } = useAutosave(project, (state) => {
-    resetProject(state)
-  })
+  useEffect(() => {
+    registerServiceWorker((apply) => setApplyUpdate(() => apply))
+  }, [])
+
+  const library = useProjectLibrary(project, resetProject)
+  const { saveStatus, isReady } = library
+  const [isProjectsOpen, setIsProjectsOpen] = useState(false)
+
+  const openProjects = useCallback(() => {
+    library.refreshList()
+    setIsProjectsOpen(true)
+  }, [library])
 
 
 
@@ -686,16 +704,27 @@ function App() {
   }, [handlePrint])
 
   function handleExport() {
-    downloadProjectJson(project)
+    downloadProjectJson(project, library.currentMeta.name)
   }
 
+  // Plik otwiera się jako nowa karta - bieżąca zostaje na liście „Moje karty".
   function handleImport(text: string) {
     const imported = parseProjectJson(text)
     if (!imported) {
-      alert('Nie udało się wczytać pliku - to nie jest poprawny projekt WorksheetLab.')
+      alert('Nie udało się wczytać pliku - to nie jest poprawny projekt KartoLabu.')
       return
     }
-    resetProject(imported)
+    library.startProject(imported)
+  }
+
+  function handleNewProject() {
+    library.startProject(createBlankProject())
+    setIsProjectsOpen(false)
+  }
+
+  async function handleExportSaved(id: string) {
+    const data = await library.exportData(id)
+    if (data) downloadProjectJson(data.project, data.name)
   }
 
   function handleClear() {
@@ -710,8 +739,8 @@ function App() {
   const previewViewportRef = useRef<HTMLDivElement>(null)
   const [panelSize, setPanelSize] = useState({ width: 0, height: 0 })
 
-  // Zależność od `isReady` i `hasDraft` jest konieczna: przy pierwszym renderze na ekranie
-  // stoi okno „wykryto zapis roboczy", panelu podglądu jeszcze nie ma i ref jest pusty.
+  // Zależność od `isReady` jest konieczna: przed wczytaniem karty na ekranie stoi
+  // „Wczytywanie...", panelu podglądu jeszcze nie ma i ref jest pusty.
   useLayoutEffect(() => {
     const element = previewViewportRef.current
     if (!element) return
@@ -728,7 +757,7 @@ function App() {
     const observer = new ResizeObserver(measure)
     observer.observe(element)
     return () => observer.disconnect()
-  }, [isReady, hasDraft])
+  }, [isReady])
 
   const fitZoom = useMemo(() => {
     const page = PAGE_SIZE_PX[activePage.orientation]
@@ -743,35 +772,6 @@ function App() {
 
   if (!isReady) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">Wczytywanie...</div>
-  }
-
-  if (hasDraft) {
-    return (
-      // `m-auto` zamiast centrowania kontenera - na niskim ekranie (telefon poziomo) okno da się przewinąć.
-      <div className="h-full overflow-y-auto flex bg-gray-50 p-4">
-        <div className="m-auto bg-white p-8 rounded-xl shadow-xl max-w-md w-full text-center">
-          <img src={`${import.meta.env.BASE_URL}illustrations/books.webp`} alt="" className="w-32 mx-auto mb-6" aria-hidden="true" />
-          <h2 className="text-2xl font-bold mb-4">Wykryto zapis roboczy</h2>
-          <p className="text-gray-600 mb-6">
-            Znalazłem niezapisany projekt z poprzedniej sesji. Chcesz go przywrócić?
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={deleteDraft}
-              className="px-6 py-2 rounded-lg font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
-            >
-              Zacznij od nowa
-            </button>
-            <button
-              onClick={loadDraft}
-              className="px-6 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-            >
-              Przywróć projekt
-            </button>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -795,6 +795,9 @@ function App() {
             onExport={handleExport}
             onImport={handleImport}
             onClear={handleClear}
+            projectName={library.currentMeta.name}
+            onOpenProjects={openProjects}
+            onNewProject={handleNewProject}
             onTemplateChange={handleTemplateChange}
             onHandwritingTextChange={handleHandwritingTextChange}
             onHandwritingModeChange={handleHandwritingModeChange}
@@ -897,6 +900,28 @@ function App() {
           </div>
         </div>
       </div>
+      {applyUpdate && (
+        <UpdateBanner
+          // Najpierw zapis, żeby przeładowanie nie zgubiło ostatniej sekundy pracy.
+          onReload={() => library.saveNow().finally(applyUpdate)}
+          onDismiss={() => setApplyUpdate(null)}
+        />
+      )}
+      <MyProjectsDialog
+        isOpen={isProjectsOpen}
+        projects={library.projects}
+        currentId={library.currentMeta.id}
+        isPersisted={library.isPersisted}
+        onClose={() => setIsProjectsOpen(false)}
+        onOpen={async (id) => {
+          if (await library.openProject(id)) setIsProjectsOpen(false)
+        }}
+        onNew={handleNewProject}
+        onRename={library.rename}
+        onDuplicate={library.duplicate}
+        onDelete={(id) => library.remove(id, createBlankProject)}
+        onExport={handleExportSaved}
+      />
       <MobilePrintHelp isOpen={isPrintHelpOpen} onPrint={printFromHelp} onClose={closePrintHelp} />
       <SupportThankYouModal
         isOpen={isSupportThankYouOpen}

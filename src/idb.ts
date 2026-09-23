@@ -1,5 +1,5 @@
 const DB_NAME = 'WorksheetLabDB'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 function getDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -12,6 +12,9 @@ function getDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains('library')) {
         db.createObjectStore('library', { keyPath: 'id' })
+      }
+      if (!db.objectStoreNames.contains('projects')) {
+        db.createObjectStore('projects', { keyPath: 'id' })
       }
     }
 
@@ -100,6 +103,49 @@ export function deleteLibraryItem(id: string): Promise<void> {
       const transaction = db.transaction('library', 'readwrite')
       const store = transaction.objectStore('library')
       store.delete(id)
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+    })
+  })
+}
+
+/** Zapisane karty („Moje karty") - rekordy z polem `id`. */
+export function getAllProjects<T>(): Promise<T[]> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('projects', 'readonly').objectStore('projects').getAll()
+      request.onsuccess = () => resolve(request.result as T[])
+      request.onerror = () => reject(request.error)
+    })
+  })
+}
+
+export function getProject<T>(id: string): Promise<T | undefined> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('projects', 'readonly').objectStore('projects').get(id)
+      request.onsuccess = () => resolve(request.result as T | undefined)
+      request.onerror = () => reject(request.error)
+    })
+  })
+}
+
+export function putProject<T extends { id: string }>(record: T): Promise<void> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('projects', 'readwrite')
+      transaction.objectStore('projects').put(record)
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+    })
+  })
+}
+
+export function deleteProject(id: string): Promise<void> {
+  return getDB().then((db) => {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('projects', 'readwrite')
+      transaction.objectStore('projects').delete(id)
       transaction.oncomplete = () => resolve()
       transaction.onerror = () => reject(transaction.error)
     })

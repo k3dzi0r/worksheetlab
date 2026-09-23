@@ -190,6 +190,48 @@ body {
   font-size: 0.75rem;
 }
 
+.update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-radius: 999px;
+  background: #0f172a;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 0.3);
+  color: #fff;
+  font-size: 0.875rem;
+  transform: translateX(-50%);
+}
+
+.update-banner-reload {
+  padding: 0.375rem 0.875rem;
+  border-radius: 999px;
+  background: #3b82f6;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.update-banner-dismiss {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* Na telefonie nad dolnym paskiem kroków. */
+@media (max-width: 900px) {
+  .update-banner {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 .support-popover-root {
   position: relative;
 }
@@ -392,6 +434,156 @@ body {
 .support-modal-options strong {
   margin-left: auto;
   color: #9a3412;
+}
+
+.support-modal.projects-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 36rem);
+  max-height: calc(100dvh - 2rem);
+}
+
+.projects-warning {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #fcd34d;
+  border-radius: 0.75rem;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.projects-warning strong {
+  color: #92400e;
+}
+
+.projects-warning-ok {
+  color: #166534;
+}
+
+.projects-new {
+  align-self: flex-start;
+  margin-top: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.projects-new:hover {
+  background: #1d4ed8;
+}
+
+.projects-empty {
+  margin: 1rem 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.projects-list {
+  display: grid;
+  gap: 0.5rem;
+  min-height: 0;
+  margin: 0.875rem -0.25rem 0;
+  padding: 0 0.25rem;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.projects-list li {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.projects-list li.is-current {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.projects-thumb {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+  font-size: 1.75rem;
+}
+
+.projects-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.projects-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0f172a;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.projects-name:hover {
+  color: #1d4ed8;
+}
+
+.projects-badge {
+  padding: 0.0625rem 0.5rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.projects-rename {
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #93c5fd;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+}
+
+.projects-details {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projects-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.projects-actions button {
+  color: #2563eb;
+  font-size: 0.8125rem;
+}
+
+.projects-actions button:hover {
+  text-decoration: underline;
+}
+
+.projects-actions .is-danger {
+  color: #b91c1c;
 }
 
 .print-help-steps {

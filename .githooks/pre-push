@@ -1,0 +1,6 @@
+#!/bin/sh
+# Te same kroki co w CI (poza budowaniem) - błąd wychodzi przed wysłaniem, a nie po cichu w GitHub Actions.
+# Pominięcie w wyjątkowej sytuacji: git push --no-verify
+set -e
+echo "pre-push: typecheck, lint, testy..."
+npm run --silent check
