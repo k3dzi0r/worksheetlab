@@ -102,7 +102,7 @@ function WorksheetTaskPreview({ worksheet, shuffleSeed, variantIndex = 0, showAn
       {worksheet.template === null && (
         <div className="flex flex-col items-center justify-center gap-2 py-16 text-gray-400 print:hidden">
           <span className="text-lg font-medium">Wybierz szablon, żeby rozpocząć</span>
-          <span className="text-sm">Panel po lewej - krok „Szablon"</span>
+          <span className="text-sm">Krok „Szablon" w panelu ustawień</span>
         </div>
       )}
       {worksheet.template === 'choice' && (

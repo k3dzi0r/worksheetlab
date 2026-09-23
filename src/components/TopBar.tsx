@@ -48,7 +48,7 @@ export function TopBar({
         </IconButton>
       </div>
 
-      <span className="w-px h-6 bg-gray-200" />
+      <span className="top-bar-divider w-px h-6 bg-gray-200" />
 
       {showShuffle && (
         <button
@@ -98,7 +98,8 @@ export function TopBar({
           onClick={onPrint}
           className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 whitespace-nowrap ml-2"
         >
-          Drukuj / Zapisz PDF
+          <span className="top-bar-print-long">Drukuj / Zapisz PDF</span>
+          <span className="top-bar-print-short">Drukuj</span>
         </button>
       </div>
     </div>

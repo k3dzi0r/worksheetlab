@@ -110,13 +110,17 @@ function serializeCrosswordEditorRows(rows: CrosswordEditorRow[]): string {
 // Kolejność w tabach - id odpowiada konkretnemu blokowi <Step step={id}> niżej w pliku,
 // więc kolejność wyświetlania i numer id celowo się rozjeżdżają (Edycja jest druga, ale
 // zostaje przy id=3, żeby nie ruszać całego bloku JSX pod nią).
+// `icon` to ścieżki SVG (viewBox 24) dla dolnego paska na telefonie.
 const STEPS = [
-  { id: 1, title: 'Szablon', hint: 'Wybierz typ karty' },
-  { id: 3, title: 'Edycja', hint: 'Treść i elementy karty' },
-  { id: 2, title: 'Układ', hint: 'Rozmiar, orientacja, tryb' },
-  { id: 4, title: 'Warianty', hint: 'Kilka wersji tej samej karty' },
-  { id: 5, title: 'Nagłówek', hint: 'Tytuł, polecenie, dane ucznia' },
+  { id: 1, title: 'Szablon', hint: 'Wybierz typ karty', icon: ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z'] },
+  { id: 3, title: 'Edycja', hint: 'Treść i elementy karty', icon: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'] },
+  { id: 2, title: 'Układ', hint: 'Rozmiar, orientacja, tryb', icon: ['M4 3h16v18H4z', 'M4 9h16', 'M12 9v12'] },
+  { id: 4, title: 'Warianty', hint: 'Kilka wersji tej samej karty', icon: ['M8 3h12v14H8z', 'M4 7v14h12'] },
+  { id: 5, title: 'Nagłówek', hint: 'Tytuł, polecenie, dane ucznia', icon: ['M4 6h16', 'M4 11h10', 'M4 16h7'] },
 ] as const
+
+/** Krok "Więcej" - tylko na telefonie; zbiera to, co na komputerze siedzi w panelu kroków. */
+const MORE_STEP = { id: 6, title: 'Więcej', hint: 'Opcje, plik, wsparcie', icon: ['M5 12h.01', 'M12 12h.01', 'M19 12h.01'] } as const
 
 /** Krok "Edycja" - id zdefiniowane wyżej w STEPS, nazwane żeby nie rozjechać się przy zmianach kolejności. */
 const EDIT_STEP_ID = 3
@@ -240,11 +244,24 @@ export function Editor({
   onToggleCorrectAnswer,
 }: EditorProps) {
   const [activeStep, setActiveStep] = useState(1)
+  // Na telefonie treść kroku to arkusz nad dolnym paskiem - na komputerze te flagi nic nie zmieniają.
+  const [isSheetOpen, setIsSheetOpen] = useState(worksheet.template === null)
+  const [isSheetExpanded, setIsSheetExpanded] = useState(false)
   // Nowa strona/zadanie zawsze zaczyna bez szablonu - wraca na krok wyboru zamiast zostawiać
   // otwarty krok z poprzedniego zadania.
   useEffect(() => {
-    if (worksheet.template === null) setActiveStep(1)
+    if (worksheet.template === null) {
+      setActiveStep(1)
+      setIsSheetOpen(true)
+    }
   }, [worksheet.id, worksheet.template])
+
+  function selectStep(stepId: number) {
+    // Ponowne kliknięcie aktywnego kroku chowa arkusz, żeby obejrzeć całą kartę.
+    setIsSheetOpen(stepId !== activeStep || !isSheetOpen)
+    setActiveStep(stepId)
+  }
+  const activeStepInfo = [...STEPS, MORE_STEP].find((step) => step.id === activeStep) ?? STEPS[0]
   const [isNavCollapsed, setIsNavCollapsed] = useState(false)
   const [isContentCollapsed, setIsContentCollapsed] = useState(false)
   const [templateCategory, setTemplateCategory] = useState<TemplateCategory>('all')
@@ -359,71 +376,11 @@ export function Editor({
     onAddItem({ id: createId(), source: 'emoji', emoji: entry.emoji, label: entry.name, caption: entry.name, showCaption: false })
   }
 
-  return (
-    <div className="editor-shell">
-      <nav className={`step-nav relative transition-all duration-300 ease-in-out ${isNavCollapsed ? '!w-16 !px-0 border-r-0' : ''}`}>
-        <button
-          type="button"
-          onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-          aria-label={isNavCollapsed ? 'Rozwiń nawigację' : 'Zwiń nawigację'}
-          title={isNavCollapsed ? 'Rozwiń nawigację' : 'Zwiń nawigację'}
-          className={`absolute top-3 bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm z-50 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hidden md:block ${isNavCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-3'}`}
-        >
-          <svg className={`w-4 h-4 transform transition-transform ${isNavCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div className="step-nav-inner custom-scrollbar h-full flex flex-col">
-        <header className="mb-5 px-4 pr-12 flex items-center gap-2">
-          <img
-            src={`${import.meta.env.BASE_URL}illustrations/worksheet-icon.png`}
-            alt=""
-            aria-hidden="true"
-            className={`w-10 h-10 object-contain shrink-0 transition-opacity ${isNavCollapsed ? 'opacity-0' : 'opacity-100'}`}
-          />
-          <div>
-            <h1 className={`text-xl font-bold text-gray-900 transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>KartoLab</h1>
-            <p className={`text-gray-500 text-xs transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>Kreator kart pracy A4</p>
-          </div>
-        </header>
-
-        <ol className="flex flex-col gap-2 px-2">
-          {STEPS.map((step) => {
-            const active = activeStep === step.id
-            return (
-              <li key={step.id}>
-                <button
-                  type="button"
-                  onClick={() => setActiveStep(step.id)}
-                  className={`w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-xl border transition-colors ${
-                    active
-                      ? 'bg-blue-50 border-blue-500'
-                      : 'bg-white border-gray-200 hover:border-gray-300'
-                  } ${isNavCollapsed ? 'justify-center' : ''}`}
-                >
-                  <span
-                    className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold shrink-0 ${
-                      active ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {step.id}
-                  </span>
-                  {!isNavCollapsed && (
-                  <span className="min-w-0">
-                    <span className={`block text-sm font-semibold ${active ? 'text-blue-800' : 'text-gray-900'}`}>
-                      {step.title}
-                    </span>
-                    <span className="block text-xs text-gray-500 truncate">{step.hint}</span>
-                  </span>
-                  )}
-                </button>
-              </li>
-            )
-          })}
-        </ol>
-
+  // Szybkie opcje, plik i wsparcie: na komputerze w panelu kroków, na telefonie w kroku "Więcej".
+  const extras = (
+    <>
         {/* Sekcja "Szybkie opcje" */}
-        <div className={`mt-6 px-4 transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+        <div className="mt-6 px-4">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Szybkie opcje</h2>
           <div className="flex flex-col gap-2">
             <label className="flex items-center justify-between cursor-pointer group">
@@ -470,7 +427,7 @@ export function Editor({
         </div>
 
         {/* Sekcja "Dodatkowe działania" */}
-        <div className={`mt-6 px-2 transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+        <div className="mt-6 px-2">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Dodatkowe działania</h2>
           <div className="grid grid-cols-3 gap-2">
             <label className="flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl bg-indigo-50 text-indigo-700 cursor-pointer hover:bg-indigo-100 transition-colors text-center h-[72px]">
@@ -512,7 +469,7 @@ export function Editor({
           </div>
         </div>
 
-        <div className={`editor-sidebar-support mt-6 mx-3 shrink-0 transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+        <div className="editor-sidebar-support mt-6 mx-3 shrink-0">
           <div className="editor-sidebar-support-copy">
             <span aria-hidden="true">☕</span>
             <div>
@@ -522,6 +479,78 @@ export function Editor({
           </div>
           <SupportPopover />
         </div>
+    </>
+  )
+
+  return (
+    <div className="editor-shell">
+      <nav className={`step-nav relative transition-all duration-300 ease-in-out ${isNavCollapsed ? '!w-16 !px-0 border-r-0' : ''}`}>
+        <button
+          type="button"
+          onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+          aria-label={isNavCollapsed ? 'Rozwiń nawigację' : 'Zwiń nawigację'}
+          title={isNavCollapsed ? 'Rozwiń nawigację' : 'Zwiń nawigację'}
+          className={`desktop-collapse-toggle absolute top-3 bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm z-50 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hidden md:block ${isNavCollapsed ? 'left-1/2 -translate-x-1/2' : 'right-3'}`}
+        >
+          <svg className={`w-4 h-4 transform transition-transform ${isNavCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div className="step-nav-inner custom-scrollbar h-full flex flex-col">
+        <header className="mb-5 px-4 pr-12 flex items-center gap-2">
+          <img
+            src={`${import.meta.env.BASE_URL}illustrations/worksheet-icon.png`}
+            alt=""
+            aria-hidden="true"
+            className={`w-10 h-10 object-contain shrink-0 transition-opacity ${isNavCollapsed ? 'opacity-0' : 'opacity-100'}`}
+          />
+          <div>
+            <h1 className={`text-xl font-bold text-gray-900 transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>KartoLab</h1>
+            <p className={`text-gray-500 text-xs transition-opacity ${isNavCollapsed ? 'opacity-0 whitespace-nowrap' : 'opacity-100'}`}>Kreator kart pracy A4</p>
+          </div>
+        </header>
+
+        <ol className="flex flex-col gap-2 px-2">
+          {[...STEPS, MORE_STEP].map((step, index) => {
+            const active = activeStep === step.id
+            return (
+              <li key={step.id} className={step.id === MORE_STEP.id ? 'step-nav-more' : undefined}>
+                <button
+                  type="button"
+                  onClick={() => selectStep(step.id)}
+                  aria-current={active ? 'step' : undefined}
+                  className={`step-nav-button w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-xl border transition-colors ${
+                    active
+                      ? 'is-active bg-blue-50 border-blue-500'
+                      : 'bg-white border-gray-200 hover:border-gray-300'
+                  } ${isNavCollapsed ? 'justify-center' : ''}`}
+                >
+                  <span
+                    className={`step-nav-number flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold shrink-0 ${
+                      active ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <svg className="step-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    {step.icon.map((d) => <path key={d} d={d} />)}
+                  </svg>
+                  {!isNavCollapsed && (
+                  <span className="step-nav-text min-w-0">
+                    <span className={`step-nav-title block text-sm font-semibold ${active ? 'text-blue-800' : 'text-gray-900'}`}>
+                      {step.title}
+                    </span>
+                    <span className="step-nav-hint block text-xs text-gray-500 truncate">{step.hint}</span>
+                  </span>
+                  )}
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+
+        <div className={`step-nav-extras ${isNavCollapsed ? 'hidden' : ''}`}>{extras}</div>
+
 
         <div className={`editor-sidebar-footer mt-auto px-4 pt-4 shrink-0 flex flex-col justify-end transition-opacity ${isNavCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
           <img
@@ -540,19 +569,40 @@ export function Editor({
         </div>
       </nav>
 
-      <div className={`step-content relative transition-all duration-300 ease-in-out bg-white ${isContentCollapsed ? '!w-11 border-none' : ''}`}>
+      <div
+        id="editor-step-sheet"
+        className={`step-content relative transition-all duration-300 ease-in-out bg-white ${isContentCollapsed ? '!w-11 border-none' : ''} ${
+          isSheetOpen ? 'is-sheet-open' : ''
+        } ${isSheetExpanded ? 'is-sheet-expanded' : ''}`}
+      >
+        {/* Nagłówek arkusza - widoczny tylko na telefonie. */}
+        <div className="step-sheet-header">
+          <button
+            type="button"
+            className="step-sheet-handle"
+            onClick={() => setIsSheetExpanded(!isSheetExpanded)}
+            aria-label={isSheetExpanded ? 'Zmniejsz panel' : 'Powiększ panel'}
+          />
+          <div className="step-sheet-title">
+            <h2>{activeStepInfo.title}</h2>
+            <p>{activeStepInfo.hint}</p>
+          </div>
+          <button type="button" className="step-sheet-done" onClick={() => setIsSheetOpen(false)}>
+            Gotowe
+          </button>
+        </div>
         <button
           type="button"
           onClick={() => setIsContentCollapsed(!isContentCollapsed)}
           aria-label={isContentCollapsed ? 'Rozwiń ustawienia' : 'Zwiń ustawienia'}
           title={isContentCollapsed ? 'Rozwiń ustawienia' : 'Zwiń ustawienia'}
-          className="absolute top-3 right-2 bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm z-50 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hidden md:block"
+          className="desktop-collapse-toggle absolute top-3 right-2 bg-white border border-gray-200 rounded-lg p-1.5 shadow-sm z-50 text-gray-500 hover:text-gray-700 hover:bg-gray-50 hidden md:block"
         >
           <svg className={`w-4 h-4 transform transition-transform ${isContentCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <div className={`w-[392px] max-w-[100vw] h-full overflow-y-auto px-6 pb-6 pt-14 transition-opacity duration-200 ${isContentCollapsed ? 'opacity-0 invisible' : 'opacity-100'}`}>
+        <div className={`step-sheet-body w-[392px] max-w-[100vw] h-full overflow-y-auto px-6 pb-6 pt-14 transition-opacity duration-200 ${isContentCollapsed ? 'opacity-0 invisible' : 'opacity-100'}`}>
 
       <Step step={1} active={activeStep}>
 {/* Wybór szablonu */}
@@ -2104,6 +2154,10 @@ export function Editor({
         />
       </section>
       </Step>
+
+<Step step={MORE_STEP.id} active={activeStep}>
+      <div className="step-more">{extras}</div>
+</Step>
       </div>
       </div>
     </div>

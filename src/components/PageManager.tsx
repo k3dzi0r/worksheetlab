@@ -26,7 +26,7 @@ function SortableTab({ id, index, isActive, onSelect, onRemove, onDuplicate, tot
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 px-3 py-2 rounded-t-lg border-t border-l border-r cursor-pointer whitespace-nowrap transition-colors select-none ${
+      className={`page-tab flex items-center gap-2 px-3 py-2 rounded-t-lg border-t border-l border-r cursor-pointer whitespace-nowrap transition-colors select-none ${
         isActive ? 'bg-white border-gray-300 text-blue-600 font-bold' : 'bg-gray-100 border-transparent text-gray-600 hover:bg-gray-200'
       }`}
     >
@@ -76,7 +76,7 @@ export function PageManager({ project, onAdd, onRemove, onDuplicate, onSelect, o
   }
 
   return (
-    <div className="flex items-end w-full overflow-x-auto border-b border-gray-300 mb-4 bg-gray-50/50 print:hidden pt-2 px-2">
+    <div className="page-manager flex items-end w-full overflow-x-auto border-b border-gray-300 mb-4 bg-gray-50/50 print:hidden pt-2 px-2">
       <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={project.pages.map(p => p.id!)} strategy={horizontalListSortingStrategy}>
           <div className="flex items-end gap-1 flex-1 min-w-max">
@@ -95,10 +95,10 @@ export function PageManager({ project, onAdd, onRemove, onDuplicate, onSelect, o
             
             <button
               onClick={onAdd}
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 bg-white border border-gray-300 border-b-transparent rounded-t-lg ml-2 transition-colors"
+              className="page-tab-add flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 bg-white border border-gray-300 border-b-transparent rounded-t-lg ml-2 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              Nowa strona
+              <span className="page-tab-add-label">Nowa strona</span>
             </button>
           </div>
         </SortableContext>

@@ -49,15 +49,19 @@ body {
   overflow: hidden;
 }
 
-.mobile-editor-toggle {
-  display: none;
-}
-
-.mobile-editor-content {
+.editor-panel-content {
   display: flex;
   flex: 1;
   min-width: 0;
   min-height: 0;
+}
+
+/* Elementy widoczne tylko na telefonie (dolny pasek i arkusz kroku). */
+.step-nav-icon,
+.step-nav-more,
+.step-sheet-header,
+.top-bar-print-short {
+  display: none;
 }
 
 /* Panel edycji to dwie kolumny: nawigacja po krokach i treść aktywnego kroku.
@@ -102,7 +106,7 @@ body {
     gap: 0.375rem;
   }
 
-  .step-nav-inner > div.mt-6 {
+  .step-nav-extras > div.mt-6 {
     margin-top: 0.75rem;
   }
 
@@ -112,7 +116,7 @@ body {
 }
 
 @media (max-height: 720px) {
-  .step-nav-inner > div.mt-6 {
+  .step-nav-extras > div.mt-6 {
     margin-top: 0.5rem;
   }
 
@@ -416,134 +420,269 @@ body {
   font-size: 0.75rem;
 }
 
+/* Telefon i wąski tablet: podgląd na górze, pod nim arkusz z ustawieniami kroku
+   i dolny pasek kroków jak w aplikacji. Jeden obszar przewijania naraz. */
 @media (max-width: 900px) {
   .app-layout {
     flex-direction: column;
-    height: 100%;
+  }
+
+  .preview-panel {
+    order: 1;
+    flex: 1;
     min-height: 0;
   }
 
   .editor-panel {
-    width: 100%;
-    min-height: 0;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .editor-panel.mobile-editor-closed {
-    flex: 0 0 3.5rem;
-  }
-
-  .editor-panel.mobile-editor-open {
-    flex: 0 0 min(68%, 38rem);
-  }
-
-  .mobile-editor-toggle {
-    display: flex;
+    order: 2;
     flex: none;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
     width: 100%;
-    height: 3.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #fff;
-    color: #1d4ed8;
-    font-size: 0.875rem;
-    font-weight: 700;
-  }
-
-  .mobile-editor-closed .mobile-editor-content {
-    display: none;
-  }
-
-  .mobile-editor-open .mobile-editor-content {
-    overflow: hidden;
+    border-right: none;
+    border-top: 1px solid #e5e7eb;
   }
 
   .editor-shell {
     flex-direction: column;
-    min-height: 0;
+    width: 100%;
   }
 
+  .desktop-collapse-toggle,
+  .step-nav-inner > header,
+  .step-nav-extras,
+  .editor-sidebar-footer {
+    display: none !important;
+  }
+
+  /* Dolny pasek kroków */
   .step-nav {
-    width: 100% !important;
-    max-height: clamp(7.5rem, 34%, 13rem);
-    border-bottom: 1px solid #f1f5f9;
+    order: 2;
+    width: 100%;
+    border-right: none;
+    background: #fff;
   }
 
   .step-nav-inner {
-    overflow-y: auto !important;
-    padding: 0.5rem;
-  }
-  
-  .step-nav-inner > header {
-    display: none;
-  }
-  .step-nav-inner > div.mt-auto {
-    display: none;
-  }
-  .step-nav-inner > ol {
-    flex: none;
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 0.5rem;
-    padding-bottom: 0.5rem;
+    height: auto;
+    padding: 0.25rem 0.25rem calc(0.25rem + env(safe-area-inset-bottom));
+    overflow: visible;
   }
 
-  .step-nav-inner > div.mt-6,
-  .editor-sidebar-support {
-    flex: none;
+  .step-nav-inner > ol {
+    flex-direction: row;
+    gap: 0.125rem;
+    padding: 0;
   }
-  
-  .step-nav-inner > ol > li > button {
-    flex-shrink: 0;
-    width: auto;
+
+  .step-nav-inner > ol > li {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .step-nav-more {
+    display: block;
+  }
+
+  .step-nav-button {
     flex-direction: column;
+    justify-content: center;
+    gap: 0.125rem;
+    min-height: 3.25rem;
+    padding: 0.375rem 0.125rem;
+    border: none;
+    border-radius: 0.75rem;
+    background: transparent;
+    color: #64748b;
     text-align: center;
   }
-  
-  .step-nav-inner > ol > li > button > span:nth-child(2) {
+
+  .step-nav-button.is-active {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .step-nav-number,
+  .step-nav-hint {
     display: none;
   }
 
-  .step-content {
-    width: 100% !important;
-    height: auto;
-    flex: 1;
-    min-height: 0;
-  }
-  
-  .step-content > div:last-child {
-    width: 100% !important;
-  }
-
-  .preview-panel {
-    flex: 1;
-    min-height: 12rem;
-    overflow: hidden;
-  }
-
-  .top-bar {
-    flex-wrap: wrap;
-  }
-
-  .top-bar-history,
-  .top-bar-zoom,
-  .top-bar-actions {
+  .step-nav-icon {
+    display: block;
     flex: none;
   }
 
-  .top-bar-save-status {
+  .step-nav-text {
+    width: 100%;
+  }
+
+  .step-nav-title {
+    overflow: hidden;
+    color: inherit !important;
+    font-size: 0.6875rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Arkusz z treścią kroku - nad paskiem, podgląd nad nim dopasowuje się sam. */
+  .step-content {
+    order: 1;
     display: none;
+    flex-direction: column;
+    flex: none;
+    width: 100%;
+    height: 52dvh;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #f1f5f9;
+    border-radius: 1rem 1rem 0 0;
+    box-shadow: 0 -8px 24px rgb(15 23 42 / 0.08);
+  }
+
+  .step-content.is-sheet-open {
+    display: flex;
+  }
+
+  .step-content.is-sheet-expanded {
+    height: calc(100dvh - 8rem);
+  }
+
+  /* Rozwinięty arkusz: zostaje tylko pasek z drukiem, podgląd wraca po zwinięciu. */
+  .app-layout:has(.is-sheet-expanded) .page-manager-bar,
+  .app-layout:has(.is-sheet-expanded) .preview-viewport {
+    display: none;
+  }
+
+  .step-sheet-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.75rem;
+    padding: 0 1rem 0.625rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .step-sheet-handle {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: 4rem;
+    height: 1.25rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .step-sheet-handle::before {
+    content: '';
+    width: 2.5rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: #cbd5e1;
+  }
+
+  .step-sheet-title h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Opis kroku powtarzałby nagłówek pierwszej sekcji arkusza. */
+  .step-sheet-title p {
+    display: none;
+  }
+
+  .step-sheet-done {
+    min-height: 2.5rem;
+    padding: 0 1.125rem;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .step-sheet-body {
+    flex: 1;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    padding: 1rem 1rem 1.5rem;
+    overscroll-behavior: contain;
+  }
+
+  .step-more > div:first-child {
+    margin-top: 0;
+  }
+
+  .step-more > div {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .step-more .editor-sidebar-support {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Pasek nad podglądem - jeden rząd, większe pola dotyku. */
+  .top-bar {
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .top-bar button {
+    min-height: 2.5rem;
+    min-width: 2.25rem;
+  }
+
+  .top-bar-divider,
+  .top-bar-save-status,
+  .top-bar-print-long {
+    display: none;
+  }
+
+  .top-bar-print-short {
+    display: inline;
+  }
+
+  .top-bar-actions {
+    margin-left: auto;
+  }
+
+  .top-bar-actions button {
+    margin-left: 0;
+    padding: 0 1rem;
+    font-size: 0.875rem;
   }
 
   .page-manager-bar {
-    padding: 0.25rem 1rem 0;
+    padding: 0.25rem 0.5rem 0;
+  }
+
+  .page-manager {
+    margin-bottom: 0;
+    padding: 0.25rem 0.25rem 0;
+  }
+
+  .page-tab {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+  }
+
+  .page-tab > div:first-child {
+    display: none;
+  }
+
+  .page-tab-add {
+    padding: 0.375rem 0.625rem;
+  }
+
+  .page-tab-add-label {
+    display: none;
   }
 
   .preview-viewport {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .app-footer {
@@ -562,65 +701,20 @@ body {
   }
 }
 
-@media (max-width: 900px) and (orientation: landscape) {
-  .app-layout {
-    flex-direction: row;
-  }
-
-  .editor-panel {
-    width: 3.5rem;
-    height: 100%;
-    flex: 0 0 3.5rem;
-    border-right: 1px solid #e5e7eb;
-    border-bottom: none;
-  }
-
-  .editor-panel.mobile-editor-open {
-    width: min(62%, 34rem);
-    flex-basis: min(62%, 34rem);
-  }
-
-  .mobile-editor-toggle {
-    height: 3.5rem;
-  }
-
-  .mobile-editor-closed .mobile-editor-toggle span {
-    display: none;
-  }
-
-  .editor-shell {
-    flex-direction: row;
-  }
-
-  .step-nav {
-    width: 4.5rem !important;
-    max-height: none;
-    border-right: 1px solid #f1f5f9;
-    border-bottom: none;
-  }
-
-  .step-nav-inner > ol {
-    flex-direction: column;
-    overflow-x: visible;
-  }
-
-  .step-nav-inner > ol > li > button {
-    width: 100%;
-  }
-
-  .step-nav-inner > div.mt-6,
-  .editor-sidebar-support,
-  .editor-sidebar-footer {
-    display: none;
-  }
-
-  .step-nav > button {
-    display: none;
-  }
-
+/* Telefon poziomo: mało wysokości, więc arkusz zajmuje prawie cały ekran nad paskiem. */
+@media (max-width: 900px) and (max-height: 520px) {
   .step-content {
-    width: auto !important;
-    height: 100%;
+    height: calc(100dvh - 7rem);
+  }
+
+  .step-nav-button {
+    flex-direction: row;
+    min-height: 2.5rem;
+    gap: 0.375rem;
+  }
+
+  .step-nav-text {
+    width: auto;
   }
 }
 

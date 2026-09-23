@@ -119,7 +119,6 @@ function App() {
   const [shuffleSeed, setShuffleSeed] = useState(0)
   const [showAnswerKey, setShowAnswerKey] = useState(false)
   const [isSupportThankYouOpen, setIsSupportThankYouOpen] = useState(false)
-  const [isMobileEditorOpen, setIsMobileEditorOpen] = useState(false)
   // Nieaktywne strony są normalnie `display:none`, więc ich liniatura (mierzona przez
   // ResizeObserver na realnej szerokości kontenera) nigdy się nie przelicza - w PDF-ie
   // wychodziły puste. Przed drukiem pokazujemy wszystkie strony i czekamy klatkę, żeby
@@ -708,8 +707,9 @@ function App() {
 
   if (hasDraft) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full text-center">
+      // `m-auto` zamiast centrowania kontenera - na niskim ekranie (telefon poziomo) okno da się przewinąć.
+      <div className="h-full overflow-y-auto flex bg-gray-50 p-4">
+        <div className="m-auto bg-white p-8 rounded-xl shadow-xl max-w-md w-full text-center">
           <img src={`${import.meta.env.BASE_URL}illustrations/books.webp`} alt="" className="w-32 mx-auto mb-6" aria-hidden="true" />
           <h2 className="text-2xl font-bold mb-4">Wykryto zapis roboczy</h2>
           <p className="text-gray-600 mb-6">
@@ -737,20 +737,8 @@ function App() {
   return (
     <div className="app-shell">
       <div className="app-layout">
-        <div className={`editor-panel ${isMobileEditorOpen ? 'mobile-editor-open' : 'mobile-editor-closed'}`}>
-          <button
-            type="button"
-            className="mobile-editor-toggle print:hidden"
-            onClick={() => setIsMobileEditorOpen((isOpen) => !isOpen)}
-            aria-expanded={isMobileEditorOpen}
-            aria-controls="mobile-editor-content"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              {isMobileEditorOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-            </svg>
-            <span>{isMobileEditorOpen ? 'Zamknij ustawienia' : 'Ustawienia'}</span>
-          </button>
-          <div id="mobile-editor-content" className="mobile-editor-content">
+        <div className="editor-panel print:hidden">
+          <div className="editor-panel-content">
             <Editor
             worksheet={worksheet}
             tasks={activePage.tasks}
