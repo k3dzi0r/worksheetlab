@@ -381,4 +381,6 @@ export interface ProjectState {
   showPageNumbers?: boolean
   /** Czy drukować dyskretny podpis KartoLabu na każdej stronie. */
   showBranding?: boolean
+  /** Czy na końcu wydruku dołączyć strony z kluczem odpowiedzi (a karty dla uczniów bez klucza). */
+  answerKeyPages?: boolean
 }

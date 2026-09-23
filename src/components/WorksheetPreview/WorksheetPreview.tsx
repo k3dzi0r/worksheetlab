@@ -44,6 +44,8 @@ interface WorksheetPreviewProps {
   activeTaskIndex?: number
   /** Kliknięcie w zadanie na kartce otwiera jego edycję. */
   onTaskClick?: (taskIndex: number) => void
+  /** Strona z kluczem dla nauczyciela - dostaje wyraźny znacznik w rogu. */
+  isAnswerKeyPage?: boolean
 }
 
 const PRINT_STYLE_ELEMENT_ID = 'worksheetlab-print-orientation'
@@ -250,7 +252,7 @@ function WorksheetTaskPreview({ worksheet, shuffleSeed, variantIndex = 0, showAn
 }
 
 /** Podgląd strony A4 z jednym lub wieloma niezależnymi zadaniami. */
-export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, showBranding = true, pageIndex, totalPages, activeTaskIndex, onTaskClick }: WorksheetPreviewProps) {
+export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnswerKey = false, showPageNumbers, showBranding = true, pageIndex, totalPages, activeTaskIndex, onTaskClick, isAnswerKeyPage = false }: WorksheetPreviewProps) {
   usePrintOrientation(page.orientation)
 
   const pageStyle: CSSProperties = {
@@ -260,6 +262,7 @@ export function WorksheetPreview({ page, shuffleSeed, variantIndex = 0, showAnsw
 
   return (
     <div id="worksheet-page" className="worksheet-a4 bg-white shadow-lg mx-auto relative" style={pageStyle}>
+      {isAnswerKeyPage && <div className="worksheet-answer-key-badge">Klucz odpowiedzi</div>}
       <WorksheetHeaderView header={page.header} instructionScale={page.tasks[0]?.instructionScale ?? 1} />
       <div className={`worksheet-task-grid task-count-${page.tasks.length}`}>
         {page.tasks.map((task, index) => (

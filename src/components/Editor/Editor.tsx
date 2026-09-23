@@ -31,8 +31,8 @@ import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
 import { MyLibrary } from '../MyLibrary/MyLibrary'
 import type { EmojiEntry } from '../../data/emojis'
 import { createId } from '../../utils'
-import { WORKSHEET_EXAMPLES } from '../../examples'
-import type { WorksheetExample } from '../../examples'
+import { EXAMPLE_THEMES, WORKSHEET_EXAMPLES } from '../../examples'
+import type { ExampleTheme, WorksheetExample } from '../../examples'
 import { generateWordSearch, parseWords } from '../../wordSearch'
 import { buildCrossword, parseCrosswordLines } from '../../crossword'
 import { DOT_NUMBERING, DOT_SHAPES } from '../../dotToDot'
@@ -134,6 +134,8 @@ function Step({ step, active, children }: { step: number; active: number; childr
 
 
 interface EditorProps {
+  answerKeyPages: boolean
+  onToggleAnswerKeyPages: () => void
   projectName: string
   onOpenProjects: () => void
   onNewProject: () => void
@@ -253,6 +255,8 @@ export function Editor({
   stepRequest,
   onShuffle,
   onApplyExample,
+  answerKeyPages,
+  onToggleAnswerKeyPages,
   projectName,
   onOpenProjects,
   onNewProject,
@@ -289,6 +293,17 @@ export function Editor({
   const [isNavCollapsed, setIsNavCollapsed] = useState(false)
   const [isContentCollapsed, setIsContentCollapsed] = useState(false)
   const [templateCategory, setTemplateCategory] = useState<TemplateCategory>('all')
+  const [exampleTheme, setExampleTheme] = useState<ExampleTheme | 'all'>('all')
+  const [showAllExamples, setShowAllExamples] = useState(false)
+  const themeExamples = useMemo(
+    () => (exampleTheme === 'all' ? WORKSHEET_EXAMPLES : WORKSHEET_EXAMPLES.filter((example) => example.theme === exampleTheme)),
+    [exampleTheme],
+  )
+  // Po jednym przykładzie z każdego tematu na start - reszta pod „Pokaż wszystkie".
+  const visibleExamples = useMemo(() => {
+    if (exampleTheme !== 'all' || showAllExamples) return themeExamples
+    return EXAMPLE_THEMES.flatMap((theme) => WORKSHEET_EXAMPLES.find((example) => example.theme === theme.value) ?? [])
+  }, [exampleTheme, showAllExamples, themeExamples])
   const visibleTemplates = useMemo(
     () =>
       templateCategory === 'all'
@@ -621,8 +636,25 @@ export function Editor({
         <section>
           <h2 className="text-lg font-semibold">Zacznij od przykładu</h2>
           <p className="text-xs text-gray-500 mb-2">Gotowa karta, którą potem zmienisz po swojemu.</p>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {EXAMPLE_THEMES.map((theme) => (
+              <button
+                key={theme.value}
+                type="button"
+                onClick={() => setExampleTheme(theme.value)}
+                aria-pressed={exampleTheme === theme.value}
+                className={`px-2.5 py-1 text-xs rounded-full border ${
+                  exampleTheme === theme.value
+                    ? 'bg-blue-600 border-blue-600 text-white font-medium'
+                    : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400'
+                }`}
+              >
+                {theme.label}
+              </button>
+            ))}
+          </div>
           <div className="grid grid-cols-2 gap-2">
-            {WORKSHEET_EXAMPLES.map((example) => (
+            {visibleExamples.map((example) => (
               <button
                 key={example.id}
                 type="button"
@@ -642,6 +674,11 @@ export function Editor({
               </button>
             ))}
           </div>
+          {visibleExamples.length < themeExamples.length && (
+            <button type="button" onClick={() => setShowAllExamples(true)} className="mt-2 text-sm text-blue-600 hover:underline">
+              Pokaż wszystkie przykłady ({themeExamples.length})
+            </button>
+          )}
         </section>
       )}
 
@@ -962,7 +999,15 @@ export function Editor({
   {(hasAnswerKey || canShuffle) && (
     <section className="flex flex-col gap-2">
       {hasAnswerKey && (
-        <Toggle label="Pokaż klucz odpowiedzi" hint="Tylko do sprawdzania - wyłącz przed wydrukiem dla uczniów." checked={showAnswerKey} onChange={onToggleAnswerKey} />
+        <>
+          <Toggle label="Pokaż klucz na podglądzie" hint="Rozwiązania widoczne na kartce na ekranie." checked={showAnswerKey} onChange={onToggleAnswerKey} />
+          <Toggle
+            label="Drukuj klucz na osobnej stronie"
+            hint="Karty dla uczniów bez rozwiązań, na końcu strony z kluczem dla Ciebie."
+            checked={answerKeyPages}
+            onChange={onToggleAnswerKeyPages}
+          />
+        </>
       )}
       {canShuffle && (
         <button

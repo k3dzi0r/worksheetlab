@@ -340,6 +340,7 @@ export function parseProjectJson(text: string): ProjectState | null {
       activeTaskIndex,
       showPageNumbers: typeof data.showPageNumbers === 'boolean' ? data.showPageNumbers : false,
       showBranding: typeof data.showBranding === 'boolean' ? data.showBranding : true,
+      answerKeyPages: typeof data.answerKeyPages === 'boolean' ? data.answerKeyPages : false,
     }
   }
 

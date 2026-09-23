@@ -974,6 +974,20 @@ body {
   overflow: hidden;
 }
 
+.worksheet-answer-key-badge {
+  position: absolute;
+  top: 6mm;
+  right: 8mm;
+  padding: 1mm 3mm;
+  border: 0.4mm solid #b91c1c;
+  border-radius: 1.5mm;
+  color: #b91c1c;
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .worksheet-page-meta {
   display: flex;
   justify-content: center;

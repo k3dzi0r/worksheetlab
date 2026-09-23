@@ -9,7 +9,7 @@ import type {
   MatchPair,
   WorksheetPage,
 } from './types/worksheet'
-import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER } from './types/worksheet'
+import { ITEM_SCALE_DEFAULT, ITEM_SCALE_MIN, ITEM_SCALE_MAX, DEFAULT_WORKSHEET_HEADER, ANSWER_KEY_TEMPLATES } from './types/worksheet'
 import type { WorksheetHeader, StepRequest } from './types/worksheet'
 import type { WorksheetExample } from './examples'
 import { createId, shuffleArray, clamp } from './utils'
@@ -181,6 +181,10 @@ function App() {
 
   const handleTogglePageNumbers = useCallback(() => {
     setProject((prev) => ({ ...prev, showPageNumbers: !prev.showPageNumbers }))
+  }, [setProject])
+
+  const handleToggleAnswerKeyPages = useCallback(() => {
+    setProject((prev) => ({ ...prev, answerKeyPages: !prev.answerKeyPages }))
   }, [setProject])
 
   const handleToggleBranding = useCallback(() => {
@@ -795,6 +799,8 @@ function App() {
             onExport={handleExport}
             onImport={handleImport}
             onClear={handleClear}
+            answerKeyPages={project.answerKeyPages ?? false}
+            onToggleAnswerKeyPages={handleToggleAnswerKeyPages}
             projectName={library.currentMeta.name}
             onOpenProjects={openProjects}
             onNewProject={handleNewProject}
@@ -885,7 +891,8 @@ function App() {
                       page={page}
                       shuffleSeed={shuffleSeed}
                       variantIndex={variantIndex}
-                      showAnswerKey={showAnswerKey}
+                      // Przy kluczu na osobnych stronach karty dla uczniów drukują się czyste.
+                      showAnswerKey={showAnswerKey && !(project.answerKeyPages && isPrintingAllPages)}
                       showPageNumbers={project.showPageNumbers ?? false}
                       showBranding={project.showBranding ?? true}
                       pageIndex={idx}
@@ -896,6 +903,34 @@ function App() {
                   ))}
                 </div>
               ))}
+              {/* Klucz dla nauczyciela na końcu wydruku - na ekranie ukryty, drukuje się także z Ctrl+P. */}
+              {project.answerKeyPages &&
+                project.pages.map((page, idx) =>
+                  page.tasks.some((task) => task.template !== null && ANSWER_KEY_TEMPLATES.includes(task.template)) ? (
+                    <div
+                      key={`${page.id}-key`}
+                      // Jak nieaktywne strony: ukryta strona nie ma wymiarów, więc szablony liczone
+                      // z ResizeObserver (np. liczba zegarów) wyszłyby puste - pokazujemy ją na czas druku.
+                      className={`${isPrintingAllPages ? 'flex' : 'hidden print:flex'} w-full flex-col items-center`}
+                      style={{ pageBreakAfter: 'always' }}
+                    >
+                      {Array.from({ length: page.variantCount }).map((_, variantIndex) => (
+                        <WorksheetPreview
+                          key={`${page.id}-key-${variantIndex}`}
+                          page={page}
+                          shuffleSeed={shuffleSeed}
+                          variantIndex={variantIndex}
+                          showAnswerKey
+                          isAnswerKeyPage
+                          showPageNumbers={project.showPageNumbers ?? false}
+                          showBranding={project.showBranding ?? true}
+                          pageIndex={idx}
+                          totalPages={project.pages.length}
+                        />
+                      ))}
+                    </div>
+                  ) : null,
+                )}
             </div>
           </div>
         </div>
