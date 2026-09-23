@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
+import { useDialogFocus } from '../hooks/useDialogFocus'
 
 const DISMISS_KEY = 'kartolab-mobile-print-help-dismissed'
 
@@ -31,15 +32,8 @@ interface MobilePrintHelpProps {
 export function MobilePrintHelp({ isOpen, onPrint, onClose }: MobilePrintHelpProps) {
   const printRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    if (!isOpen) return
-    printRef.current?.focus()
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', closeOnEscape)
-    return () => document.removeEventListener('keydown', closeOnEscape)
-  }, [isOpen, onClose])
+  const dialogRef = useRef<HTMLElement>(null)
+  useDialogFocus(dialogRef, isOpen, onClose, printRef)
 
   if (!isOpen) return null
 
@@ -56,7 +50,7 @@ export function MobilePrintHelp({ isOpen, onPrint, onClose }: MobilePrintHelpPro
 
   return (
     <div className="support-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="support-modal" role="dialog" aria-modal="true" aria-labelledby="print-help-title">
+      <section ref={dialogRef} className="support-modal" role="dialog" aria-modal="true" aria-labelledby="print-help-title">
         <button type="button" className="support-modal-close" onClick={onClose} aria-label="Zamknij">
           ×
         </button>

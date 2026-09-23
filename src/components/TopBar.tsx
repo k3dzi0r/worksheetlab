@@ -68,6 +68,7 @@ export function TopBar({
           type="button"
           onClick={() => onZoomChange(null)}
           title="Pokaż całą stronę"
+          aria-label="Pokaż całą stronę"
           aria-pressed={zoom === null}
           className={`top-bar-fit flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium ${
             zoom === null ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:bg-gray-100'

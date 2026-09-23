@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useDialogFocus } from '../hooks/useDialogFocus'
 import type { SavedProjectMeta } from '../projectLibrary'
 import { TEMPLATE_OPTIONS } from '../types/worksheet'
 import { TemplateThumbnail } from './Editor/TemplateThumbnail'
@@ -42,15 +43,8 @@ export function MyProjectsDialog({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
 
-  useEffect(() => {
-    if (!isOpen) return
-    closeRef.current?.focus()
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', closeOnEscape)
-    return () => document.removeEventListener('keydown', closeOnEscape)
-  }, [isOpen, onClose])
+  const dialogRef = useRef<HTMLElement>(null)
+  useDialogFocus(dialogRef, isOpen, onClose, closeRef)
 
   if (!isOpen) return null
 
@@ -61,7 +55,7 @@ export function MyProjectsDialog({
 
   return (
     <div className="support-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="support-modal projects-dialog" role="dialog" aria-modal="true" aria-labelledby="projects-title">
+      <section ref={dialogRef} className="support-modal projects-dialog" role="dialog" aria-modal="true" aria-labelledby="projects-title">
         <button ref={closeRef} type="button" className="support-modal-close" onClick={onClose} aria-label="Zamknij">
           ×
         </button>
@@ -128,6 +122,13 @@ export function MyProjectsDialog({
                           value={draftName}
                           onChange={(event) => setDraftName(event.target.value)}
                           onBlur={() => commitRename(meta.id)}
+                          onKeyDown={(event) => {
+                            // Escape w polu nazwy anuluje zmianę, a nie zamyka całego okna.
+                            if (event.key === 'Escape') {
+                              event.stopPropagation()
+                              setEditingId(null)
+                            }
+                          }}
                           aria-label="Nazwa karty"
                           className="projects-rename"
                         />

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import type { WorksheetItem, WorksheetState, TemplateType, ChoiceLayout, PageOrientation, WorksheetHeader } from '../../types/worksheet'
 import { TEMPLATE_OPTIONS, TEMPLATE_CATEGORIES, ITEM_SCALE_MIN, ITEM_SCALE_MAX, ITEM_SCALE_STEP, ANSWER_KEY_TEMPLATES, SHUFFLEABLE_TEMPLATES } from '../../types/worksheet'
 import type { TemplateCategory, StepRequest } from '../../types/worksheet'
@@ -199,6 +200,26 @@ export function Editor({
   const hasAnswerKey = worksheet.template !== null && ANSWER_KEY_TEMPLATES.includes(worksheet.template)
   const canShuffle = worksheet.template !== null && SHUFFLEABLE_TEMPLATES.includes(worksheet.template)
 
+  // Na telefonie kroki otwierają arkusz - czytnik ekranu powinien wiedzieć, czy jest otwarty.
+  const isMobileLayout = useMediaQuery('(max-width: 900px)')
+  const navRef = useRef<HTMLElement>(null)
+
+  function closeSheet() {
+    setIsSheetOpen(false)
+    // Fokus wraca na aktywny krok w pasku, a nie ginie razem z zamkniętym arkuszem.
+    navRef.current?.querySelector<HTMLElement>('[aria-current="step"]')?.focus()
+  }
+
+  useEffect(() => {
+    if (!isMobileLayout || !isSheetOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Otwarte okno (np. Moje karty) samo obsługuje Escape i oznacza zdarzenie.
+      if (event.key === 'Escape' && !event.defaultPrevented) closeSheet()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  })
+
   function selectStep(stepId: number) {
     // Ponowne kliknięcie aktywnego kroku chowa arkusz, żeby obejrzeć całą kartę.
     setIsSheetOpen(stepId !== activeStep || !isSheetOpen)
@@ -313,7 +334,7 @@ export function Editor({
 
   return (
     <div className="editor-shell">
-      <nav className={`step-nav relative transition-all duration-300 ease-in-out ${isNavCollapsed ? '!w-16 !px-0 border-r-0' : ''}`}>
+      <nav ref={navRef} aria-label="Kroki tworzenia karty" className={`step-nav relative transition-all duration-300 ease-in-out ${isNavCollapsed ? '!w-16 !px-0 border-r-0' : ''}`}>
         <button
           type="button"
           onClick={() => setIsNavCollapsed(!isNavCollapsed)}
@@ -348,6 +369,8 @@ export function Editor({
                   type="button"
                   onClick={() => selectStep(step.id)}
                   aria-current={active ? 'step' : undefined}
+                  aria-controls={isMobileLayout ? 'editor-step-sheet' : undefined}
+                  aria-expanded={isMobileLayout ? active && isSheetOpen : undefined}
                   className={`step-nav-button w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-xl border transition-colors ${
                     active
                       ? 'is-active bg-blue-50 border-blue-500'
@@ -400,6 +423,8 @@ export function Editor({
 
       <div
         id="editor-step-sheet"
+        role="region"
+        aria-label={`Ustawienia: ${activeStepInfo.title}`}
         className={`step-content relative transition-all duration-300 ease-in-out bg-white ${isContentCollapsed ? '!w-11 border-none' : ''} ${
           isSheetOpen ? 'is-sheet-open' : ''
         } ${isSheetExpanded ? 'is-sheet-expanded' : ''}`}
@@ -411,12 +436,13 @@ export function Editor({
             className="step-sheet-handle"
             onClick={() => setIsSheetExpanded(!isSheetExpanded)}
             aria-label={isSheetExpanded ? 'Zmniejsz panel' : 'Powiększ panel'}
+            aria-expanded={isSheetExpanded}
           />
           <div className="step-sheet-title">
             <h2>{activeStepInfo.title}</h2>
             <p>{activeStepInfo.hint}</p>
           </div>
-          <button type="button" className="step-sheet-done" onClick={() => setIsSheetOpen(false)}>
+          <button type="button" className="step-sheet-done" onClick={closeSheet}>
             Gotowe
           </button>
         </div>

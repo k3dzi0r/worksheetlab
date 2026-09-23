@@ -121,6 +121,51 @@ describe('MyProjectsDialog', () => {
     expect(props.onExportAll).toHaveBeenCalled()
   })
 
+  it('Escape zamyka okno, a Escape w polu nazwy tylko anuluje zmianę', () => {
+    const props = renderDialog()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Zmień nazwę' })[0])
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Nazwa karty' }), { key: 'Escape' })
+    expect(props.onClose).not.toHaveBeenCalled()
+    expect(screen.queryByRole('textbox', { name: 'Nazwa karty' })).toBeNull()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(props.onClose).toHaveBeenCalled()
+  })
+
+  it('fokus zaczyna na „Zamknij" i Tab nie wychodzi poza okno', () => {
+    renderDialog()
+    const close = screen.getByRole('button', { name: 'Zamknij' })
+    expect(document.activeElement).toBe(close)
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.contains(document.activeElement)).toBe(true)
+    expect(document.activeElement).not.toBe(close)
+  })
+
+  it('po zamknięciu fokus wraca do przycisku, który otworzył okno', () => {
+    const opener = document.createElement('button')
+    document.body.appendChild(opener)
+    opener.focus()
+    const props = {
+      projects,
+      currentId: 'a',
+      isPersisted: false,
+      onClose: vi.fn(),
+      onOpen: vi.fn(),
+      onNew: vi.fn(),
+      onRename: vi.fn(),
+      onDuplicate: vi.fn(),
+      onDelete: vi.fn(),
+      onExport: vi.fn(),
+      onExportAll: vi.fn(),
+      onImportFile: vi.fn(),
+    }
+    const { rerender } = render(<MyProjectsDialog {...props} isOpen />)
+    expect(document.activeElement).not.toBe(opener)
+    rerender(<MyProjectsDialog {...props} isOpen={false} />)
+    expect(document.activeElement).toBe(opener)
+    opener.remove()
+  })
+
   it('pokazuje zachętę, gdy nie ma żadnych kart', () => {
     renderDialog({ projects: [] })
     expect(screen.getByText(/Nie masz jeszcze zapisanych kart/)).toBeTruthy()
